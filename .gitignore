@@ -1,0 +1,4 @@
+*env*
+!sample.env
+.terraform*
+*.tfstate*
