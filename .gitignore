@@ -1,4 +1,5 @@
 *env*
 !sample.env
+id_ed*
 .terraform*
 *.tfstate*
