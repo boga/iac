@@ -76,6 +76,10 @@ resource "scaleway_instance_server" "instance" {
               PermitEmptyPasswords no
               PasswordAuthentication no
               AllowUsers ans
+      packages:
+        - python3-pip
+      runcmd:
+        - [ sudo, --user, ans, python3, -m, pip, install, --user, ansible ]
     EOT
   }
 
