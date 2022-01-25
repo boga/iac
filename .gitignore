@@ -2,3 +2,4 @@
 !sample.env
 id_ed*
 .terraform*
+!.terraform*lock*
