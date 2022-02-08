@@ -1,0 +1,14 @@
+version: '3'
+services:
+  prometheus:
+    image: "prom/prometheus"
+    ports:
+      - 0.0.0.0:9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.yml:/etc/prometheus/alert.yml
+      - prometheus-data:/prometheus
+    command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
+
+volumes:
+  prometheus-data:
