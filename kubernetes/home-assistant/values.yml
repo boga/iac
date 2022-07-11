@@ -1,0 +1,7 @@
+persistence:
+  config:
+    enabled: true
+  usb:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/ttyACM0
