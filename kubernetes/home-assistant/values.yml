@@ -1,7 +1,0 @@
-persistence:
-  config:
-    enabled: true
-  usb:
-    enabled: true
-    type: hostPath
-    hostPath: /dev/serial/by-id/usb-Texas_Instruments_TI_CC2531_USB_CDC___0X00124B001CDCAB48-if00
