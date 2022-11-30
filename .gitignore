@@ -3,3 +3,6 @@
 id_ed*
 .terraform*
 !.terraform*lock*
+tmp
+.idea
+*.iml
