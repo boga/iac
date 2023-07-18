@@ -1,0 +1,4 @@
+*.retry
+id_*
+inventory*
+kubeconfig*
