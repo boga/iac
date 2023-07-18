@@ -1,0 +1,28 @@
+---
+- name: Install Nginx Ingress controller
+  hosts: localhost
+  gather_facts: true
+
+  tasks:
+    - name: Remove Traefik if it exists
+      kubernetes.core.helm:
+        name: "{{ item }}"
+        state: absent
+        namespace: kube-system
+        wait: true
+      loop:
+        - traefik
+        - traefik-crd
+    
+    - name: Add stable chart repo
+      kubernetes.core.helm_repository:
+        name: stable
+        repo_url: "https://kubernetes.github.io/ingress-nginx"
+    
+    - name: Install Nginx Ingress controller
+      kubernetes.core.helm:
+        chart_ref: stable/ingress-nginx
+        name: ingress-nginx 
+        namespace: ingress-nginx
+        create_namespace: true
+        state: present
