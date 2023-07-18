@@ -1,4 +1,5 @@
 *.retry
 id_*
+.DS_Store
 inventory*
 kubeconfig*
