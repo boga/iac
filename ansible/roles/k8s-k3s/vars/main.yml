@@ -1,0 +1,7 @@
+---
+k3s_tmp_dir: "/home/{{ ansible_user }}/k3s-tmp-dir"
+k3s_install_script: "{{ k3s_tmp_dir }}/install-k3s.sh"
+k3s_systemd_service_file: /etc/systemd/system/k3s.service
+k3s_kubeconfig_local: "kubeconfig-{{ ansible_facts.hostname }}-{{ ansible_date_time.iso8601_basic }}.yml"
+k3s_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+force_installation: false

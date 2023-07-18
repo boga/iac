@@ -1,0 +1,7 @@
+---
+- name: Install k3s Kubernetes
+  hosts: looner
+  gather_facts: true
+
+  roles:
+    - role: k8s-k3s
