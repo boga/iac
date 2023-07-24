@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-tcp-services
+  namespace: "{{ ingress_nginx_namespace }}"
+data:
+  53: "{{ namespace_name }}/{{ service_name }}:53"

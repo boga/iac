@@ -4,6 +4,7 @@
   gather_facts: false
   vars:
     namespace_name: apps
+    service_name: adguard-home
 
   roles:
     - role: k8s-create-namespace
