@@ -13,16 +13,16 @@
       loop:
         - traefik
         - traefik-crd
-    
+
     - name: Add stable chart repo
       kubernetes.core.helm_repository:
         name: stable
         repo_url: "https://kubernetes.github.io/ingress-nginx"
-    
+
     - name: Install Nginx Ingress controller
       kubernetes.core.helm:
         chart_ref: stable/ingress-nginx
-        name: ingress-nginx 
-        namespace: ingress-nginx
+        name: ingress-nginx
+        namespace: "{{ ingress_nginx_namespace }}"
         create_namespace: true
         state: present
