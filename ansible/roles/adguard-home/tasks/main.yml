@@ -1,4 +1,4 @@
-- name: "Deploy AdGuard Home to k8s" 
+- name: "Deploy AdGuard Home to k8s"
   kubernetes.core.k8s:
     state: present
     namespace: "{{ namespace_name }}"
@@ -14,3 +14,8 @@
       msg_part: "service"
     - file_path: "ingress.yml"
       msg_part: "ingress"
+
+- name: Create ingress-nginx TCP services ConfigMap
+  kubernetes.core.k8s:
+    state: present
+    template: "ingress-nginx-tcp-service-cm.j2"
