@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adguard
+  labels:
+    app: adguard
+data:
+  AdGuardHome.yaml: |
+    http:
+      address: 10.0.0.0:80
+      session_ttl: 720h
+    users: []
+    auth_attempts: 5
+    block_auth_min: 15
+    http_proxy: ""
+    language: ""
+    theme: auto
+    debug_pprof: false
