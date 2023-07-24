@@ -1,0 +1,10 @@
+---
+- name: Install AdGuard Home
+  hosts: localhost
+  gather_facts: false
+  vars:
+    namespace_name: apps
+
+  roles:
+    - role: k8s-create-namespace
+    - role: adguard-home
