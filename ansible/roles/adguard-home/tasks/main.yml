@@ -1,0 +1,16 @@
+- name: "Deploy AdGuard Home to k8s" 
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition: "{{ lookup('file', item.file_path) | from_yaml_all }}"
+  loop:
+    - file_path: "cm.yml"
+      msg_part: "config file ConfigMap"
+    - file_path: "pvc.yml"
+      msg_part: "config&data PersistentVolumeClaim"
+    - file_path: "deployment.yml"
+      msg_part: "deployment"
+    - file_path: "service.yml"
+      msg_part: "service"
+    - file_path: "ingress.yml"
+      msg_part: "ingress"

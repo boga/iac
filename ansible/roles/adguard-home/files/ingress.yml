@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adguard
+  labels:
+    app: adguard
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: "adguard.looner.lan"
+      http:
+        paths:
+          - backend:
+              service:
+                name: adguard
+                port: 
+                  name: adguard-http
+            path: /
+            pathType: Prefix
