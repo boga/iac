@@ -1,0 +1,26 @@
+---
+- name: Add chart repo
+  kubernetes.core.helm_repository:
+    name: metallb
+    repo_url: "https://metallb.github.io/metallb"
+
+- name: Install MetalLB
+  kubernetes.core.helm:
+    chart_ref: metallb/metallb
+    name: metallb
+    namespace: "metallb-system"
+    create_namespace: true
+    state: present
+    wait: true
+
+- name: "Create IPAddressPool"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "metallb-system"
+    template: "ip-address-pool.yml.j2"
+
+- name: "Create L2Advertisement"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "metallb-system"
+    template: "l2advertisement.yml.j2"
