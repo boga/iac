@@ -1,0 +1,8 @@
+- name: "Deploy Blocky to k8s"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - "cm.j2"
+    - "deployment.j2"
