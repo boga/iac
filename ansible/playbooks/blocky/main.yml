@@ -1,0 +1,29 @@
+---
+- name: Install Blocky
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: blocky
+      vars:
+        namespace_name: apps
+
+- name: Disable built-in DNS server
+  hosts: looner
+  gather_facts: false
+
+  tasks:
+    - name: Disable local DNS server on the node
+      become: true
+      ansible.builtin.copy:
+        dest: "/etc/systemd/resolved.conf.d/99-disable-local-dns-server.conf"
+        mode: u=rw,g=r,o=r
+        content: |
+          [Resolve]
+          DNSStubListener=no
+
+    - name: Restart systemd-resolved to make it source custom config file
+      become: true
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: restarted
