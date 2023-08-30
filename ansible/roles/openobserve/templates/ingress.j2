@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openobserve
+  labels:
+    app: openobserve
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: "openobserve.looner.lan"
+      http:
+        paths:
+          - backend:
+              service:
+                name: openobserve
+                port: 
+                  name: http
+            path: /
+            pathType: Prefix
