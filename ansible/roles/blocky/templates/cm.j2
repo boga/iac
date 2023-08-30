@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blocky
+  labels:
+    app: blocky
+data:
+  blocky.yaml: |
+    upstream:
+      default:
+        - 1.1.1.1      
+    bootstrapDns:
+      - tcp+udp:1.1.1.1
+      - https://1.1.1.1/dns-query
+    ports:
+      dns: 0.0.0.0:53
+      http: 4000
+    log:
+      level: info     # optional: Log level (one from debug, info, warn, error). Default: info
+      format: text    # optional: Log format (text or json). Default: text
+      timestamp: true # optional: log timestamps. Default: true
+      privacy: false  # optional: obfuscate log output (replace all alphanumeric characters with *) for user sensitive data like request domains or responses to increase privacy. Default: false
+    prometheus:
+      enable: true
+      path: /metrics
+    blocking:
+      clientGroupsBlock:
+        default:
+          - ads
+          - special
+      blockType: nxDomain
+      blackLists:
+        ads:
+          - https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+          - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+          - |
+            # inline definition with YAML literal block scalar style
+            someadsdomain.com
+            anotheradsdomain.com
+            # this is a regex
+            /^banners?[_.-]/
+        special:
+          - https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews/hosts      

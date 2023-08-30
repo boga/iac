@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blocky
+  labels:
+    app: blocky
+spec:
+  selector:
+    matchLabels:
+      app: blocky
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: blocky
+    spec:
+      containers:
+        - name: blocky
+          image: spx01/blocky
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 53
+              protocol: TCP
+              hostPort: 53
+            - containerPort: 53
+              protocol: UDP
+              hostPort: 53
+            - containerPort: 4000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+            limits:
+              cpu: 500m
+              memory: 1250Mi
+          volumeMounts:
+            - mountPath: /app/config.yml
+              name: config-file
+              readOnly: false
+              subPath: blocky.yaml
+      volumes:
+        - name: config-file
+          configMap:
+            name: blocky
+            items:
+            - key: blocky.yaml
+              path: blocky.yaml
