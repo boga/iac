@@ -1,0 +1,31 @@
+- name: "Make temporary file path for the manifest"
+  ansible.builtin.tempfile:
+    state: file
+    suffix: OpenObserve_manifest
+  register: manifest
+
+- name: "Download OpenObserve manifest to temporary file"
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/openobserve/openobserve/{{ version }}/deploy/k8s/statefulset.yaml"    
+    dest: "{{ manifest.path }}"
+    mode: 'u=r,g=r,o=r'
+
+- name: "Create a k8s namespace"
+  kubernetes.core.k8s:
+    name: "{{ namespace_name }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+  register: namespace
+
+- name: "Deploy OpenObserve to k8s"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace.result.metadata.name }}"
+    src: "{{ manifest.path }}"
+
+- name: "Create Ingress"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace.result.metadata.name }}"
+    template: "ingress.j2"

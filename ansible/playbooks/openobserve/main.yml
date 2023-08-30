@@ -1,0 +1,10 @@
+---
+- name: Install OpenObserve
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: openobserve
+      vars:
+        version: "91581364381cd13df588ed262e47a6710c50e7a9" # May 31, 2023
+        namespace_name: "openobserve"
