@@ -6,3 +6,4 @@
   loop:
     - "cm.j2"
     - "deployment.j2"
+    - "pod-monitor.j2"
