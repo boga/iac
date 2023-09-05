@@ -1,0 +1,32 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}" 
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: "Add Grafana chart repo"
+  kubernetes.core.helm_repository:
+    name: grafana
+    repo_url: "https://grafana.github.io/helm-charts"
+
+- name: Update Grafana cache
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+
+- name: Install Loki stack
+  kubernetes.core.helm:
+    chart_ref: grafana/loki-stack
+    name: loki
+    namespace: "{{ namespace_name }}"
+    chart_version: 2.9.11
+    state: present
+    values:
+      grafana:
+        enabled: false      
+      prometheus:
+        enabled: false

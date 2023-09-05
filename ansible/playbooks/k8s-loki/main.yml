@@ -1,0 +1,9 @@
+---
+- name: Install Loki
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-loki
+      vars:
+        namespace_name: o11y
