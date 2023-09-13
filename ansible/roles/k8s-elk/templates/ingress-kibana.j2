@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  labels:
+    app: kibana
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: "kibana.looner.lan"
+      http:
+        paths:
+          - backend:
+              service:
+                name: kibana-kibana
+                port: 
+                  name: http
+            path: /
+            pathType: Prefix

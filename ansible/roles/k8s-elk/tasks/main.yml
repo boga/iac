@@ -77,6 +77,12 @@
           memory: "2Gi"
       automountToken: false
 
+- name: "Create an Ingress for Kibana"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "ingress-kibana.j2"
+
 - name: Install Fluent Bit
   kubernetes.core.helm:
     chart_ref: fluent-bit/fluent-bit
