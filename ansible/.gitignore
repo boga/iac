@@ -3,3 +3,4 @@ id_*
 .DS_Store
 inventory*
 kubeconfig*
+**/*-password.txt

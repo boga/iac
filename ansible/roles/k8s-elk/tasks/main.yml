@@ -1,0 +1,115 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}" 
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: "Add Helm chart repos"
+  kubernetes.core.helm_repository:
+    name: "{{ item.name }}"
+    repo_url: "{{ item.url }}"
+  loop: 
+    - { name: "fluent-bit", url: "https://fluent.github.io/helm-charts" }
+    - { name: "elastic", url: "https://helm.elastic.co" }
+
+- name: Update Helm repos cache
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+
+- name: "Create a secret for Elasticsearch"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "elasticsearch-secret.j2"
+
+- name: Install Elasticsearch
+  kubernetes.core.helm:
+    chart_ref: elastic/elasticsearch
+    name: elasticsearch
+    namespace: "{{ namespace_name }}"
+    chart_version: 8.5.1
+    state: present
+    values:
+      replicas: 1
+      minimumMasterNodes: 1
+      resources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "1000m"
+          memory: "2Gi"
+      volumeClaimTemplate:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+      extraEnvs:
+      - name: "ELASTIC_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "{{ elasticsearch_password_secret_name }}"
+            key: password
+      secret:
+        enabled: false
+
+- name: Install Kibana
+  kubernetes.core.helm:
+    chart_ref: elastic/kibana
+    name: kibana
+    namespace: "{{ namespace_name }}"
+    chart_version: 8.5.1
+    state: present
+    values:
+      elasticsearchHosts: "https://elasticsearch-master:9200"
+      elasticsearchCredentialSecret: "{{ elasticsearch_password_secret_name }}"
+      resources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "1000m"
+          memory: "2Gi"
+      automountToken: false
+
+- name: Install Fluent Bit
+  kubernetes.core.helm:
+    chart_ref: fluent-bit/fluent-bit
+    name: fluent-bit
+    namespace: "{{ namespace_name }}"
+    chart_version: 0.38.0
+    state: present
+    values:
+      autoscaling:
+        maxReplicas: 1
+
+      env:
+        - name: FLUENT_ELASTICSEARCH_USER
+          value: "elastic"
+        - name: FLUENT_ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ elasticsearch_password_secret_name }}"
+              key: password
+
+      config:
+        outputs: |
+          [OUTPUT]
+              Name es
+              Match *
+              Host elasticsearch-master
+              Port 9200
+              HTTP_User       ${FLUENT_ELASTICSEARCH_USER}
+              HTTP_Passwd     ${FLUENT_ELASTICSEARCH_PASSWORD}
+              Logstash_Format On
+              Replace_Dots    On
+              Retry_Limit     False
+              TLS             On
+              TLS.verify      Off
+              # https://github.com/fluent/fluentd-kubernetes-daemonset/issues/1310#issuecomment-1045323003
+              Suppress_Type_Name On
