@@ -58,6 +58,20 @@
       secret:
         enabled: false
 
+- name: "Remove Kibana parts to avoid stuck on the next step"
+  kubernetes.core.k8s:
+    state: absent
+    namespace: "{{ namespace_name }}"
+    kind: "{{ item.kind }}"
+    name: "{{ item.name }}"
+  loop:
+    - { kind: "ConfigMap", name: "kibana-kibana-helm-scripts" }
+    - { kind: "Job", name: "pre-install-kibana-kibana" }
+    - { kind: "Role", name: "pre-install-kibana-kibana" }
+    - { kind: "RoleBinding", name: "pre-install-kibana-kibana" }
+    - { kind: "Secret", name: "kibana-kibana-es-token" }
+    - { kind: "ServiceAccount", name: "pre-install-kibana-kibana" }
+
 - name: Install Kibana
   kubernetes.core.helm:
     chart_ref: elastic/kibana
@@ -75,13 +89,9 @@
         limits:
           cpu: "1000m"
           memory: "2Gi"
-      automountToken: false
-
-- name: "Create an Ingress for Kibana"
-  kubernetes.core.k8s:
-    state: present
-    namespace: "{{ namespace_name }}"
-    template: "ingress-kibana.j2"
+      kibanaConfig:
+        kibana.yml: |
+          server.publicBaseUrl: http://kibana.looner.lan
 
 - name: Install Fluent Bit
   kubernetes.core.helm:
