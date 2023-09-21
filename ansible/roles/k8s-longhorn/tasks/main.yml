@@ -25,6 +25,9 @@
     namespace: "{{ namespace_name }}"
     chart_version: 1.5.1
     state: present
+    values:
+      persistence:
+        defaultClass: false
 
 - name: "Create Ingress"
   kubernetes.core.k8s:
@@ -59,9 +62,11 @@
     kind: StorageClass
   register: storage_class_list
 
-- name: "Create a dict of storage classes"
+- name: "Postprocess storage classes list"
   set_fact:
-    storage_class_dict: "{{ storage_class_dict|default({}) | combine( {item.metadata.name: item.metadata.annotations['storageclass.kubernetes.io/is-default-class']} ) }}"
+    storage_classes: "{{ storage_classes|default([]) + [ { 'name': item.metadata.name, 'isDefault': item.metadata.annotations['storageclass.kubernetes.io/is-default-class']|default('true') } ] }}"
+    longhornStorageClassIsDefault: "{{ longhornStorageClassIsDefault|default('false') or 'longhorn' == storage_classes[-1]['name'] and 'true' == storage_classes[-1]['isDefault'] }}"
+    longhornStorageClassExists: "{{ longhornStorageClassExists|default('false') or 'longhorn' == storage_classes[-1]['name'] }}"
   with_items: "{{ storage_class_list.resources }}"
 
 - name: "Remove 'default' flag from all storage classes"
@@ -70,11 +75,11 @@
       - kubectl
       - patch
       - storageclass
-      - "{{ item.key }}"
+      - "{{ item.name }}"
       - -p
       - '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
-  when: item.value == "true" and item.key != "longhorn"
-  with_items: "{{ lookup('dict', storage_class_dict) }}"
+  when: item.isDefault == "true" and item.name != "longhorn"
+  with_items: "{{ storage_classes }}"
 
 - name: "Set 'default' flag to 'longhorn' storage classes"
   ansible.builtin.command:
@@ -85,4 +90,30 @@
       - longhorn
       - -p
       - '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-  when: storage_class_dict["longhorn"] == "false"
+  when: longhornStorageClassExists and not longhornStorageClassIsDefault
+
+- name: "Create StorageClasses for HDD&SSD"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: "{{ item.name }}"
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "{{ item.isDefault|default('false') }}"
+      provisioner: driver.longhorn.io
+      allowVolumeExpansion: true
+      reclaimPolicy: "Delete"
+      volumeBindingMode: Immediate
+      parameters:
+        numberOfReplicas: "1"
+        staleReplicaTimeout: "30"
+        fsType: "ext4"
+        diskSelector: "{{ item.diskSelector }}"
+        nodeSelector: "storage"
+  with_items: 
+    - { name: "longhorn-hdd-fast", diskSelector: "hdd-fast", isDefault: "true" }
+    - { name: "longhorn-hdd-slow", diskSelector: "hdd-slow" }
+    - { name: "longhorn-ssd", diskSelector: "ssd" }
