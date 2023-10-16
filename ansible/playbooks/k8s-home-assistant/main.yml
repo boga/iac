@@ -1,0 +1,10 @@
+---
+- name: Installs Home Assistant
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-home-assistant
+      vars:
+        namespace_name: apps
+

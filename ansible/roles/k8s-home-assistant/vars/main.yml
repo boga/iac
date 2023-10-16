@@ -1,0 +1,5 @@
+---
+homekit_bridge_udp_port: 5353
+homekit_bridge_port: 21063
+home_assistant_port: 8123
+homekit_bridge_node_ip: 192.168.88.218

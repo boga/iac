@@ -1,0 +1,309 @@
+---
+- name: "Creates k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: "Creates ConfigMap for configuration.yaml"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: home-assistant-configmap
+      data:
+        known_devices.yaml: |
+        automations.yaml: |
+        configuration.yaml: |-
+          default_config:
+          homekit:
+            name: "Home Assistant Bridge"
+            advertise_ip: "{{ homekit_bridge_node_ip }}"
+            port: "{{ homekit_bridge_port }}"
+          frontend:
+            themes: !include_dir_merge_named themes
+          automation: !include automations.yaml
+          http:
+            use_x_forwarded_for: true
+            trusted_proxies:
+              - 10.0.0.0/8
+          logger:
+            default: warning
+            logs:
+              homeassistant.components.homekit: debug
+              pyhap: debug              
+    
+
+              
+- name: "Creates daemon set for the device plugin"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: generic-device-plugin
+        namespace: kube-system
+        labels:
+          app.kubernetes.io/name: generic-device-plugin
+      spec:
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: generic-device-plugin
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: generic-device-plugin
+          spec:
+            priorityClassName: system-node-critical
+            tolerations:
+              - operator: "Exists"
+                effect: "NoExecute"
+              - operator: "Exists"
+                effect: "NoSchedule"
+            containers:
+              - image: squat/generic-device-plugin
+                args:
+                  - --device
+                  - |
+                    name: serial
+                    groups:
+                      - paths:
+                          - path: /dev/ttyUSB*
+                      - paths:
+                          - path: /dev/ttyACM*
+                      - paths:
+                          - path: /dev/tty.usb*
+                      - paths:
+                          - path: /dev/cu.*
+                      - paths:
+                          - path: /dev/cuaU*
+                      - paths:
+                          - path: /dev/rfcomm*
+                  - --device
+                  - |
+                    name: video
+                    groups:
+                      - paths:
+                          - path: /dev/video0
+                  - --device
+                  - |
+                    name: fuse
+                    groups:
+                      - count: 10
+                        paths:
+                          - path: /dev/fuse
+                  - --device
+                  - |
+                    name: audio
+                    groups:
+                      - count: 10
+                        paths:
+                          - path: /dev/snd
+                  - --device
+                  - |
+                    name: capture
+                    groups:
+                      - paths:
+                          - path: /dev/snd/controlC0
+                          - path: /dev/snd/pcmC0D0c
+                      - paths:
+                          - path: /dev/snd/controlC1
+                            mountPath: /dev/snd/controlC0
+                          - path: /dev/snd/pcmC1D0c
+                            mountPath: /dev/snd/pcmC0D0c
+                      - paths:
+                          - path: /dev/snd/controlC2
+                            mountPath: /dev/snd/controlC0
+                          - path: /dev/snd/pcmC2D0c
+                            mountPath: /dev/snd/pcmC0D0c
+                      - paths:
+                          - path: /dev/snd/controlC3
+                            mountPath: /dev/snd/controlC0
+                          - path: /dev/snd/pcmC3D0c
+                            mountPath: /dev/snd/pcmC0D0c
+                name: generic-device-plugin
+                resources:
+                  requests:
+                    cpu: 50m
+                    memory: 10Mi
+                  limits:
+                    cpu: 50m
+                    memory: 20Mi
+                ports:
+                  - containerPort: 8080
+                    name: http
+                securityContext:
+                  privileged: true
+                volumeMounts:
+                  - name: device-plugin
+                    mountPath: /var/lib/kubelet/device-plugins
+                  - name: dev
+                    mountPath: /dev
+            volumes:
+              - name: device-plugin
+                hostPath:
+                  path: /var/lib/kubelet/device-plugins
+              - name: dev
+                hostPath:
+                  path: /dev
+        updateStrategy:
+          type: RollingUpdate
+
+- name: "Creates deployment"
+  kubernetes.core.k8s:
+    state: present
+    force: true
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: home-assistant
+        labels:
+          app: home-assistant
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: home-assistant
+        template:
+          metadata:
+            labels:
+              app: home-assistant
+          spec:
+            containers:
+              #              - name: bluez
+              #                image: ghcr.io/mysticrenji/bluez-service:v1.0.0
+              #                securityContext:
+              #                  privileged: true
+
+              - name: home-assistant
+                # v2023.10.1 as of Oct 10th 2023
+                image: "ghcr.io/home-assistant/home-assistant@sha256:a615c4a8ea9c6dd0fa8b0383b2d665d2bf03f31d35d7924662a355c3dca2bdd8"
+                resources:
+                  requests:
+                    memory: "256Mi"
+                  limits:
+                    memory: "512Mi"
+                    squat.ai/serial: 1
+                ports:
+                  - containerPort: "{{ home_assistant_port }}"
+                  - containerPort: "{{ homekit_bridge_udp_port }}"
+                    protocol: UDP
+                    hostPort: "{{ homekit_bridge_udp_port }}"
+                  - containerPort: "{{ homekit_bridge_port }}"
+                    protocol: TCP
+                    hostPort: "{{ homekit_bridge_port }}"
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+                  - mountPath: /config/configuration.yaml
+                    subPath: configuration.yaml
+                    name: configmap-file
+                  - mountPath: /config/automations.yaml
+                    subPath: automations.yaml
+                    name: configmap-file
+                  - mountPath: /media
+                    name: media-volume
+                  # - mountPath: /run/dbus
+                  #   name: d-bus
+                  #   readOnly: true
+            volumes:
+              - name: config
+                persistentVolumeClaim:
+                  claimName: home-assistant-pvc
+              - name: media-volume
+                hostPath:
+                  path: /tmp/media
+              - name: configmap-file
+                configMap:
+                  name: home-assistant-configmap
+              #  hostPath:
+              #    path: /tmp/home-assistant
+              #    type: DirectoryOrCreate
+              # - name: d-bus
+              #   hostPath:
+              #     path: /run/dbus
+              - name: zigbee
+                hostPath:
+                  path: /dev/ttyUSB0
+            #- name: cam
+            #  hostPath:
+            #    path: /dev/video0
+
+- name: "Creates service"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: home-assistant
+        annotations:
+          traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+      spec:
+        selector:
+          app: home-assistant
+        type: ClusterIP
+        ports:
+          - name: http
+            protocol: TCP
+            port: 80
+            targetPort: "{{ home_assistant_port }}"
+
+- name: "Creates persistent volume claim"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: home-assistant-pvc
+        labels:
+          app: home-assistant
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 9Gi
+
+- name: "Creates Ingress"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: home-assistant
+        labels:
+          app: home-assistant
+        annotations:
+          ingress.kubernetes.io/rewrite-target: /
+#          traefik.ingress.kubernetes.io/router.entrypoints: 'websecure'
+#          traefik.ingress.kubernetes.io/router.tls: 'true'
+#          nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+#          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+#          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      spec:
+        rules:
+          - host: "home-assistant.looner.lan"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: home-assistant
+                      namespace: "{{ namespace_name }}"
+                      port:
+                        name: http
+                  path: /
+                  pathType: Prefix
