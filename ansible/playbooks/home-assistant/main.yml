@@ -1,0 +1,9 @@
+---
+- name: Installs Home Assistant
+  hosts: looner
+  gather_facts: false
+
+  roles:
+    - role: home-assistant
+      vars:
+        namespace_name: apps
