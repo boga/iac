@@ -1,0 +1,13 @@
+---
+- name: "Add chart repo: {{ repo_name }}"
+  kubernetes.core.helm_repository:
+    name: "{{ repo_name }}"
+    repo_url: "{{ repo_url }}"
+
+- name: Update Helm cache
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+  when: update_repo_cache
