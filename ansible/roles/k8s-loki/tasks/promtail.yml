@@ -56,7 +56,7 @@
 
 - name: "Install ConfigMap"
   kubernetes.core.k8s:
-    state: patched # TODO: replace with "present"
+    state: present
     namespace: "{{ namespace_name }}"
     definition:
       apiVersion: v1
