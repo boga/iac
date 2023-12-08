@@ -1,0 +1,41 @@
+- name: Install Grafana
+  kubernetes.core.helm:
+    chart_ref: grafana/grafana
+    name: grafana
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ grafana_chart_version }}"
+    state: present
+    values:
+      loki:
+        commonConfig:
+          replication_factor: 1
+        storage:
+          type: 'filesystem'
+      singleBinary:
+        replicas: 1
+
+- name: "Create Ingress for Grafana"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: grafana
+        labels:
+          app: grafana
+        annotations:
+          ingress.kubernetes.io/rewrite-target: /
+      spec:
+        rules:
+          - host: "grafana.looner.lan"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: grafana
+                      port:
+                        name: service
+                  path: /
+                  pathType: Prefix
