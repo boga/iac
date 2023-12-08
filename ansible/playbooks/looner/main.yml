@@ -1,0 +1,4 @@
+---
+- ansible.builtin.import_playbook: "../k3s/main.yml"
+- ansible.builtin.import_playbook: "../k8s-longhorn/main.yml"
+- ansible.builtin.import_playbook: "../k8s-elk/main.yml"
