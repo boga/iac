@@ -1,0 +1,17 @@
+---
+- name: Install Loki
+  kubernetes.core.helm:
+    chart_ref: grafana/loki
+    name: loki
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ loki_chart_version }}"
+    state: present
+    values:
+      loki:
+        auth_enabled: false
+        commonConfig:
+          replication_factor: 1
+        storage:
+          type: 'filesystem'
+      singleBinary:
+        replicas: 1
