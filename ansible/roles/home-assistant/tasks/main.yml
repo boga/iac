@@ -1,16 +1,3 @@
 ---
-- name: "Copies files to server"
-  become: true
-  ansible.builtin.template:
-    src: "{{ item.src_path }}.j2"
-    dest: "{{ home_assistant_root_dir }}/{{ item.remote_path }}"
-    mode: "u=rw,g=r,o=r"
-  loop:
-    - { src_path: "docker-compose.yml", remote_path: "docker-compose.yml" }
-    - { src_path: "configuration.yaml", remote_path: "home-assistant/configuration.yaml" }
-
-- name: "Docker Compose up"
-  become: true
-  shell:
-    cmd: "docker compose --file docker-compose.yml up --detach"
-    chdir: "{{ home_assistant_root_dir }}/"
+- name: "Setup Docker Compose project"
+  ansible.builtin.include_tasks: setup_docker_compose.yml
