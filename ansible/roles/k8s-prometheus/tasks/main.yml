@@ -18,15 +18,8 @@
     namespace: "{{ namespace_name }}"
     state: present
     values:
+      grafana:
+        enabled: false # Grafana is installed via its own playbook
       prometheus:
         prometheusSpec:
           podMonitorSelectorNilUsesHelmValues: false
-
-- name: "Create Ingress"
-  kubernetes.core.k8s:
-    state: present
-    namespace: "{{ namespace_name }}"
-    template: "ingress-{{ item.template_name }}.j2"
-  loop: 
-    - { template_name: "prometheus" }
-    - { template_name: "grafana" }
