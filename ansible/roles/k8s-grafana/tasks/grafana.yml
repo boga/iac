@@ -13,6 +13,10 @@
           type: 'filesystem'
       singleBinary:
         replicas: 1
+      sidecar:
+        datasources:
+          enabled: true
+          skipReload: false
 
 - name: "Create Ingress for Grafana"
   kubernetes.core.k8s:
