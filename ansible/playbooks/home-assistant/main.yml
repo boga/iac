@@ -1,0 +1,9 @@
+---
+- name: Installs Home Assistant
+  hosts: looner
+  gather_facts: false
+
+  roles:
+    - role: home-assistant
+      vars:
+        home_assistant_image_tag: "@sha256:de25f0ad773b54d1c0e5a63147e23417055f3056b0ef24cf4a5ac8019bb33df3"

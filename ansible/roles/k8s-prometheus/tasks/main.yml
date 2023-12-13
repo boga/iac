@@ -18,15 +18,32 @@
     namespace: "{{ namespace_name }}"
     state: present
     values:
+      grafana:
+        enabled: false # Grafana is installed via its own playbook
       prometheus:
         prometheusSpec:
           podMonitorSelectorNilUsesHelmValues: false
 
-- name: "Create Ingress"
+- name: "Install Grafana ConfigMap: Prometheus datasource"
   kubernetes.core.k8s:
     state: present
     namespace: "{{ namespace_name }}"
-    template: "ingress-{{ item.template_name }}.j2"
-  loop: 
-    - { template_name: "prometheus" }
-    - { template_name: "grafana" }
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-datasource-prometheus
+        labels:
+          grafana_datasource: "1"
+          namespace: o11y
+      data:
+        datasource.yaml: |-
+          apiVersion: 1
+          datasources:
+          - access: proxy
+            basicAuth: false
+            editable: false
+            isDefault: false
+            name: Prometheus
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090
