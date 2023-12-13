@@ -26,3 +26,7 @@
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
         loki_chart_version: "5.36.3"
+
+    - role: k8s-prometheus
+      vars:
+        namespace_name: o11y

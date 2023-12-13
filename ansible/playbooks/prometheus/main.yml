@@ -1,9 +1,0 @@
----
-- name: Install Prometheus
-  hosts: localhost
-  gather_facts: false
-
-  roles:
-    - role: prometheus
-      vars:
-        namespace_name: o11y
