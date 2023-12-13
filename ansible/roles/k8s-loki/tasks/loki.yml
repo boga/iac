@@ -15,3 +15,27 @@
           type: 'filesystem'
       singleBinary:
         replicas: 1
+
+- name: "Install Grafana ConfigMap: Loki datasource"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-datasource-loki
+        labels:
+          grafana_datasource: "1"
+          namespace: o11y
+      data:
+        datasource.yaml: |-
+          apiVersion: 1
+          datasources:
+          - access: proxy
+            basicAuth: false
+            editable: false
+            isDefault: false
+            name: Loki
+            type: loki
+            url: http://loki.o11y.svc.cluster.local:3100
