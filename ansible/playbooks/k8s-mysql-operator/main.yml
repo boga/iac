@@ -1,0 +1,10 @@
+---
+- name: Install MySQL operator
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-mysql-operator
+      vars:
+        namespace_name: mysql-operator
+        mysql_operator_chart_version: 2.1.2
