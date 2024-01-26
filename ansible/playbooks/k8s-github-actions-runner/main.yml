@@ -1,0 +1,12 @@
+---
+- name: Install Github Actions Runner Controller
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ./vars.yml
+    - ./vault.yml
+
+  roles:
+    - role: k8s-github-actions-runner
+
