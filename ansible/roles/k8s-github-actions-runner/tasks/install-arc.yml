@@ -42,3 +42,5 @@
     values:
       githubConfigUrl: "{{ github_config_url }}"
       githubConfigSecret: "{{ scale_set_secret_name }}"
+      containerMode:
+        type: "dind"
