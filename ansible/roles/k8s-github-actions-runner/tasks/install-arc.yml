@@ -1,0 +1,46 @@
+---
+- name: "Create k8s namespace"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ item }}"
+    state: present
+  with_items:
+   - "{{ actions_runner_controller_namespace_name }}"
+   - "{{ actions_runner_scale_set_namespace_name }}"
+
+- name: Install Actions Runner Controller
+  kubernetes.core.helm:
+    chart_ref: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+    name: github-actions-runner-controller
+    namespace: "{{ actions_runner_controller_namespace_name }}"
+    chart_version: "{{ actions_runner_controller_chart_version }}"
+    state: present
+
+- name: "Create secret for the runner scale set"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ actions_runner_scale_set_namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ scale_set_secret_name }}"
+      type: Opaque
+      stringData:
+        github_app_id: "{{ github_app_id }}"
+        github_app_installation_id: "{{ github_app_installation_id }}"
+        github_app_private_key: "{{ github_app_private_key }}"
+
+- name: Install Actions Runner scale set
+  kubernetes.core.helm:
+    chart_ref: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
+    name: arc-runner-set
+    namespace: "{{ actions_runner_scale_set_namespace_name }}"
+    chart_version: "{{ actions_runner_scale_set_chart_version }}"
+    state: present
+    values:
+      githubConfigUrl: "{{ github_config_url }}"
+      githubConfigSecret: "{{ scale_set_secret_name }}"
+      containerMode:
+        type: "dind"

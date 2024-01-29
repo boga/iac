@@ -1,0 +1,8 @@
+---
+actions_runner_controller_chart_version: 0.8.2
+actions_runner_controller_namespace_name: github-actions-runner-controller
+actions_runner_scale_set_chart_version: 0.8.2
+actions_runner_scale_set_namespace_name: github-actions-runner-scale-set
+github_app_id: "807788"
+github_app_installation_id: "46584934"
+github_config_url: "https://github.com/boga/spring-demo"
