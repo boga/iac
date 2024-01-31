@@ -1,0 +1,13 @@
+---
+postgres_operator_repo: postgres-operator
+postgres_operator_ui_repo: postgres-operator_ui
+
+charts:
+    - chart_ref: "postgres-operator/postgres-operator"
+      release_name: "postgres-operator"
+      repo_name: "postgres-operator"
+      repo_url: "https://opensource.zalando.com/postgres-operator/charts/postgres-operator"
+    - chart_ref: "postgres-operator-ui/postgres-operator-ui"
+      release_name: "postgres-operator-ui"
+      repo_name: "postgres-operator-ui"
+      repo_url: "https://opensource.zalando.com/postgres-operator/charts/postgres-operator-ui"
