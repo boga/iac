@@ -1,7 +1,4 @@
 ---
-postgres_operator_repo: postgres-operator
-postgres_operator_ui_repo: postgres-operator_ui
-
 charts:
     - chart_ref: "postgres-operator/postgres-operator"
       release_name: "postgres-operator"
