@@ -1,0 +1,11 @@
+---
+- name: Install MongoDB operator
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-mongodb-operator
+      vars:
+        operator_namespace_name: mongodb-operator
+        databases_namespace_name: mongodb-databases
+        mongo_operator_chart_version: 0.9.0

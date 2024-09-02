@@ -1,0 +1,38 @@
+---
+- name: "Create k8s namespace"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ databases_namespace_name }}"
+    - "{{ operator_namespace_name }}"
+
+- name: "Add the operator charts repo"
+  kubernetes.core.helm_repository:
+    name: "mongodb"
+    repo_url: "https://mongodb.github.io/helm-charts"
+
+- name: "Update Helm cache"
+  kubernetes.core.helm:
+    name: "dummy"
+    namespace: "kube-system"
+    state: "absent"
+    update_repo_cache: true
+
+- name: "Apply RBAC for the database namespace: {{ databases_namespace_name }}"
+  k8s:
+    namespace: "{{ databases_namespace_name }}"
+    definition: "{{ lookup('kubernetes.core.kustomize', dir='github.com/mongodb/mongodb-kubernetes-operator/config/rbac?ref=v' + mongo_operator_chart_version) }}"
+
+- name: "Install the operator"
+  kubernetes.core.helm:
+    chart_ref: "mongodb/community-operator"
+    name: "mongodb-operator"
+    namespace: "{{ operator_namespace_name }}"
+    chart_version: "{{ mongo_operator_chart_version }}"
+    state: present
+    values:
+      operator:
+        watchNamespace: "*"
