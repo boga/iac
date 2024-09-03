@@ -1,0 +1,47 @@
+---
+- name: Install aptitude
+  ansible.builtin.apt:
+    name: aptitude
+    state: latest
+
+- name: Update and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 3600
+
+- name: Install required system packages
+  ansible.builtin.apt:
+    state: latest
+    package:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - python3-pip
+      - python3-setuptools
+      - software-properties-common
+      - virtualenv
+
+- name: Add Docker GPG apt Key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker Repository
+  ansible.builtin.apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: Install Docker Module for Python
+  ansible.builtin.pip:
+    name: docker
+
+- name: Install Docker
+  ansible.builtin.apt:
+    state: latest
+    package:
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-ce
+      - docker-ce-cli
+      - docker-compose-plugin

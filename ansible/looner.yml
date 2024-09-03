@@ -1,19 +1,8 @@
 ---
-- name: Installs required software
-  hosts: localhost
-  gather_facts: false
-
-  tasks:
-    - name: Install collection kubernetes.core
-      community.general.ansible_galaxy_install:
-        type: collection
-        name: kubernetes.core
-
 - name: Installs Looner
-  hosts: localhost
+  hosts: looner
   gather_facts: false
+  become: true
 
   roles:
-    - role: k8s-ingress-nginx
-      vars:
-        ingress_nginx_namespace: kube-system
+    - role: provision
