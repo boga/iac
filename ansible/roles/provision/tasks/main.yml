@@ -45,3 +45,8 @@
       - docker-ce
       - docker-ce-cli
       - docker-compose-plugin
+
+- name: "Init a new swarm with default parameters: advertise_addr={{ docker_swarm_advertise_addr }}"
+  community.docker.docker_swarm:
+    state: present
+    advertise_addr: "{{ docker_swarm_advertise_addr }}"
