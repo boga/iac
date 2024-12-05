@@ -1,0 +1,9 @@
+---
+- name: Installs Little
+  hosts: little
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: provision
+    - role: docker
