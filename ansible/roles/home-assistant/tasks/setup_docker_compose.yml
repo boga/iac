@@ -1,16 +1,25 @@
 ---
-- name: "Copies files to server"
-  become: true
-  ansible.builtin.template:
-    src: "{{ item.src_path }}.j2"
-    dest: "{{ home_assistant_root_dir }}/{{ item.remote_path }}"
+- name: "Create Home Assitant directory: {{ home_assistant_root_dir }}"
+  ansible.builtin.file:
+    path: "{{ home_assistant_root_dir }}"
+    state: directory
     mode: "u=rw,g=r,o=r"
-  loop:
-    - { src_path: "docker-compose.yml", remote_path: "docker-compose.yml" }
-    - { src_path: "configuration.yaml", remote_path: "home-assistant/configuration.yaml" }
 
-- name: "Docker Compose up"
-  become: true
-  shell:
-    cmd: "docker compose --file docker-compose.yml up --detach"
-    chdir: "{{ home_assistant_root_dir }}/"
+- name: Spin up compose project
+  community.docker.docker_compose_v2:
+    project_name: home-assistant
+    state: present
+    definition:
+      services:
+        homeassistant:
+          container_name: homeassistant
+          image: "ghcr.io/home-assistant/home-assistant:{{ home_assistant_image_tag }}"
+          volumes:
+            - "{{ home_assistant_root_dir }}/config:/config"
+            - /etc/localtime:/etc/localtime:ro
+          devices:
+            - "/dev/ttyUSB0:/dev/ttyUSB0"
+          restart: unless-stopped
+          ports:
+            - "{{ home_assistant_port }}:8123/tcp"
+            - "{{ home_assistant_port }}:8123/udp"
