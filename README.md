@@ -5,7 +5,7 @@ Sample inventory.yml:
 all:
   hosts:
     looner:
-      ansible_host: 192.168.1.94
+      ansible_host: 192.168.88.218
       ansible_ssh_private_key_file: ./id_ed25519-looner
 ```
 To create Ansible user run this command:

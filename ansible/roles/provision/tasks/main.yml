@@ -1,0 +1,24 @@
+---
+- name: Install aptitude
+  ansible.builtin.apt:
+    name: aptitude
+    state: latest
+
+- name: Update and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 3600
+
+- name: Install required system packages
+  ansible.builtin.apt:
+    state: latest
+    package:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - python3-pip
+      - python3-setuptools
+      - software-properties-common
+      - tmux
+      - virtualenv
