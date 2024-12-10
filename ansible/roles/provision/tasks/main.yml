@@ -17,6 +17,7 @@
       - apt-transport-https
       - ca-certificates
       - curl
+      - net-tools
       - python3-pip
       - python3-setuptools
       - software-properties-common
