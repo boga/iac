@@ -1,7 +1,7 @@
 ---
-- name: "Create AdGuard Home directory: {{ root_dir }}"
+- name: "Create AdGuard Home directory: {{ ADGUARD_ROOT_DIR }}"
   ansible.builtin.file:
-    path: "{{ root_dir }}"
+    path: "{{ ADGUARD_ROOT_DIR }}"
     state: directory
     mode: "u=rw,g=r,o=r"
 
@@ -13,14 +13,14 @@
       services:
         adguard-home:
           container_name: adguard-home
-          image: "adguard/adguardhome:{{ image_tag }}"
+          image: "adguard/adguardhome:{{ ADGUARD_IMAGE_TAG }}"
           volumes:
-            - "{{ root_dir }}/workdir:/opt/adguardhome/work"
-            - "{{ root_dir }}/confdir:/opt/adguardhome/conf"
+            - "{{ ADGUARD_ROOT_DIR }}/workdir:/opt/adguardhome/work"
+            - "{{ ADGUARD_ROOT_DIR }}/confdir:/opt/adguardhome/conf"
           restart: unless-stopped
           ports:
-            - "{{ http_port }}:80/tcp"
-            - "{{ http_port }}:80/udp"
+            - "{{ ADGUARD_HTTP_PORT }}:80/tcp"
+            - "{{ ADGUARD_HTTP_PORT }}:80/udp"
             # - "443:443/tcp"
             # - "443:443/udp"
             - "53:53/tcp"

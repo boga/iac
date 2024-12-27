@@ -4,6 +4,7 @@
   gather_facts: false
   become: true
   vars:
+    ADGUARD_IMAGE_TAG: v0.107.54 # Nov 6th 2024
     HOME_ASSISTANT_IMAGE_TAG: "2024.12"
 
   roles:
@@ -11,7 +12,3 @@
     - role: docker
     - role: home-assistant
     - role: adguard-home
-      vars:
-        image_tag: v0.107.54 # Nov 6th 2024
-        http_port: 3000
-        root_dir: /mnt/adguard-home
