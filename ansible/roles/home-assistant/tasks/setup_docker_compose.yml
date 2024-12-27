@@ -1,7 +1,7 @@
 ---
-- name: "Create Home Assitant directory: {{ home_assistant_root_dir }}"
+- name: "Create Home Assitant directory: {{ HOME_ASSISTANT_ROOT_DIR }}"
   ansible.builtin.file:
-    path: "{{ home_assistant_root_dir }}"
+    path: "{{ HOME_ASSISTANT_ROOT_DIR }}"
     state: directory
     mode: "u=rw,g=r,o=r"
 
@@ -13,13 +13,13 @@
       services:
         homeassistant:
           container_name: homeassistant
-          image: "ghcr.io/home-assistant/home-assistant:{{ home_assistant_image_tag }}"
+          image: "ghcr.io/home-assistant/home-assistant:{{ HOME_ASSISTANT_IMAGE_TAG }}"
           volumes:
-            - "{{ home_assistant_root_dir }}/config:/config"
+            - "{{ HOME_ASSISTANT_ROOT_DIR }}/config:/config"
             - /etc/localtime:/etc/localtime:ro
           devices:
             - "/dev/ttyUSB0:/dev/ttyUSB0"
           restart: unless-stopped
           ports:
-            - "{{ home_assistant_port }}:8123/tcp"
-            - "{{ home_assistant_port }}:8123/udp"
+            - "{{ HOME_ASSISTANT_PORT }}:8123/tcp"
+            - "{{ HOME_ASSISTANT_PORT }}:8123/udp"
