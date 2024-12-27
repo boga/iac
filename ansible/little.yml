@@ -9,6 +9,6 @@
 
   roles:
     - role: provision
+    - role: adguard-home
     - role: docker
     - role: home-assistant
-    - role: adguard-home
