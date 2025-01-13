@@ -1,0 +1,19 @@
+name: "Backup"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linter:
+    name: "Restic backup"
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Debug
+        run: |
+          ssh ans@little "ls -la /mnt"
