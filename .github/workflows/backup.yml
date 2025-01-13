@@ -17,4 +17,4 @@ jobs:
           tags: tag:ci
       - name: Debug
         run: |
-          ssh -o StrictHostKeyChecking=no ans@little "ls -la /mnt"
+          tailscale ssh ans@little "ls -la /mnt"
