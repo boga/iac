@@ -2,6 +2,7 @@ name: "Backup"
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   linter:
@@ -16,4 +17,4 @@ jobs:
           tags: tag:ci
       - name: Debug
         run: |
-          ssh ans@little "ls -la /mnt"
+          ssh -o StrictHostKeyChecking=no ans@little "ls -la /mnt"
