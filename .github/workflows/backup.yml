@@ -5,7 +5,7 @@ on:
   push:
 
 jobs:
-  linter:
+  backup:
     name: "Restic backup"
     runs-on: [ubuntu-latest]
     steps:
@@ -17,4 +17,4 @@ jobs:
           tags: tag:ci
       - name: Debug
         run: |
-          tailscale ssh ans@little "ls -la /mnt"
+          ssh -o StrictHostKeyChecking=no ans@little "sudo ls -la /mnt"
