@@ -2,7 +2,9 @@ name: "Backup"
 
 on:
   workflow_dispatch:
-  push: # TODO: replace with schedule
+  push: # TODO: remove before release
+  schedule:
+    - cron: "00 4 * * *"
 
 jobs:
   backup:
