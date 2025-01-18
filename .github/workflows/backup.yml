@@ -10,6 +10,9 @@ jobs:
     runs-on: [ubuntu-latest]
     env:
       ANSIBLE_VAULT_PASSWORD_FILE: ./ansible_vault_password
+    defaults:
+      run:
+        working-directory: ./ansible
 
     steps:
       - name: Tailscale
@@ -18,9 +21,6 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - name: Debug
-        run: |
-          ssh -o StrictHostKeyChecking=no ans@little "sudo ls -la /mnt"
 
       - name: Checkout repo
         uses: actions/checkout@v3
