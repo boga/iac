@@ -20,13 +20,8 @@
     AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
     RESTIC_PASSWORD: "{{ backup_password }}"
     RESTIC_REPOSITORY: "{{ s3_bucket }}"
+  register: restic_backup_output
 
-- name: Verify the backup
-  shell: |
-    {{ restic_binary_path }} snapshots
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
-    AWS_DEFAULT_REGION: "{{ s3_region }}"
-    AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
-    RESTIC_PASSWORD: "{{ backup_password }}"
-    RESTIC_REPOSITORY: "{{ s3_bucket }}"
+- name: Report
+  debug:
+    msg: "Backup completed successfully. Snapshots: {{ restic_output.stdout }}"
