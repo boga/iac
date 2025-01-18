@@ -1,0 +1,16 @@
+---
+- name: Backup a directory to S3 Bucket using Restic
+  hosts: little
+  gather_facts: false
+  become: true
+
+  roles:
+    - name: "Backup Adguard Home"
+      role: restic
+      vars:
+        backup_directory: "{{ adguard_home_backup_directory }}"
+        backup_password: "{{ adguard_home_backup_password }}"
+        s3_access_key: "{{ adguard_home_s3_access_key }}"
+        s3_bucket: "{{ adguard_home_s3_bucket }}"
+        s3_region: "{{ adguard_home_s3_region }}"
+        s3_secret_key: "{{ adguard_home_s3_secret_key }}"
