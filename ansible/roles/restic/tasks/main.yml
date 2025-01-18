@@ -1,0 +1,3 @@
+---
+- name: "Setup Restic"
+  ansible.builtin.include_tasks: setup_restic.yml
