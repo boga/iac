@@ -24,4 +24,4 @@
 
 - name: Report
   debug:
-    msg: "Backup completed successfully. Snapshots: {{ restic_output.stdout }}"
+    msg: "Backup completed successfully. Snapshots: {{ restic_backup_output.stdout }}"
