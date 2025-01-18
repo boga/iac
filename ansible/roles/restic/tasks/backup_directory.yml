@@ -1,0 +1,32 @@
+---
+- name: Initialize Restic repository if not exists
+  shell: |
+    if ! {{ restic_binary_path }} snapshots >/dev/null 2>&1; then
+      {{ restic_binary_path }} init
+    fi
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
+    AWS_DEFAULT_REGION: "{{ s3_region }}"
+    AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+    RESTIC_PASSWORD: "{{ backup_password }}"
+    RESTIC_REPOSITORY: "{{ s3_bucket }}"
+
+- name: Backup directory to S3 using Restic
+  shell: |
+    {{ restic_binary_path }} --verbose backup {{ backup_directory }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
+    AWS_DEFAULT_REGION: "{{ s3_region }}"
+    AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+    RESTIC_PASSWORD: "{{ backup_password }}"
+    RESTIC_REPOSITORY: "{{ s3_bucket }}"
+
+- name: Verify the backup
+  shell: |
+    {{ restic_binary_path }} snapshots
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
+    AWS_DEFAULT_REGION: "{{ s3_region }}"
+    AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+    RESTIC_PASSWORD: "{{ backup_password }}"
+    RESTIC_REPOSITORY: "{{ s3_bucket }}"

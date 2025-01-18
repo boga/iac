@@ -1,78 +1,31 @@
 ---
-- name: Install Restic's package
-  ansible.builtin.apt:
-    state: latest
-    package:
-      - restic
+- name: Install necessary packages
+  apt:
+    name: [ "curl", "bzip2", "jq" ]
+    state: present
 
-- name: Update restic to recent version
-  ansible.builtin.command:
-    argv:
-      - restic
-      - self-update
+- name: Check if Restic archive exists
+  stat:
+    path: "{{ restic_tmp_path }}"
+  register: archive_check
 
-- name: Check if repo exists
-  ansible.builtin.command:
-    argv:
-      - restic
-      - cat
-      - config
-  environment:
-    RESTIC_REPOSITORY: "{{ RESTIC_REPOSITORY }}"
-    RESTIC_PASSWORD: "{{ RESTIC_PASSWORD }}"
-    AWS_DEFAULT_REGION: "{{ RESTIC_AWS_DEFAULT_REGION }}"
-    AWS_SECRET_ACCESS_KEY: "{{ RESTIC_AWS_SECRET_ACCESS_KEY }}"
-    AWS_ACCESS_KEY_ID: "{{ RESTIC_AWS_ACCESS_KEY_ID }}"
-  register: repo_exists_output
-  ignore_errors: true
+- name: Download Restic archive if not exists
+  get_url:
+    url: "{{ restic_download_url }}"
+    dest: "{{ restic_archive_tmp_path }}"
+  when: not archive_check.stat.exists
 
-- name: Create repo (if needed)
-  ansible.builtin.command:
-    argv:
-      - restic
-      - init
-  environment:
-    RESTIC_REPOSITORY: "{{ RESTIC_REPOSITORY }}"
-    RESTIC_PASSWORD: "{{ RESTIC_PASSWORD }}"
-    AWS_DEFAULT_REGION: "{{ RESTIC_AWS_DEFAULT_REGION }}"
-    AWS_SECRET_ACCESS_KEY: "{{ RESTIC_AWS_SECRET_ACCESS_KEY }}"
-    AWS_ACCESS_KEY_ID: "{{ RESTIC_AWS_ACCESS_KEY_ID }}"
-  # https://restic.readthedocs.io/en/stable/075_scripting.html#check-if-a-repository-is-already-initialized
-  when: 10 == repo_exists_output['rc']
+- name: Extract Restic binary if not already extracted
+  command: "bunzip2 --keep {{ restic_archive_tmp_path }}"
+  args:
+    creates: "{{ restic_tmp_path }}"
 
-- name: "Create config directory if it does not exist: {{ CONFIG_DIRECTORY }}"
-  ansible.builtin.file:
-    path: "{{ CONFIG_DIRECTORY }}"
-    state: directory
-    mode: '0777'
+- name: "Move Restic binary: {{ restic_binary_path }}"
+  command: "mv {{ restic_tmp_path }} {{ restic_binary_path }}"
+  args:
+    creates: "{{ restic_binary_path }}"
 
-- name: Add a line to the file
-  ansible.builtin.lineinfile:
-    path: "{{ CONFIG_DIRECTORY }}/{{ item.file_path }}"
-    line: "{{ item.value }}"
-    create: yes
-  loop:
-    - file_path: RESTIC_REPOSITORY
-      value: "{{ RESTIC_REPOSITORY }}"
-    - file_path: RESTIC_PASSWORD
-      value: "{{ RESTIC_PASSWORD }}"
-    - file_path: AWS_DEFAULT_REGION
-      value: "{{ RESTIC_AWS_DEFAULT_REGION }}"
-    - file_path: AWS_SECRET_ACCESS_KEY
-      value: "{{ RESTIC_AWS_SECRET_ACCESS_KEY }}"
-    - file_path: AWS_ACCESS_KEY_ID
-      value: "{{ RESTIC_AWS_ACCESS_KEY_ID }}"
-
-- name: Add cronjob to backup to S3
-  ansible.builtin.cron:
-    name: "backup to s3"
-    hour: "{{ HOUR }}"
-    minute: "{{ MINUTE }}"
-    job: "                                                                           \
-        RESTIC_REPOSITORY=$(cat '{{ CONFIG_DIRECTORY }}/RESTIC_REPOSITORY')          \
-        RESTIC_PASSWORD=$(cat '{{ CONFIG_DIRECTORY }}/RESTIC_PASSWORD')              \
-        AWS_DEFAULT_REGION=$(cat '{{ CONFIG_DIRECTORY }}/AWS_DEFAULT_REGION')        \
-        AWS_SECRET_ACCESS_KEY=$(cat '{{ CONFIG_DIRECTORY }}/AWS_SECRET_ACCESS_KEY')  \
-        AWS_ACCESS_KEY_ID=$(cat '{{ CONFIG_DIRECTORY }}/AWS_ACCESS_KEY_ID')          \
-        restic --verbose backup {{ BACKUP_SUBJECT_DIR }}                             \
-    "
+- name: Set executable permissions for Restic binary
+  file:
+    path: "{{ restic_binary_path }}"
+    mode: '0755'

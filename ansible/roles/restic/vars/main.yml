@@ -1,0 +1,5 @@
+restic_archive_tmp_path: "{{ restic_tmp_path }}.bz2"
+restic_binary_path: "/usr/local/bin/restic_{{ restic_version }}"
+restic_download_url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_arm64.bz2"
+restic_tmp_path: "/tmp/restic_{{ restic_version }}_linux_arm64"
+restic_version: "0.17.3"
