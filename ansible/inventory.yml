@@ -1,0 +1,6 @@
+all:
+  hosts:
+    looner:
+      ansible_host: looner
+    little:
+      ansible_host: little
