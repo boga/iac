@@ -2,12 +2,15 @@ name: "Backup"
 
 on:
   workflow_dispatch:
-  push:
+  push: # TODO: replace with schedule
 
 jobs:
   backup:
     name: "Restic backup"
     runs-on: [ubuntu-latest]
+    env:
+      ANSIBLE_VAULT_PASSWORD_FILE: ./ansible_vault_password
+
     steps:
       - name: Tailscale
         uses: tailscale/github-action@v3
@@ -18,3 +21,25 @@ jobs:
       - name: Debug
         run: |
           ssh -o StrictHostKeyChecking=no ans@little "sudo ls -la /mnt"
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Create Ansible Vault password file
+        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $ANSIBLE_VAULT_PASSWORD_FILE
+
+      - name: Run Ansible Playbook
+        run: ansible-playbook --vault-password-file=$ANSIBLE_VAULT_PASSWORD_FILE backup.yml
+
+      - name: Clean up Vault password file
+        run: rm $ANSIBLE_VAULT_PASSWORD_FILE
