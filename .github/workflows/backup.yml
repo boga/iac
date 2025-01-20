@@ -8,7 +8,7 @@ on:
 
 jobs:
   backup:
-    name: "Backup"
+    name: "backup"
     runs-on: [ubuntu-latest]
     env:
       ANSIBLE_VAULT_PASSWORD_FILE: ./ansible_vault_password
