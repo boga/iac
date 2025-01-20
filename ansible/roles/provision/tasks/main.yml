@@ -15,8 +15,10 @@
     state: latest
     package:
       - apt-transport-https
+      - apt-utils
       - ca-certificates
       - curl
+      - file
       - net-tools
       - python3-pip
       - python3-setuptools

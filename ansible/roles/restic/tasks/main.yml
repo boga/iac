@@ -1,0 +1,3 @@
+---
+- ansible.builtin.include_tasks: setup_restic.yml
+- ansible.builtin.include_tasks: backup_directory.yml
