@@ -37,7 +37,14 @@ jobs:
           pip install ansible
 
       - name: Create Ansible Vault password file
-        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $ANSIBLE_VAULT_PASSWORD_FILE
+
+        uses: ./github/actions/create-file-action
+        with:
+          file-path: "${{ env.ANSIBLE_VAULT_PASSWORD_FILE }}"
+          file-content: '${{ secrets.ANSIBLE_VAULT_PASSWORD }}'
+
+#       - name: Create Ansible Vault password file
+#         run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $ANSIBLE_VAULT_PASSWORD_FILE
 
       - name: Run Ansible Playbook
         run: ansible-playbook --vault-password-file=$ANSIBLE_VAULT_PASSWORD_FILE backup.yml
