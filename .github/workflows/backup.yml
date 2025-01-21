@@ -2,6 +2,7 @@ name: "Backup"
 
 on:
   workflow_dispatch:
+  push:
   schedule:
     - cron: "00 4 * * *"
 
