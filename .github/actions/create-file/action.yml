@@ -8,6 +8,6 @@ inputs:
     description: 'Content to write to the file'
     required: true
 runs:
-  using: 'node2'
+  using: 'node20'
   main: 'create-file.js'
   post: 'remove-file.js'
