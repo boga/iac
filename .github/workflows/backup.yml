@@ -38,7 +38,7 @@ jobs:
 
       - name: Create Ansible Vault password file
 
-        uses: ./github/actions/create-file-action
+        uses: ./.github/actions/create-file
         with:
           file-path: "${{ env.ANSIBLE_VAULT_PASSWORD_FILE }}"
           file-content: '${{ secrets.ANSIBLE_VAULT_PASSWORD }}'
