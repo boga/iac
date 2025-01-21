@@ -11,7 +11,7 @@ jobs:
     name: "backup"
     runs-on: [ubuntu-latest]
     env:
-      ANSIBLE_VAULT_PASSWORD_FILE: ./ansible_vault_password
+      ANSIBLE_VAULT_PASSWORD_FILE: ./ansible/ansible_vault_password
     defaults:
       run:
         working-directory: ./ansible
