@@ -7,6 +7,7 @@ try {
 
     fs.writeFileSync(filePath, fileContent);
     core.info(`File created at ${filePath}`);
+    core.setOutput("file-path", filePath);
 } catch (error) {
     core.setFailed(`Failed to create file: ${error.message}`);
 }

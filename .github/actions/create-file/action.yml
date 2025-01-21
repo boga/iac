@@ -4,9 +4,13 @@ inputs:
   file-path:
     description: 'Path of the file to create'
     required: true
+    default: "${{ github.workspace }}/create-file-${{ github.run_id }}-${{ github.run_attempt }}"
   file-content:
     description: 'Content to write to the file'
     required: true
+outputs:
+  file-path:
+    description: 'Path to the created file'
 runs:
   using: 'node20'
   main: 'create-file.js'
