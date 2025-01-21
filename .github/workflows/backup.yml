@@ -9,8 +9,6 @@ jobs:
   backup:
     name: "backup"
     runs-on: [ubuntu-latest]
-    env:
-      ANSIBLE_VAULT_PASSWORD_FILE: ./ansible_vault_password
     defaults:
       run:
         working-directory: ./ansible
@@ -37,10 +35,10 @@ jobs:
           pip install ansible
 
       - name: Create Ansible Vault password file
-        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $ANSIBLE_VAULT_PASSWORD_FILE
+        id: create-ansible-vault-password-file
+        uses: ./.github/actions/create-file
+        with:
+          file-content: '${{ secrets.ANSIBLE_VAULT_PASSWORD }}'
 
       - name: Run Ansible Playbook
-        run: ansible-playbook --vault-password-file=$ANSIBLE_VAULT_PASSWORD_FILE backup.yml
-
-      - name: Clean up Vault password file
-        run: rm $ANSIBLE_VAULT_PASSWORD_FILE
+        run: ansible-playbook --vault-password-file=${{ steps.create-ansible-vault-password-file.outputs.file-path }} backup.yml
