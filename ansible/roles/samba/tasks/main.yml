@@ -1,0 +1,19 @@
+---
+- name: Spin up compose project
+  community.docker.docker_compose_v2:
+    project_name: samba
+    state: present
+    definition:
+      services:
+        samba:
+          image: "dperson/samba"
+          volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /mnt/hdd-fast:/mnt/hdd-fast
+          restart: unless-stopped
+          ports:
+            - "137-139:137-139"
+            - "445:445"
+          environment:
+            NMBD: "true"
+            SHARE: "Data;/mnt/hdd-fast"
