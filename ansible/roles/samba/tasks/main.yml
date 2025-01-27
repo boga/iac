@@ -8,12 +8,12 @@
         samba:
           image: "dperson/samba"
           volumes:
-            - /etc/localtime:/etc/localtime:ro
-            - /mnt/hdd-fast:/mnt/hdd-fast
+            - "/etc/localtime:/etc/localtime:ro"
+            - "{{ samba_mount_point }}:{{ samba_mount_point }}"
           restart: unless-stopped
           ports:
             - "137-139:137-139"
             - "445:445"
           environment:
             NMBD: "true"
-            SHARE: "Data;/mnt/hdd-fast"
+            SHARE: "{{ samba_share }}"

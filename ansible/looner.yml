@@ -16,3 +16,6 @@
           "/mnt/hdd-fast/k8s-data *(rw,sync,no_root_squash,no_subtree_check,insecure)",
         ]
     - role: samba
+      vars:
+        samba_mount_point: /mnt/hdd-fast
+        samba_share: /mnt/hdd-fast;/mnt/hdd-fast
