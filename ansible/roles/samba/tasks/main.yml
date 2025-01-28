@@ -1,0 +1,19 @@
+---
+- name: Spin up compose project
+  community.docker.docker_compose_v2:
+    project_name: samba
+    state: present
+    definition:
+      services:
+        samba:
+          image: "dperson/samba"
+          volumes:
+            - "/etc/localtime:/etc/localtime:ro"
+            - "{{ samba_mount_point }}:{{ samba_mount_point }}"
+          restart: unless-stopped
+          ports:
+            - "137-139:137-139"
+            - "445:445"
+          environment:
+            NMBD: "true"
+            SHARE: "{{ samba_share }}"
