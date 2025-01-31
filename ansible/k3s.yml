@@ -1,0 +1,38 @@
+---
+- name: Prepare nodes
+  hosts: k3s_cluster
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: techno_tim.k3s_ansible.download
+
+- name: Install server
+  hosts: k3s_master
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: techno_tim.k3s_ansible.k3s_server
+
+- name: Install workers
+  hosts: k3s_worker
+  become: true
+  roles:
+    - role: techno_tim.k3s_ansible.k3s_agent
+
+- name: Configure cluster
+  hosts: k3s_master
+  become: true
+  roles:
+    - role: techno_tim.k3s_ansible.k3s_server_post
+
+- name: Store kubeconfig in the playbook directory
+  hosts: k3s_master
+  tasks:
+    - name: Copying kubeconfig from {{ hostvars[groups[group_name_master | default('master')][0]]['ansible_hostname'] }}
+      ansible.builtin.fetch:
+        src: "{{ ansible_user_dir }}/.kube/config"
+        dest: ./kubeconfig
+        flat: true
+      when: ansible_hostname == hostvars[groups[group_name_master | default('master')][0]]['ansible_hostname']
