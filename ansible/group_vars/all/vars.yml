@@ -1,0 +1,2 @@
+---
+tailscale_oauthkey: "{{ vault_tailscale_oauthkey }}"
