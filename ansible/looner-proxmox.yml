@@ -17,7 +17,7 @@
         # /dev/sdc1: UUID="a6264bb7-0b53-4db5-8bf8-b7d84a767b33" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="5b4707f5-01"
         - { dir: "/mnt/hdd-fast/", fs: "ext4", uuid: "a6264bb7-0b53-4db5-8bf8-b7d84a767b33" }
 
-- name: Installs Looner
+- name: Installs Looner Proxmox
   hosts: looner-proxmox
   gather_facts: true
   become: true
