@@ -1,0 +1,15 @@
+- name: Installs Looner
+  hosts: k3s-master
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: provision
+    - role: artis3n.tailscale
+      vars:
+        tailscale_args: "--ssh"
+        tailscale_authkey: "{{ tailscale_oauthkey }}"
+        tailscale_tags:
+          - "server"
+        tailscale_oauth_ephemeral: false
+        tailscale_oauth_preauthorized: false

@@ -1,0 +1,9 @@
+apt_packages:
+  - apt-transport-https
+  - apt-utils
+  - ca-certificates
+  - curl
+  - file
+  - net-tools
+  - software-properties-common
+  - sudo
