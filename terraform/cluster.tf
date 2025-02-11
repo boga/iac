@@ -1,24 +1,49 @@
-resource "proxmox_virtual_environment_vm" "debian_vm" {
-  name      = "test-debian"
-  node_name = "looner-proxmox"
+resource "proxmox_virtual_environment_vm" "talos_cp_01" {
+  name        = "talos-cp-01"
+  description = "Managed by Terraform"
+  tags = ["terraform"]
+  node_name   = "looner-proxmox"
+  on_boot     = true
 
-  # should be true if qemu agent is not installed / enabled on the VM
-  stop_on_destroy = true
+  cpu {
+    cores = 2
+    type  = "x86-64-v2-AES"
+  }
 
-  initialization {
-    user_account {
-      # do not use this in production, configure your own ssh key instead!
-      username = "user"
-      password = "password"
-    }
+  memory {
+    dedicated = 4096
+  }
+
+  agent {
+    enabled = true
+  }
+
+  network_device {
+    bridge = "vmbr0"
   }
 
   disk {
     datastore_id = "local-lvm"
-    file_id      = "local:iso/debian-12.9.0-amd64-netinst.iso"
+    file_id      = proxmox_virtual_environment_download_file.talos_nocloud_image.id
+    file_format  = "raw"
     interface    = "virtio0"
-    iothread     = true
-    discard      = "on"
-    size         = 20
+    size         = 4 # GB
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  initialization {
+    datastore_id = "local-lvm"
+    ip_config {
+      ipv4 {
+        address = "${var.talos_cp_01_ip_addr}/24"
+        gateway = var.default_gateway
+      }
+      ipv6 {
+        address = "dhcp"
+      }
+    }
   }
 }
