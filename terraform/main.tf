@@ -11,11 +11,7 @@ provider "proxmox" {
   endpoint = "https://looner-proxmox:8006"
   insecure = true
 
-  # These are in env vars
-  # username = "root@pam"
-  # password = "the-password-set-during-installation-of-proxmox-ve"
-  # uncomment (unless on Windows...)
-  # tmp_dir  = "/var/tmp"
+  api_token = var.proxmox_api_token
 
   ssh {
     agent    = false

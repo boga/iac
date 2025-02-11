@@ -1,0 +1,9 @@
+*env*
+!sample.env
+id_ed*
+.terraform*
+!.terraform*lock*
+tmp
+.idea
+*.iml
+proxmox-api-token.auto.tfvars

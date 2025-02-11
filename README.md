@@ -1,3 +1,10 @@
+## Terraform
+### Proxmox authentication
+Create a `terraform/proxmox-api-token.auto.tfvars` file with the API token:
+```terraform
+proxmox_api_token = "root@pam!terraform2=here-goes-token-uuid"
+```
+
 ## Ansible
 
 ### Bootstrapping a server
