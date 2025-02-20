@@ -27,7 +27,11 @@ resource "proxmox_virtual_environment_vm" "talos_cp_01" {
     file_id      = proxmox_virtual_environment_download_file.talos_nocloud_image.id
     file_format  = "raw"
     interface    = "virtio0"
-    size         = 4 # GB
+    size     	= 15 # GB
+    iothread 	= true
+    cache    	= "none"
+    backup   	= true
+    discard  	= "on"
   }
 
   operating_system {

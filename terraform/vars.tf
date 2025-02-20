@@ -3,6 +3,10 @@ variable "proxmox_api_token" {
   sensitive = true
 }
 
+variable "cluster_name" {
+  type    = string
+}
+
 variable "default_gateway" {
   type = string
   description = "Default gateway for Talos nodes"
