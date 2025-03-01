@@ -26,7 +26,8 @@
     - role: provision
     - role: artis3n.tailscale
       vars:
-        tailscale_args: "--ssh"
+        # accept-dns=false because of https://tailscale.com/kb/1133/proxmox#resolvconf-within-lxc
+        tailscale_args: "--ssh --accept-dns=false"
         tailscale_authkey: "{{ tailscale_oauthkey }}"
         tailscale_tags:
           - "server"
