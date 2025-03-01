@@ -16,3 +16,13 @@ variable "talos_cp_01_ip_addr" {
   type = string
   description = "Talos #1 control plane IP address"
 }
+
+variable "talos_worker_01_ip_addr" {
+  type = string
+  description = "Talos #1 worker IP address"
+}
+
+variable "tailscale_api_token" {
+  type = string
+  description = "Tailscale API OAuth token to connect Talos control plane to tailnet"
+}

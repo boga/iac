@@ -6,4 +6,6 @@ id_ed*
 tmp
 .idea
 *.iml
-proxmox-api-token.auto.tfvars
+*.secret.auto.tfvars
+talosconfig
+kubeconfig
