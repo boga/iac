@@ -1,13 +1,7 @@
 locals {
   talos = {
     version = "v1.9.4"
-    # Your image schematic ID is: 7d4c31cbd96db9f90c874990697c523482b2bae27fb4631d5583dcd9c281b1ff
-    # customization:
-    #   systemExtensions:
-    #     officialExtensions:
-    #       - siderolabs/qemu-guest-agent
-    #       - siderolabs/tailscale
-    schematic = "7d4c31cbd96db9f90c874990697c523482b2bae27fb4631d5583dcd9c281b1ff"
+    schematic = talos_image_factory_schematic.talos_cp.id
   }
 }
 

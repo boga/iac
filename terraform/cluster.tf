@@ -36,20 +36,20 @@ resource "talos_machine_configuration_apply" "cp_config_apply" {
   node                        = var.talos_cp_01_ip_addr
 }
 
-data "talos_machine_configuration" "machineconfig_worker" {
-  cluster_name     = var.cluster_name
-  cluster_endpoint = "https://${var.talos_cp_01_ip_addr}:6443"
-  machine_type     = "worker"
-  machine_secrets  = talos_machine_secrets.machine_secrets.machine_secrets
-}
+# data "talos_machine_configuration" "machineconfig_worker" {
+#   cluster_name     = var.cluster_name
+#   cluster_endpoint = "https://${var.talos_cp_01_ip_addr}:6443"
+#   machine_type     = "worker"
+#   machine_secrets  = talos_machine_secrets.machine_secrets.machine_secrets
+# }
 
-resource "talos_machine_configuration_apply" "worker_config_apply" {
-  depends_on                  = [ proxmox_virtual_environment_vm.talos_worker_01 ]
-  client_configuration        = talos_machine_secrets.machine_secrets.client_configuration
-  machine_configuration_input = data.talos_machine_configuration.machineconfig_worker.machine_configuration
-  count                       = 1
-  node                        = var.talos_worker_01_ip_addr
-}
+# resource "talos_machine_configuration_apply" "worker_config_apply" {
+#   depends_on                  = [ proxmox_virtual_environment_vm.talos_worker_01 ]
+#   client_configuration        = talos_machine_secrets.machine_secrets.client_configuration
+#   machine_configuration_input = data.talos_machine_configuration.machineconfig_worker.machine_configuration
+#   count                       = 1
+#   node                        = var.talos_worker_01_ip_addr
+# }
 
 resource "talos_machine_bootstrap" "bootstrap" {
   depends_on           = [ talos_machine_configuration_apply.cp_config_apply ]
@@ -70,14 +70,22 @@ resource "talos_machine_bootstrap" "bootstrap" {
 #   endpoints            = data.talos_client_configuration.talosconfig.endpoints
 # }
 
-data "talos_cluster_kubeconfig" "kubeconfig" {
-  depends_on           = [
-    talos_machine_bootstrap.bootstrap,
-    # data.talos_cluster_health.health,
+resource "talos_cluster_kubeconfig" "this" {
+  depends_on = [
+    talos_machine_bootstrap.bootstrap
   ]
   client_configuration = talos_machine_secrets.machine_secrets.client_configuration
   node                 = var.talos_cp_01_ip_addr
 }
+
+# data "talos_cluster_kubeconfig" "kubeconfig" {
+#   depends_on           = [
+#     talos_machine_bootstrap.bootstrap,
+#     # data.talos_cluster_health.health,
+#   ]
+#   client_configuration = talos_machine_secrets.machine_secrets.client_configuration
+#   node                 = var.talos_cp_01_ip_addr
+# }
 
 output "talosconfig" {
   value = data.talos_client_configuration.talosconfig.talos_config
@@ -85,6 +93,11 @@ output "talosconfig" {
 }
 
 output "kubeconfig" {
-  value = data.talos_cluster_kubeconfig.kubeconfig.kubeconfig_raw
+  value = talos_cluster_kubeconfig.this.kubeconfig_raw
   sensitive = true
 }
+
+output "schematic" {
+  value = proxmox_virtual_environment_download_file.talos_nocloud_image.url
+}
+
