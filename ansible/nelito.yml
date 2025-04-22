@@ -5,6 +5,8 @@
     docker_volumes_dir: /mnt/user/docker-data
     paperless_http_port: 18000
     paperless_docker_volume_dir: "{{ docker_volumes_dir }}/paperless-ngx"
+  environment:
+    DOCKER_HOST: "ssh://root@nelito"
 
   tasks:
     - name: Paperless-ngx
