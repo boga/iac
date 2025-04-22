@@ -1,52 +1,172 @@
-- name: Preliminary tasks
-  hosts: looner-proxmox
+- name: Nelito services
+  hosts: localhost
   gather_facts: false
-  become: true
+  vars:
+    docker_volumes_dir: /mnt/user/docker-data
+    paperless_http_port: 18000
+    paperless_docker_volume_dir: "{{ docker_volumes_dir }}/paperless-ngx"
 
   tasks:
-    - name: Mount HDDs
-      ansible.posix.mount:
-        path: "{{ item.dir }}"
-        src: "UUID={{ item.uuid }}"
-        fstype: "{{ item.fs }}"
-        opts: defaults
-        state: mounted
-      loop:
-        # /dev/sdb1: UUID="2235e805-43a8-4bec-b564-f20c589c7d32" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="73f8f526-e3ae-9649-a068-3ebd3153567a"
-        - { dir: "/mnt/hdd-slow/", fs: "ext4", uuid: "2235e805-43a8-4bec-b564-f20c589c7d32" }
-        # /dev/sdc1: UUID="a6264bb7-0b53-4db5-8bf8-b7d84a767b33" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="5b4707f5-01"
-        - { dir: "/mnt/hdd-fast/", fs: "ext4", uuid: "a6264bb7-0b53-4db5-8bf8-b7d84a767b33" }
+    - name: Paperless-ngx
+      environment:
+        ###############################################################################
+        # Paperless-ngx settings                                                      #
+        ###############################################################################
 
-- name: Installs Looner
-  hosts: looner-proxmox
-  gather_facts: true
-  become: true
+        # See http://docs.paperless-ngx.com/configuration/ for all available options.
 
-  roles:
-    - role: provision
-    - role: artis3n.tailscale
-      vars:
-        tailscale_args: "--ssh"
-        tailscale_authkey: "{{ tailscale_oauthkey }}"
-        tailscale_tags:
-          - "server"
-        tailscale_oauth_ephemeral: false
-        tailscale_oauth_preauthorized: false
-    - role: geerlingguy.nfs
-      vars:
-        nfs_rpcbind_state: started
-        nfs_rpcbind_enabled: true
-        nfs_exports: [
-          "/mnt/hdd-fast/Audio    *(rw,sync,no_root_squash,no_subtree_check,insecure)",
-          "/mnt/hdd-fast/Image    *(rw,sync,no_root_squash,no_subtree_check,insecure)",
-          "/mnt/hdd-fast/k8s-data *(rw,sync,no_root_squash,no_subtree_check,insecure)",
-        ]
-    - role: geerlingguy.pip
-      vars:
-        pip_install_packages:
-          - name: docker
-    - role: geerlingguy.docker
-    - role: samba
-      vars:
-        samba_mount_point: /mnt/hdd-fast
-        samba_share: /mnt/hdd-fast;/mnt/hdd-fast
+        # The UID and GID of the user used to run paperless in the container. Set this
+        # to your UID and GID on the host so that you have write access to the
+        # consumption directory.
+        #USERMAP_UID: 1000
+        #USERMAP_GID: 1000
+
+        # See the documentation linked above for all options. A few commonly adjusted settings
+        # are provided below.
+
+        # This is required if you will be exposing Paperless-ngx on a public domain
+        # (if doing so please consider security measures such as reverse proxy)
+        #PAPERLESS_URL: https://paperless.example.com
+
+        # Adjust this key if you plan to make paperless available publicly. It should
+        # be a very long sequence of random characters. You don't need to remember it.
+        #PAPERLESS_SECRET_KEY: change-me
+
+        # Use this variable to set a timezone for the Paperless Docker containers. Defaults to UTC.
+        #PAPERLESS_TIME_ZONE: America/Los_Angeles
+
+        # The default language to use for OCR. Set this to the language most of your
+        # documents are written in.
+        #PAPERLESS_OCR_LANGUAGE: eng
+
+        # Additional languages to install for text recognition, separated by a whitespace.
+        # Note that this is different from PAPERLESS_OCR_LANGUAGE (default=eng), which defines
+        # the language used for OCR.
+        # The container installs English, German, Italian, Spanish and French by default.
+        # See https://packages.debian.org/search?keywords=tesseract-ocr-&searchon=names&suite=buster
+        # for available languages.
+        # PAPERLESS_OCR_LANGUAGES: tur ces
+      community.docker.docker_compose_v2:
+        project_name: paperless-ngx
+        state: present
+        definition:
+          # Docker Compose file for running paperless from the docker container registry.
+          # This file contains everything paperless needs to run.
+          # Paperless supports amd64, arm and arm64 hardware.
+          #
+          # All compose files of paperless configure paperless in the following way:
+          #
+          # - Paperless is (re)started on system boot, if it was running before shutdown.
+          # - Docker volumes for storing data are managed by Docker.
+          # - Folders for importing and exporting files are created in the same directory
+          #   as this file and mounted to the correct folders inside the container.
+          # - Paperless listens on port 8000.
+          #
+          # In addition to that, this Docker Compose file adds the following optional
+          # configurations:
+          #
+          # - Instead of SQLite (default), PostgreSQL is used as the database server.
+          # - Apache Tika and Gotenberg servers are started with paperless and paperless
+          #   is configured to use these services. These provide support for consuming
+          #   Office documents (Word, Excel, Power Point and their LibreOffice counter-
+          #   parts.
+          #
+          # To install and update paperless with this file, do the following:
+          #
+          # - Copy this file as 'docker-compose.yml' and the files 'docker-compose.env'
+          #   and '.env' into a folder.
+          # - Run 'docker compose pull'.
+          # - Run 'docker compose up -d'.
+          #
+          # For more extensive installation and update instructions, refer to the
+          # documentation.
+
+          services:
+            broker:
+              image: docker.io/library/redis:7
+              restart: unless-stopped
+              volumes:
+                - "{{ paperless_docker_volume_dir }}/redis/data:/data"
+
+            db:
+              image: docker.io/library/postgres:17
+              restart: unless-stopped
+              volumes:
+                - "{{ paperless_docker_volume_dir }}/postgres/data:/var/lib/postgresql/data"
+              environment:
+                POSTGRES_DB: paperless
+                POSTGRES_USER: paperless
+                POSTGRES_PASSWORD: paperless
+
+            webserver:
+              image: ghcr.io/paperless-ngx/paperless-ngx:latest
+              restart: unless-stopped
+              depends_on:
+                - db
+                - broker
+                - gotenberg
+                - tika
+              ports:
+                - "{{ paperless_http_port }}:8000"
+              volumes:
+                - "{{ paperless_docker_volume_dir }}/paperless/data:/usr/src/paperless/data"
+                - "{{ paperless_docker_volume_dir }}/paperless/media:/usr/src/paperless/media"
+                - "{{ paperless_docker_volume_dir }}/paperless/export:/usr/src/paperless/export"
+                - "{{ paperless_docker_volume_dir }}/paperless/consume:/usr/src/paperless/consume"
+              environment:
+                PAPERLESS_REDIS: redis://broker:6379
+                PAPERLESS_DBHOST: db
+                PAPERLESS_TIKA_ENABLED: 1
+                PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+                PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+                ###############################################################################
+                # Paperless-ngx settings                                                      #
+                ###############################################################################
+
+                # See http://docs.paperless-ngx.com/configuration/ for all available options.
+
+                # The UID and GID of the user used to run paperless in the container. Set this
+                # to your UID and GID on the host so that you have write access to the
+                # consumption directory.
+                #USERMAP_UID: 1000
+                #USERMAP_GID: 1000
+
+                # See the documentation linked above for all options. A few commonly adjusted settings
+                # are provided below.
+
+                # This is required if you will be exposing Paperless-ngx on a public domain
+                # (if doing so please consider security measures such as reverse proxy)
+                #PAPERLESS_URL: https://paperless.example.com
+
+                # Adjust this key if you plan to make paperless available publicly. It should
+                # be a very long sequence of random characters. You don't need to remember it.
+                #PAPERLESS_SECRET_KEY: change-me
+
+                # Use this variable to set a timezone for the Paperless Docker containers. Defaults to UTC.
+                PAPERLESS_TIME_ZONE: Europe/Amsterdam
+
+                # The default language to use for OCR. Set this to the language most of your
+                # documents are written in.
+                #PAPERLESS_OCR_LANGUAGE: eng
+
+                # Additional languages to install for text recognition, separated by a whitespace.
+                # Note that this is different from PAPERLESS_OCR_LANGUAGE (default=eng), which defines
+                # the language used for OCR.
+                # The container installs English, German, Italian, Spanish and French by default.
+                # See https://packages.debian.org/search?keywords=tesseract-ocr-&searchon=names&suite=buster
+                # for available languages.
+                PAPERLESS_OCR_LANGUAGES: nld eng rus
+
+            gotenberg:
+              image: docker.io/gotenberg/gotenberg:8.19
+              restart: unless-stopped
+              # The gotenberg chromium route is used to convert .eml files. We do not
+              # want to allow external content like tracking pixels or even javascript.
+              command:
+                - "gotenberg"
+                - "--chromium-disable-javascript=true"
+                - "--chromium-allow-list=file:///tmp/.*"
+
+            tika:
+              image: docker.io/apache/tika:latest
+              restart: unless-stopped
