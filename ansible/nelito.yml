@@ -160,8 +160,6 @@
                 - 3000:3000
               volumes:
                 - "{{ homepage_docker_volume_dir }}/config:/app/config"
-#                 - "{{ homepage_docker_volume_dir }}/next_server:/app/.next/server"
-  #                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
               restart: unless-stopped
             docker-proxy:
               image: tecnativa/docker-socket-proxy
