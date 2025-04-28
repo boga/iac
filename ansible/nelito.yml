@@ -14,10 +14,43 @@
     portainer_docker_volume_dir: "{{ docker_volumes_dir }}/portainer"
     homepage_http_port: 18002
     homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
+    docker_socket_proxy_network: "docker_socket_proxy_network"
   environment:
     DOCKER_HOST: "ssh://root@nelito"
 
   tasks:
+    # - name: "Create a Docker network called {{docker_socket_proxy_network}}"
+      # shell: "docker network create {{docker_socket_proxy_network}}"
+      # register: result
+      # changed_when: "'Error' not in result.stderr"
+
+    - name: Docker socket proxy
+      community.docker.docker_compose_v2:
+        project_name: docker-socket-proxy
+        state: present
+        definition:
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
+          services:
+            docker-proxy:
+              image: tecnativa/docker-socket-proxy
+              environment:
+                - CONTAINERS=1     # Allow container management
+                - NETWORKS=1       # Allow network management
+                - POST=1           # Allow creating/starting containers (required for Portainer)
+                - IMAGES=1         # Allow managing images
+                - INFO=1           # Allow engine info
+                - VOLUMES=1        # Allow managing volumes
+                - LOG_LEVEL=info
+                - EXEC=0           # Block exec commands (security)
+                - SYSTEM=0         # Block Docker daemon config changes (security)
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+              networks:
+                - docker_socket_proxy_network
+
     - name: Paperless-ngx
       community.docker.docker_compose_v2:
         project_name: paperless-ngx
@@ -140,8 +173,13 @@
                 # - 8000:8000
               volumes:
                 - "{{ portainer_docker_volume_dir }}/data:/data"
-                - "/var/run/docker.sock:/var/run/docker.sock:ro"
               restart: unless-stopped
+              networks:
+                - docker_socket_proxy_network
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
 
     - name: Homepage
       community.docker.docker_compose_v2:
@@ -161,14 +199,9 @@
               volumes:
                 - "{{ homepage_docker_volume_dir }}/config:/app/config"
               restart: unless-stopped
-            docker-proxy:
-              image: tecnativa/docker-socket-proxy
-              environment:
-                - CONTAINERS=1
-                - NETWORKS=1
-                - LOG_LEVEL=info
-                - POST=0
-                - EXEC=0
-                - SYSTEM=0
-              volumes:
-                - /var/run/docker.sock:/var/run/docker.sock:ro
+              networks:
+                - docker_socket_proxy_network
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
