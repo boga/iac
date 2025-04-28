@@ -2,11 +2,18 @@
   hosts: localhost
   gather_facts: false
   vars:
-    docker_volumes_dir: /mnt/user/docker-data
+    # Unraid typically runs Docker containers using the `nobody` user (UID 99) and the `users` group (GID 100).
+    # This is set via the `PUID` and `PGID` environment variables in the Docker container configuration.
+    # This approach ensures that containers have appropriate access to shared storage and avoids permission issues.
+    docker_pid: 99
+    docker_gid: 100
+    docker_volumes_dir: "/mnt/user/docker-data"
     paperless_http_port: 18000
     paperless_docker_volume_dir: "{{ docker_volumes_dir }}/paperless-ngx"
     portainer_http_port: 18001
     portainer_docker_volume_dir: "{{ docker_volumes_dir }}/portainer"
+    homepage_http_port: 18002
+    homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
   environment:
     DOCKER_HOST: "ssh://root@nelito"
 
@@ -35,6 +42,12 @@
 
             webserver:
               image: ghcr.io/paperless-ngx/paperless-ngx:latest
+              labels:
+                homepage.group: Services
+                homepage.name: Paperless
+                homepage.icon: paperless.png
+                homepage.href: http://nelito.saiga-boga.ts.net:18000
+                homepage.description: Documents archive
               restart: unless-stopped
               depends_on:
                 - db
@@ -63,8 +76,8 @@
                 # The UID and GID of the user used to run paperless in the container. Set this
                 # to your UID and GID on the host so that you have write access to the
                 # consumption directory.
-                #USERMAP_UID: 1000
-                #USERMAP_GID: 1000
+                USERMAP_UID: "{{ docker_pid }}"
+                USERMAP_GID: "{{ docker_gid }}"
 
                 # See the documentation linked above for all options. A few commonly adjusted settings
                 # are provided below.
@@ -114,6 +127,12 @@
           services:
             portainer:
               image: portainer/portainer-ce@sha256:449202d765d28ec443c1657fc1121aff92b8afcee6b58bcea36e1f0e81e8297c
+              labels:
+                homepage.group: Services
+                homepage.name: Portainer
+                homepage.icon: portainer.png
+                homepage.href: https://nelito.saiga-boga.ts.net:18001
+                homepage.description: Media server
               ports:
                 # exposes the Portainer UI securely over HTTPS on port 9443.
                 - "{{ portainer_http_port }}:9443"
@@ -121,5 +140,35 @@
                 # - 8000:8000
               volumes:
                 - "{{ portainer_docker_volume_dir }}/data:/data"
-                - "/var/run/docker.sock:/var/run/docker.sock"
+                - "/var/run/docker.sock:/var/run/docker.sock:ro"
               restart: unless-stopped
+
+    - name: Homepage
+      community.docker.docker_compose_v2:
+        project_name: homepage
+        state: present
+        definition:
+          services:
+            homepage:
+              image: ghcr.io/gethomepage/homepage:latest
+              container_name: homepage
+              environment:
+                HOMEPAGE_ALLOWED_HOSTS: "nelito.saiga-boga.ts.net:3000"
+                PUID: "{{ docker_pid }}"
+                PGID: "{{ docker_gid }}"
+              ports:
+                - 3000:3000
+              volumes:
+                - "{{ homepage_docker_volume_dir }}/config:/app/config"
+              restart: unless-stopped
+            docker-proxy:
+              image: tecnativa/docker-socket-proxy
+              environment:
+                - CONTAINERS=1
+                - NETWORKS=1
+                - LOG_LEVEL=info
+                - POST=0
+                - EXEC=0
+                - SYSTEM=0
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock:ro
