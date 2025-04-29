@@ -14,10 +14,61 @@
     portainer_docker_volume_dir: "{{ docker_volumes_dir }}/portainer"
     homepage_http_port: 18002
     homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
+    docker_socket_proxy_network: "docker_socket_proxy_network"
+    docker_host_ssh_string: "ssh://root@nelito"
   environment:
-    DOCKER_HOST: "ssh://root@nelito"
+    DOCKER_HOST: "{{ docker_host_ssh_string }}"
 
   tasks:
+    - name: Fetch info about docker_socket_proxy_network
+      community.docker.docker_network_info:
+        name: "{{ docker_socket_proxy_network }}"
+        docker_host: "{{ docker_host_ssh_string }}"
+        use_ssh_client: true
+      register: network_info
+      ignore_errors: true
+
+    - name: "Display {{ docker_socket_proxy_network }} info (if found)"
+      ansible.builtin.debug:
+        var: network_info
+      when: network_info.exists
+
+    - name: Create docker_socket_proxy_network if it does not exist
+      community.docker.docker_network:
+        name: "{{ docker_socket_proxy_network }}"
+        docker_host: "{{ docker_host_ssh_string }}"
+        use_ssh_client: true
+        state: present
+      when: not network_info.exists
+
+    - name: Docker socket proxy
+      community.docker.docker_compose_v2:
+        project_name: docker-socket-proxy
+        state: present
+        definition:
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
+          services:
+            docker-proxy:
+              image: tecnativa/docker-socket-proxy
+              environment:
+                - CONTAINERS=1     # Allow container management
+                - NETWORKS=1       # Allow network management
+                - POST=1           # Allow creating/starting containers (required for Portainer)
+                - IMAGES=1         # Allow managing images
+                - INFO=1           # Allow engine info
+                - VOLUMES=1        # Allow managing volumes
+                - LOG_LEVEL=info
+                - EXEC=0           # Block exec commands (security)
+                - SYSTEM=0         # Block Docker daemon config changes (security)
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+              networks:
+                - docker_socket_proxy_network
+              restart: unless-stopped
+
     - name: Paperless-ngx
       community.docker.docker_compose_v2:
         project_name: paperless-ngx
@@ -106,7 +157,7 @@
                 PAPERLESS_OCR_LANGUAGES: nld eng rus
 
             gotenberg:
-              image: docker.io/gotenberg/gotenberg:8.19
+              image: docker.io/gotenberg/gotenberg:8.19 # Pinned minor version
               restart: unless-stopped
               # The gotenberg chromium route is used to convert .eml files. We do not
               # want to allow external content like tracking pixels or even javascript.
@@ -131,8 +182,8 @@
                 homepage.group: Services
                 homepage.name: Portainer
                 homepage.icon: portainer.png
-                homepage.href: https://nelito.saiga-boga.ts.net:18001
-                homepage.description: Media server
+                homepage.href: "https://nelito.saiga-boga.ts.net:{{ portainer_http_port }}" # Assuming HTTPS due to port 9443
+                homepage.description: Docker Management UI # Updated description
               ports:
                 # exposes the Portainer UI securely over HTTPS on port 9443.
                 - "{{ portainer_http_port }}:9443"
@@ -140,8 +191,13 @@
                 # - 8000:8000
               volumes:
                 - "{{ portainer_docker_volume_dir }}/data:/data"
-                - "/var/run/docker.sock:/var/run/docker.sock:ro"
               restart: unless-stopped
+              networks:
+                - docker_socket_proxy_network
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
 
     - name: Homepage
       community.docker.docker_compose_v2:
@@ -153,22 +209,17 @@
               image: ghcr.io/gethomepage/homepage:latest
               container_name: homepage
               environment:
-                HOMEPAGE_ALLOWED_HOSTS: "nelito.saiga-boga.ts.net:3000"
+                HOMEPAGE_ALLOWED_HOSTS: "nelito.saiga-boga.ts.net:{{ homepage_http_port }}" # This is usually for CORS, not access control. Check Homepage docs if needed.
                 PUID: "{{ docker_pid }}"
                 PGID: "{{ docker_gid }}"
               ports:
-                - 3000:3000
+                - "{{ homepage_http_port }}:3000"
               volumes:
                 - "{{ homepage_docker_volume_dir }}/config:/app/config"
               restart: unless-stopped
-            docker-proxy:
-              image: tecnativa/docker-socket-proxy
-              environment:
-                - CONTAINERS=1
-                - NETWORKS=1
-                - LOG_LEVEL=info
-                - POST=0
-                - EXEC=0
-                - SYSTEM=0
-              volumes:
-                - /var/run/docker.sock:/var/run/docker.sock:ro
+              networks:
+                - docker_socket_proxy_network
+          networks:
+            docker_socket_proxy_network:
+              name: "{{ docker_socket_proxy_network }}"
+              external: true
