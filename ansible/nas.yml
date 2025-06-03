@@ -23,8 +23,13 @@
         definition:
           services:
             homeassistant:
-              container_name: homeassistant
               image: "ghcr.io/home-assistant/home-assistant:stable"
+              labels:
+                homepage.group: Services
+                homepage.name: Home assistant
+                homepage.icon: homeassistant.png
+                homepage.href: http://nas.saiga-boga.ts.net:18003
+                homepage.description: Home automation
               volumes:
                 - "{{ homeassistant_docker_volume_dir }}:/config"
                 - /etc/localtime:/etc/localtime:ro
