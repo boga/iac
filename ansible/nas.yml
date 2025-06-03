@@ -1,0 +1,192 @@
+- name: NAS services
+  hosts: nas
+  gather_facts: false
+  become: true
+  vars:
+    docker_pid: 568
+    docker_gid: 568
+    docker_volumes_dir: "/mnt/top/docker"
+    paperless_http_port: 18000
+    paperless_docker_volume_dir: "{{ docker_volumes_dir }}/paperless-ngx"
+    portainer_http_port: 18001
+    portainer_docker_volume_dir: "{{ docker_volumes_dir }}/portainer"
+    homepage_http_port: 18002
+    homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
+    homeassistant_http_port: 18002
+    homeassistant_docker_volume_dir: "{{ docker_volumes_dir }}/homeassistant"
+
+  tasks:
+    - name: Home Assistant
+      community.docker.docker_compose_v2:
+        project_name: homeassistant
+        state: present
+        definition:
+          services:
+            homeassistant:
+              container_name: homeassistant
+              image: "ghcr.io/home-assistant/home-assistant:stable"
+              volumes:
+                - "{{ homeassistant_docker_volume_dir }}:/config"
+                - /etc/localtime:/etc/localtime:ro
+                - /run/dbus:/run/dbus:ro
+              restart: unless-stopped
+              privileged: true
+              ports:
+                - "{{ homeassistant_http_port }}:8123"
+              devices:
+                - /dev/ttyUSB0
+
+#     - name: Paperless-ngx
+#       community.docker.docker_compose_v2:
+#         project_name: paperless-ngx
+#         state: present
+#         definition:
+#           services:
+#             broker:
+#               image: docker.io/library/redis:7
+#               restart: unless-stopped
+#               volumes:
+#                 - "{{ paperless_docker_volume_dir }}/redis/data:/data"
+#
+#             db:
+#               image: docker.io/library/postgres:17
+#               restart: unless-stopped
+#               volumes:
+#                 - "{{ paperless_docker_volume_dir }}/postgres/data:/var/lib/postgresql/data"
+#               environment:
+#                 POSTGRES_DB: paperless
+#                 POSTGRES_USER: paperless
+#                 POSTGRES_PASSWORD: paperless
+#
+#             webserver:
+#               image: ghcr.io/paperless-ngx/paperless-ngx:latest
+#               labels:
+#                 homepage.group: Services
+#                 homepage.name: Paperless
+#                 homepage.icon: paperless.png
+#                 homepage.href: http://nelito.saiga-boga.ts.net:18000
+#                 homepage.description: Documents archive
+#               restart: unless-stopped
+#               depends_on:
+#                 - db
+#                 - broker
+#                 - gotenberg
+#                 - tika
+#               ports:
+#                 - "{{ paperless_http_port }}:8000"
+#               volumes:
+#                 - "{{ paperless_docker_volume_dir }}/paperless/data:/usr/src/paperless/data"
+#                 - "{{ paperless_docker_volume_dir }}/paperless/media:/usr/src/paperless/media"
+#                 - "{{ paperless_docker_volume_dir }}/paperless/export:/usr/src/paperless/export"
+#                 - "{{ paperless_docker_volume_dir }}/paperless/consume:/usr/src/paperless/consume"
+#               environment:
+#                 PAPERLESS_REDIS: redis://broker:6379
+#                 PAPERLESS_DBHOST: db
+#                 PAPERLESS_TIKA_ENABLED: 1
+#                 PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+#                 PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+#                 ###############################################################################
+#                 # Paperless-ngx settings                                                      #
+#                 ###############################################################################
+#
+#                 # See http://docs.paperless-ngx.com/configuration/ for all available options.
+#
+#                 # The UID and GID of the user used to run paperless in the container. Set this
+#                 # to your UID and GID on the host so that you have write access to the
+#                 # consumption directory.
+#                 USERMAP_UID: "{{ docker_pid }}"
+#                 USERMAP_GID: "{{ docker_gid }}"
+#
+#                 # See the documentation linked above for all options. A few commonly adjusted settings
+#                 # are provided below.
+#
+#                 # This is required if you will be exposing Paperless-ngx on a public domain
+#                 # (if doing so please consider security measures such as reverse proxy)
+#                 #PAPERLESS_URL: https://paperless.example.com
+#
+#                 # Adjust this key if you plan to make paperless available publicly. It should
+#                 # be a very long sequence of random characters. You don't need to remember it.
+#                 #PAPERLESS_SECRET_KEY: change-me
+#
+#                 # Use this variable to set a timezone for the Paperless Docker containers. Defaults to UTC.
+#                 PAPERLESS_TIME_ZONE: Europe/Amsterdam
+#
+#                 # The default language to use for OCR. Set this to the language most of your
+#                 # documents are written in.
+#                 #PAPERLESS_OCR_LANGUAGE: eng
+#
+#                 # Additional languages to install for text recognition, separated by a whitespace.
+#                 # Note that this is different from PAPERLESS_OCR_LANGUAGE (default=eng), which defines
+#                 # the language used for OCR.
+#                 # The container installs English, German, Italian, Spanish and French by default.
+#                 # See https://packages.debian.org/search?keywords=tesseract-ocr-&searchon=names&suite=buster
+#                 # for available languages.
+#                 PAPERLESS_OCR_LANGUAGES: nld eng rus
+#
+#             gotenberg:
+#               image: docker.io/gotenberg/gotenberg:8.19
+#               restart: unless-stopped
+#               # The gotenberg chromium route is used to convert .eml files. We do not
+#               # want to allow external content like tracking pixels or even javascript.
+#               command:
+#                 - "gotenberg"
+#                 - "--chromium-disable-javascript=true"
+#                 - "--chromium-allow-list=file:///tmp/.*"
+#
+#             tika:
+#               image: docker.io/apache/tika:latest
+#               restart: unless-stopped
+#
+#     - name: Portainer
+#       community.docker.docker_compose_v2:
+#         project_name: portainer
+#         state: present
+#         definition:
+#           services:
+#             portainer:
+#               image: portainer/portainer-ce@sha256:449202d765d28ec443c1657fc1121aff92b8afcee6b58bcea36e1f0e81e8297c
+#               labels:
+#                 homepage.group: Services
+#                 homepage.name: Portainer
+#                 homepage.icon: portainer.png
+#                 homepage.href: https://nelito.saiga-boga.ts.net:18001
+#                 homepage.description: Media server
+#               ports:
+#                 # exposes the Portainer UI securely over HTTPS on port 9443.
+#                 - "{{ portainer_http_port }}:9443"
+#                 # exposes the port for optional Edge compute features.
+#                 # - 8000:8000
+#               volumes:
+#                 - "{{ portainer_docker_volume_dir }}/data:/data"
+#                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
+#               restart: unless-stopped
+#
+#     - name: Homepage
+#       community.docker.docker_compose_v2:
+#         project_name: homepage
+#         state: present
+#         definition:
+#           services:
+#             homepage:
+#               image: ghcr.io/gethomepage/homepage:latest
+#               container_name: homepage
+#               environment:
+#                 HOMEPAGE_ALLOWED_HOSTS: "nelito.saiga-boga.ts.net:3000"
+#                 PUID: "{{ docker_pid }}"
+#                 PGID: "{{ docker_gid }}"
+#               ports:
+#                 - 3000:3000
+#               volumes:
+#                 - "{{ homepage_docker_volume_dir }}/config:/app/config"
+#               restart: unless-stopped
+#             docker-proxy:
+#               image: tecnativa/docker-socket-proxy
+#               environment:
+#                 - CONTAINERS=1
+#                 - NETWORKS=1
+#                 - LOG_LEVEL=info
+#                 - POST=0
+#                 - EXEC=0
+#                 - SYSTEM=0
+#               volumes:
+#                 - /var/run/docker.sock:/var/run/docker.sock:ro
