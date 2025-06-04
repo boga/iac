@@ -45,9 +45,9 @@
                 TASKS: 1
                 SECRETS: 1
                 CONFIGS: 1
-                POST: 1
-                DELETE: 1
-                EXEC: 1
+                POST: 0
+                DELETE: 0
+                EXEC: 0
               volumes:
                 - /var/run/docker.sock:/var/run/docker.sock:ro
               restart: unless-stopped
