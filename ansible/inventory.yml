@@ -1,20 +1,5 @@
 all:
   hosts:
-    looner:
-      ansible_host: looner
-    little:
-      ansible_host: little
-    looner-proxmox:
-      ansible_host: looner-proxmox
-
-k3s_master:
-  hosts:
-    looner
-
-k3s_worker:
-  hosts:
-
-k3s_cluster:
-  children:
-    k3s_worker:
-    k3s_master:
+    nas:
+      ansible_host: nas
+      ansible_user: ans
