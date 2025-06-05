@@ -14,6 +14,8 @@
     homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
     homeassistant_http_port: 18003
     homeassistant_docker_volume_dir: "{{ docker_volumes_dir }}/homeassistant"
+    tsdproxy_docker_volume_dir: "{{ docker_volumes_dir }}/tsdproxy"
+    tsdproxy_http_port: 18004
 
   tasks:
     - name: Create shared Docker network for socket proxy
@@ -219,6 +221,26 @@
               volumes:
                 - "{{ homepage_docker_volume_dir }}/config:/app/config"
               restart: unless-stopped
+              networks:
+                - "docker-socket-proxy-net"
+          networks:
+            "docker-socket-proxy-net":
+              external: true
+
+    - name: TSDProxy
+      community.docker.docker_compose_v2:
+        project_name: tsdproxy
+        state: present
+        definition:
+          services:
+            tsdproxy:
+              image: almeidapaulopt/tsdproxy:1
+              volumes:
+                - "{{ tsdproxy_docker_volume_dir }}/data:/data"
+                - "{{ tsdproxy_docker_volume_dir }}/config:/config"
+              restart: unless-stopped
+              ports:
+                - "{{ tsdproxy_http_port }}:8080"
               networks:
                 - "docker-socket-proxy-net"
           networks:
