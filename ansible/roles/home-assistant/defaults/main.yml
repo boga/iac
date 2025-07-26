@@ -1,2 +1,1 @@
-HOME_ASSISTANT_PORT: 8123
-HOME_ASSISTANT_ROOT_DIR: /mnt/home-assistant
+home_assistant_root_dir: "{{ docker_volumes_dir }}/home-assistant"
