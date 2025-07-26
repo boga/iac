@@ -1,1 +1,4 @@
-home_assistant_root_dir: "{{ docker_volumes_dir }}/home-assistant"
+root_dir: "{{ docker_volumes_dir }}/home-assistant"
+home_assistant_root_dir: "{{ root_dir }}/homeassistant"
+tailscale_root_dir: "{{ root_dir }}/tailscale"
+home_assistant_config_file: "{{ home_assistant_root_dir }}/configuration.yaml"
