@@ -1,3 +1,49 @@
 ---
-- name: "Setup Docker Compose project"
-  ansible.builtin.include_tasks: setup_docker_compose.yml
+- name: "Create Home Assistant directory: {{ home_assistant_root_dir }}"
+  ansible.builtin.file:
+    path: "{{ home_assistant_root_dir }}"
+    state: directory
+    mode: "u=rw,g=r,o=r"
+
+- name: "Create Home Assistant configuration file: {{ home_assistant_config_file }}"
+  ansible.builtin.template:
+    src: home-assistant-configuration.yaml.j2
+    dest: "{{ home_assistant_config_file }}"
+#    owner: docker_pid
+#    group: docker_gid
+    mode: '0644'
+
+- name: Spin up compose project
+  community.docker.docker_compose_v2:
+    project_name: home-assistant
+    state: present
+    definition:
+      services:
+        homeassistant:
+          image: "ghcr.io/home-assistant/home-assistant{{ home_assistant_image_tag }}"
+          volumes:
+            - "{{ home_assistant_root_dir }}:/config"
+            - /etc/localtime:/etc/localtime:ro
+            - /run/dbus:/run/dbus:ro
+          devices:
+            - "/dev/ttyUSB0:/dev/ttyUSB0"
+          restart: unless-stopped
+          depends_on:
+            - tailscale
+          network_mode: service:tailscale
+        tailscale:
+          image: tailscale/tailscale:latest
+          hostname: tailscale
+          environment:
+            TS_AUTHKEY: "{{ vault_nas_docker_vm_containers_oauth_secret_key }}"
+            TS_HOSTNAME: home-assistant
+            TS_EXTRA_ARGS: "--advertise-tags=tag:server"
+            TS_STATE_DIR: /var/lib/tailscale
+            TS_USERSPACE: false
+          volumes:
+            - "{{ tailscale_root_dir }}:/var/lib/tailscale"
+          devices:
+            - /dev/net/tun:/dev/net/tun
+          cap_add:
+            - net_admin
+          restart: unless-stopped
