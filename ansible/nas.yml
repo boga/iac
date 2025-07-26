@@ -12,7 +12,6 @@
     portainer_docker_volume_dir: "{{ docker_volumes_dir }}/portainer"
     homepage_http_port: 18002
     homepage_docker_volume_dir: "{{ docker_volumes_dir }}/homepage"
-    homeassistant_http_port: 18003
     homeassistant_docker_volume_dir: "{{ docker_volumes_dir }}/homeassistant"
 
   tasks:
@@ -69,18 +68,35 @@
                 homepage.group: Services
                 homepage.name: Home assistant
                 homepage.icon: homeassistant.png
-                homepage.href: "http://nas.saiga-boga.ts.net:{{ homeassistant_http_port }}"
+                homepage.href: "http://nas.saiga-boga.ts.net"
                 homepage.description: Home automation
               volumes:
-                - "{{ homeassistant_docker_volume_dir }}:/config"
+                - "{{ homeassistant_docker_volume_dir }}/homeassistant:/config"
                 - /etc/localtime:/etc/localtime:ro
                 - /run/dbus:/run/dbus:ro
               restart: unless-stopped
               privileged: true
-              ports:
-                - "{{ homeassistant_http_port }}:8123"
               devices:
                 - /dev/ttyUSB0
+              depends_on:
+                - tailscale
+              network_mode: service:tailscale
+            tailscale:
+              image: tailscale/tailscale:latest
+              hostname: tailscale
+              environment:
+                TS_AUTHKEY: "{{ vault_nas_docker_vm_containers_oauth_secret_key }}"
+                TS_HOSTNAME: home-assistant
+                TS_EXTRA_ARGS: "--advertise-tags=tag:server"
+                TS_STATE_DIR: /var/lib/tailscale
+                TS_USERSPACE: false
+              volumes:
+                - "{{ homeassistant_docker_volume_dir }}/tailscale/state:/var/lib/tailscale"
+              devices:
+                - /dev/net/tun:/dev/net/tun
+              cap_add:
+                - net_admin
+              restart: unless-stopped
 
     - name: Paperless-ngx
       community.docker.docker_compose_v2:
