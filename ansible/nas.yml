@@ -255,3 +255,13 @@
     - name: home-assistant
       vars:
         home_assistant_image_tag: "@sha256:9682a29fdfde74dd67c78d724105a9c11cb2affaf350192b0a89447f958547df" # 2025.07
+    - name: tsdproxy
+      vars:
+        docker_node_tailscale_fqdn: "nas-docker-vm.saiga-boga.ts.net"
+        docker_socket_proxy_endpoint: "tcp://docker_socket_proxy:2375"
+        http_host: "0.0.0.0"
+        http_port: "8080"
+        root_dir: "{{ docker_volumes_dir }}/tsdproxy"
+        tailscale_client_id: "{{ vault_tailscale_client_id }}"
+        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
+        tailscale_tags: "tag:server"
