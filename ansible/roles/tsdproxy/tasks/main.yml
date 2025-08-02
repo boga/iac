@@ -1,0 +1,36 @@
+---
+- name: "Create root directory: {{ root_dir }}"
+  ansible.builtin.file:
+    path: "{{ tsdproxy_dir }}"
+    state: directory
+    mode: "u=rw,g=r,o=r"
+
+- name: "Copy TSDProxy config file"
+  ansible.builtin.template:
+    src: tsdproxy.yaml.j2
+    dest: "{{ tsdproxy_dir }}/tsdproxy.yaml"
+    mode: '0644'
+
+- name: Spin up compose project
+  community.docker.docker_compose_v2:
+    project_name: tsdproxy
+    state: present
+    recreate: always # TODO: Remove
+    definition:
+      services:
+        tsdproxy:
+          image: almeidapaulopt/tsdproxy:2
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - datadir:/data
+            - "{{ tsdproxy_dir }}:/config"
+          restart: unless-stopped
+          ports:
+            - "18080:8080"
+          networks:
+            - "docker-socket-proxy-net"
+      networks:
+        "docker-socket-proxy-net":
+          external: true
+      volumes:
+        datadir:
