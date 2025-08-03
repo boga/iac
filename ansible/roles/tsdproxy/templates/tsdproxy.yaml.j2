@@ -1,0 +1,22 @@
+defaultProxyProvider: default
+docker:
+  local:
+    host: "{{ docker_socket_proxy_endpoint }}"
+    targetHostname: "{{ docker_node_tailscale_fqdn }}"
+    defaultProxyProvider: default
+lists: {}
+tailscale:
+  providers:
+    default:
+      clientId: "{{ tailscale_client_id }}"
+      clientSecret: "{{ tailscale_client_secret }}"
+      controlUrl: https://controlplane.tailscale.com
+      tags: "{{ tailscale_tags }}"
+  dataDir: /data/
+http:
+  hostname: "{{ http_host }}"
+  port: {{ http_port }}
+log:
+  level: info
+  json: false
+proxyAccessLog: true

@@ -1,0 +1,2 @@
+tsdproxy_dir: "{{ root_dir }}/tsdproxy"
+tsdproxy_config_file: "{{ tsdproxy_dir }}/tsdproxy.yaml"
