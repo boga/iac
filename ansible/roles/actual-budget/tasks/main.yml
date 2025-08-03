@@ -1,18 +1,4 @@
 ---
-#- name: "Create Home Assistant directory: {{ home_assistant_root_dir }}"
-#  ansible.builtin.file:
-#    path: "{{ home_assistant_root_dir }}"
-#    state: directory
-#    mode: "u=rw,g=r,o=r"
-#
-#- name: "Create Home Assistant configuration file: {{ home_assistant_config_file }}"
-#  ansible.builtin.template:
-#    src: home-assistant-configuration.yaml.j2
-#    dest: "{{ home_assistant_config_file }}"
-##    owner: docker_pid
-##    group: docker_gid
-#    mode: '0644'
-
 - name: Spin up compose project
   community.docker.docker_compose_v2:
     project_name: "{{ docker_compose_project_name }}"
@@ -25,8 +11,6 @@
           ports:
             - "{{ node_port }}:{{ http_port }}"
           environment:
-            # - ACTUAL_HTTPS_KEY=/data/selfhost.key
-            # - ACTUAL_HTTPS_CERT=/data/selfhost.crt
             ACTUAL_PORT: "{{ http_port }}"
           labels:
             tsdproxy.enable: "true"
@@ -36,20 +20,8 @@
             - "{{ actual_budget_dir }}/data:/data"
           restart: unless-stopped
           healthcheck:
-            # Enable health check for the instance
             test: [ 'CMD-SHELL', 'node src/scripts/health-check.js' ]
             interval: 60s
             timeout: 10s
             retries: 3
             start_period: 20s
-#
-#- name: "Get info about a Docker network: {{ docker_network_name }}"
-#  community.docker.docker_network_info:
-#    name: "{{ docker_network_name }}"
-#  register: docker_network_info
-#
-#- name: Update Home Assistant config file with proper HTTP proxy subnet
-#  ansible.builtin.lineinfile:
-#    path: "{{ home_assistant_config_file }}"
-#    search_string: "    - here-goes-trusted-subnet"
-#    line: "    - {{ docker_network_info.network.IPAM.Config[0].Subnet }}"
