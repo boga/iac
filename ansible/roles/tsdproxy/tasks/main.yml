@@ -1,14 +1,14 @@
 ---
-- name: "Create root directory: {{ root_dir }}"
+- name: "Create root directory: {{ tsdproxy_dir }}"
   ansible.builtin.file:
     path: "{{ tsdproxy_dir }}"
     state: directory
     mode: "u=rw,g=r,o=r"
 
-- name: "Copy TSDProxy config file"
+- name: "Copy TSDProxy config file: {{ tsdproxy_config_file }}"
   ansible.builtin.template:
     src: tsdproxy.yaml.j2
-    dest: "{{ tsdproxy_dir }}/tsdproxy.yaml"
+    dest: "{{ tsdproxy_config_file }}"
     mode: '0644'
 
 - name: Spin up compose project
