@@ -1,6 +1,2 @@
-home_assistant_config_file: "{{ home_assistant_root_dir }}/configuration.yaml"
-home_assistant_root_dir: "{{ root_dir }}/homeassistant"
-http_port: "8123"
-tailscale_root_dir: "{{ root_dir }}/tailscale"
-docker_compose_project_name: "home-assistant"
-docker_network_name: "{{ docker_compose_project_name }}_default"
+actual_budget_dir: "{{ root_dir }}/actual_budget"
+docker_compose_project_name: "actual-budget"

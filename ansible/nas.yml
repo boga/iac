@@ -268,3 +268,10 @@
         tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
         tailscale_tags: "tag:server"
         node_port: 18080
+
+    - name: actual-budget
+      vars:
+        node_port: 18082
+        http_port: 5006
+        root_dir: "{{ docker_volumes_dir }}/actual_budget"
+        image: "ghcr.io/actualbudget/actual@sha256:b6bb759f31d1c2c82a37d04f9d8930359ae8e3b3faa8eaa5338a0a2328702908"
