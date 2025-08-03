@@ -2,7 +2,10 @@
 default_config:
 
 http:
-  server_port: 80
+  server_port: {{ http_port }}
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - here-goes-trusted-subnet
 
 # Load frontend themes from the themes folder
 frontend:
