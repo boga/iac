@@ -264,8 +264,11 @@
         http_host: "0.0.0.0"
         http_port: "8080"
         root_dir: "{{ docker_volumes_dir }}/tsdproxy"
-        tailscale_client_id: "{{ vault_tailscale_client_id }}"
-        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
+        # Empty credentials switch off automatic authentication, use links in logs or UI
+        tailscale_client_id: ""
+        tailscale_client_secret: ""
+#        tailscale_client_id: "{{ vault_tailscale_client_id }}"
+#        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
         tailscale_tags: "tag:server"
         node_port: 18080
 
