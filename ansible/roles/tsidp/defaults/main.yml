@@ -1,2 +1,2 @@
-actual_budget_dir: "{{ root_dir }}/actual_budget"
-docker_compose_project_name: "actual-budget"
+docker_compose_project_name: "tsidp"
+tsidp_dir: "{{ root_dir }}/tsidp"

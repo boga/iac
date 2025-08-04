@@ -5,22 +5,15 @@
     state: present
     definition:
       services:
-        actual-budget:
+        tsidp:
           image: "{{ image }}"
           ports:
-            - "{{ node_port }}:{{ http_port }}"
+            - "{{ node_port }}:443"
           environment:
-            ACTUAL_PORT: "{{ http_port }}"
-          labels:
-            tsdproxy.enable: "true"
-            tsdproxy.name: "actual-budget"
-            tsdproxy.ephemeral: "true"
+            TS_AUTHKEY: "tskey-auth-kfxpb6sXf911CNTRL-St4kF6jBoCEjio3LWMp44EMvRSsjFc9ad"
+            TS_USERSPACE: false
+            TS_HOSTNAME: "idp"
+            TAILSCALE_USE_WIP_CODE: 1
           volumes:
-            - "{{ actual_budget_dir }}/data:/data"
+            - "{{ tsidp_dir }}:/var/lib/tsidp"
           restart: unless-stopped
-          healthcheck:
-            test: [ 'CMD-SHELL', 'node src/scripts/health-check.js' ]
-            interval: 60s
-            timeout: 10s
-            retries: 3
-            start_period: 20s
