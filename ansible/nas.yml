@@ -242,7 +242,7 @@
 #              external: true
 
 - name: NAS services
-  hosts: nas-docker-vm
+  hosts: great-vm
   gather_facts: false
   become: true
   vars:

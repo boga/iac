@@ -6,3 +6,6 @@ all:
     nas-docker-vm:
       ansible_host: nas-docker-vm
       ansible_user: ans
+    great-vm:
+      ansible_host: great-vm
+      ansible_user: ans
