@@ -30,6 +30,7 @@
           labels:
             tsdproxy.enable: "true"
             tsdproxy.name: "home-assistant"
+            tsdproxy.ephemeral: "true"
           ports:
             - "{{ node_port }}:{{ http_port }}"
           restart: unless-stopped
