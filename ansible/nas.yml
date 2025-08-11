@@ -250,29 +250,77 @@
     docker_gid: 568
     docker_volumes_dir: "/mnt/docker"
 
-  roles:
-    - name: home-assistant
+  tasks:
+    - name: Create shared Docker network for socket proxy
+      community.docker.docker_network:
+        name: docker-socket-proxy-net
+        state: present
+
+    - name: Docker Socket Proxy
+      community.docker.docker_compose_v2:
+        project_name: docker-proxy
+        state: present
+        definition:
+          version: '3.8'
+          services:
+            docker_socket_proxy:
+              image: tecnativa/docker-socket-proxy
+              environment:
+                LOG_LEVEL: info
+                VERSION: 1
+                INFO: 1
+                SYSTEM: 1
+                EVENTS: 1
+                PING: 1
+                CONTAINERS: 1
+                IMAGES: 1
+                NETWORKS: 1
+                VOLUMES: 1
+                SERVICES: 1
+                TASKS: 1
+                SECRETS: 1
+                CONFIGS: 1
+                POST: 0
+                DELETE: 0
+                EXEC: 0
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+              restart: unless-stopped
+              networks:
+                - docker-socket-proxy-net
+          networks:
+            docker-socket-proxy-net:
+              external: true
+
+    - include_role:
+        name: tsdproxy
+      vars:
+        docker_node_tailscale_fqdn: "great-vm.saiga-boga.ts.net"
+        docker_socket_proxy_endpoint: "tcp://docker_socket_proxy:2375"
+        http_host: "0.0.0.0"
+        http_port: "8080"
+        root_dir: "{{ docker_volumes_dir }}/tsdproxy"
+        tailscale_client_id: "{{ vault_tailscale_client_id }}"
+        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
+        tailscale_tags: "tag:server"
+        node_port: 18080
+
+    - include_role:
+        name: tsidp
+      vars:
+        node_port: 18083
+        root_dir: "{{ docker_volumes_dir }}/tsidp"
+        image: "tailscale/tsidp:unstable-v1.85"
+
+    - include_role:
+        name: home-assistant
       vars:
         home_assistant_image_tag: "@sha256:9682a29fdfde74dd67c78d724105a9c11cb2affaf350192b0a89447f958547df" # 2025.07
         node_port: 18081
         root_dir: "{{ docker_volumes_dir }}/home-assistant"
 
-    - name: tsdproxy
-      vars:
-        docker_node_tailscale_fqdn: "nas-docker-vm.saiga-boga.ts.net"
-        docker_socket_proxy_endpoint: "tcp://docker_socket_proxy:2375"
-        http_host: "0.0.0.0"
-        http_port: "8080"
-        root_dir: "{{ docker_volumes_dir }}/tsdproxy"
-        # Empty credentials switch off automatic authentication, use links in logs or UI
-        tailscale_client_id: ""
-        tailscale_client_secret: ""
-#        tailscale_client_id: "{{ vault_tailscale_client_id }}"
-#        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
-        tailscale_tags: "tag:server"
-        node_port: 18080
-
-    - name: actual-budget
+    - include_role:
+        name: actual-budget
       vars:
         node_port: 18082
         http_port: 5006
