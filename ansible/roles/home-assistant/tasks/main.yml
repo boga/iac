@@ -27,12 +27,25 @@
             - /run/dbus:/run/dbus:ro
           devices:
             - "/dev/ttyUSB0:/dev/ttyUSB0"
-          labels:
-            tsdproxy.enable: "true"
-            tsdproxy.name: "home-assistant"
-            tsdproxy.ephemeral: "true"
-          ports:
-            - "{{ node_port }}:{{ http_port }}"
+          depends_on:
+            - tailscale
+          network_mode: service:tailscale
+          restart: unless-stopped
+        tailscale:
+          image: tailscale/tailscale:latest          
+          environment:
+            - "TS_AUTHKEY={{ tailscale_client_secret }}"
+            - TS_STATE_DIR=/var/lib/tailscale
+            - TS_USERSPACE=false
+            - TS_EXTRA_ARGS=--advertise-tags=tag:server
+            - TS_HOSTNAME=home-assistant
+          # hostname: home-assistant
+          volumes:
+            - "{{ tailscale_root_dir }}:/var/lib/tailscale"
+            - /dev/net/tun:/dev/net/tun
+          cap_add:
+            - NET_ADMIN
+            - SYS_MODULE
           restart: unless-stopped
 
 - name: "Get info about a Docker network: {{ docker_network_name }}"
