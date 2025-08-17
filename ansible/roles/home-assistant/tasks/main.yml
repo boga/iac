@@ -17,6 +17,7 @@
   community.docker.docker_compose_v2:
     project_name: "{{ docker_compose_project_name }}"
     state: present
+    recreate: always
     definition:
       services:
         homeassistant:
@@ -27,13 +28,34 @@
             - /run/dbus:/run/dbus:ro
           devices:
             - "/dev/ttyUSB0:/dev/ttyUSB0"
-          labels:
-            tsdproxy.enable: "true"
-            tsdproxy.name: "home-assistant"
-            tsdproxy.ephemeral: "true"
-          ports:
-            - "{{ node_port }}:{{ http_port }}"
+          depends_on:
+            - tailscale
+          network_mode: service:tailscale
           restart: unless-stopped
+        tailscale:
+          image: tailscale/tailscale:latest          
+          environment:
+            - "TS_AUTHKEY={{ tailscale_client_secret }}"
+            - TS_STATE_DIR=/var/lib/tailscale
+            - TS_USERSPACE=false
+            - TS_EXTRA_ARGS=--advertise-tags=tag:server
+            - "TS_HOSTNAME={{ tailscale_hostname }}"
+          # hostname: home-assistant
+          volumes:
+            - "{{ tailscale_root_dir }}:/var/lib/tailscale"
+            - /dev/net/tun:/dev/net/tun
+          cap_add:
+            - NET_ADMIN
+            - SYS_MODULE
+          restart: unless-stopped
+          post_start:
+            - command: [
+              "tailscale",
+              "cert",
+              # "--cert-file=/certs/cert.pem",
+              # "--key-file=/certs/key.pem",
+              "{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}",
+            ]
 
 - name: "Get info about a Docker network: {{ docker_network_name }}"
   community.docker.docker_network_info:
