@@ -305,12 +305,13 @@
     #     tailscale_tags: "tag:server"
     #     node_port: 18080
 
-    # - include_role:
-    #     name: tsidp
-    #   vars:
-    #     node_port: 18083
-    #     root_dir: "{{ docker_volumes_dir }}/tsidp"
-    #     image: "tailscale/tsidp:unstable-v1.85"
+    - include_role:
+        name: tsidp
+      vars:
+        node_port: 18083
+        root_dir: "{{ docker_volumes_dir }}/tsidp"
+        # unstable-v1.85
+        image: "tailscale/tsidp@sha256:fb6330a5f04624790b9ae69d46fa9ebaa7217fb0a643d4914f0b4184a31b940f"
 
     - include_role:
         name: home-assistant

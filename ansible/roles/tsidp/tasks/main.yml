@@ -7,10 +7,8 @@
       services:
         tsidp:
           image: "{{ image }}"
-          ports:
-            - "{{ node_port }}:443"
           environment:
-            TS_AUTHKEY: "tskey-auth-kfxpb6sXf911CNTRL-St4kF6jBoCEjio3LWMp44EMvRSsjFc9ad"
+            TS_AUTHKEY: "{{ ts_authkey }}"
             TS_USERSPACE: false
             TS_HOSTNAME: "idp"
             TAILSCALE_USE_WIP_CODE: 1
