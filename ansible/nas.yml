@@ -321,10 +321,11 @@
         tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
         tailscale_hostname: "home-assistant"
 
-    # - include_role:
-    #     name: actual-budget
-    #   vars:
-    #     node_port: 18082
-    #     http_port: 5006
-    #     root_dir: "{{ docker_volumes_dir }}/actual_budget"
-    #     image: "ghcr.io/actualbudget/actual@sha256:b6bb759f31d1c2c82a37d04f9d8930359ae8e3b3faa8eaa5338a0a2328702908"
+    - include_role:
+        name: actual-budget
+      vars:
+        http_port: 443
+        root_dir: "{{ docker_volumes_dir }}/actual_budget"
+        image: "ghcr.io/actualbudget/actual@sha256:3d7fb08d3b405426e8625013a5ed95f5015e6c04d0f044e2e3fe7d7b7a41951b"
+        tailscale_hostname: "actual"
+        tailscale_client_secret: "{{ vault_tailscale_client_secret }}"
