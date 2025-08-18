@@ -3,20 +3,18 @@
   community.docker.docker_compose_v2:
     project_name: "{{ docker_compose_project_name }}"
     state: present
+    recreate: always
     definition:
       services:
         actual-budget:
           image: "{{ image }}"
-          ports:
-            - "{{ node_port }}:{{ http_port }}"
           environment:
             ACTUAL_PORT: "{{ http_port }}"
-          labels:
-            tsdproxy.enable: "true"
-            tsdproxy.name: "actual-budget"
-            tsdproxy.ephemeral: "true"
+            ACTUAL_HTTPS_KEY: "/var/lib/tailscale/certs/{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}.key"
+            ACTUAL_HTTPS_CERT: "/var/lib/tailscale/certs/{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}.crt"
           volumes:
             - "{{ actual_budget_dir }}/data:/data"
+            - "{{ tailscale_root_dir }}:/var/lib/tailscale:ro"
           restart: unless-stopped
           healthcheck:
             test: [ 'CMD-SHELL', 'node src/scripts/health-check.js' ]
@@ -24,3 +22,26 @@
             timeout: 10s
             retries: 3
             start_period: 20s
+          depends_on:
+            - tailscale
+          network_mode: service:tailscale
+        tailscale:
+          image: tailscale/tailscale:latest          
+          environment:
+            - "TS_AUTHKEY={{ tailscale_client_secret }}"
+            - TS_STATE_DIR=/var/lib/tailscale
+            - TS_USERSPACE=false
+            - TS_EXTRA_ARGS=--advertise-tags=tag:server
+            - "TS_HOSTNAME={{ tailscale_hostname }}"
+          volumes:
+            - "{{ tailscale_root_dir }}:/var/lib/tailscale"
+            - /dev/net/tun:/dev/net/tun
+          cap_add:
+            - NET_ADMIN
+          restart: unless-stopped
+          post_start:
+            - command: [
+              "tailscale",
+              "cert",
+              "{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}",
+            ]
