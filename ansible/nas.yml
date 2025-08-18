@@ -312,6 +312,7 @@
         root_dir: "{{ docker_volumes_dir }}/tsidp"
         # unstable-v1.85
         image: "tailscale/tsidp@sha256:fb6330a5f04624790b9ae69d46fa9ebaa7217fb0a643d4914f0b4184a31b940f"
+        ts_authkey: "tskey-auth-kkY7XXCdkw11CNTRL-wigkmEBiP4XQwj2nGamRzW4eq5V1LMRtU"
 
     - include_role:
         name: home-assistant
