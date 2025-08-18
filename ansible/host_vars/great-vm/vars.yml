@@ -1,0 +1,3 @@
+---
+tsidp_client_id_actual: "{{ vault_tsidp_client_id_actual }}"
+tsidp_client_secret_actual: "{{ vault_tsidp_client_secret_actual }}"

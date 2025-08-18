@@ -11,6 +11,12 @@
             ACTUAL_PORT: "{{ http_port }}"
             ACTUAL_HTTPS_KEY: "/var/lib/tailscale/certs/{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}.key"
             ACTUAL_HTTPS_CERT: "/var/lib/tailscale/certs/{{ tailscale_hostname }}.{{ tailscale_tailnet_name }}.crt"
+
+            ACTUAL_OPENID_DISCOVERY_URL: "https://idp.saiga-boga.ts.net"
+            ACTUAL_OPENID_CLIENT_ID: "{{ tsidp_client_id_actual }}"
+            ACTUAL_OPENID_CLIENT_SECRET: "{{ tsidp_client_secret_actual }}"
+            ACTUAL_OPENID_SERVER_HOSTNAME: "https://actual.saiga-boga.ts.net"
+
           volumes:
             - "{{ actual_budget_dir }}/data:/data"
             - "{{ tailscale_root_dir }}:/var/lib/tailscale:ro"
