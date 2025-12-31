@@ -6,10 +6,13 @@
     - kubernetes.core
   vars:
     kubeconfig_path: "./kubeconfig"
-    nfs_csi_version: "v4.12.1"
     nfs_csi_repo_base: "https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/{{ nfs_csi_version }}/deploy/{{ nfs_csi_version }}"
+    nfs_csi_version: "v4.12.1"
+    nfs_storageclass_name: "nfs-unraid"
+    unraid_nfs_server: "192.168.88.26"
+    unraid_nfs_share: "/mnt/user/k8s-nfs"
   tasks:
-    - name: Apply NFS CSI driver manifests
+    - name: "Apply NFS CSI driver manifests: {{ nfs_csi_version }}"
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -39,3 +42,21 @@
         namespace: kube-system
         wait: true
         wait_timeout: 180
+
+    - name: "Add StorageClass: {{ nfs_storageclass_name }}"
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: "{{ nfs_storageclass_name }}"
+          provisioner: nfs.csi.k8s.io
+          parameters:
+            server: "{{ unraid_nfs_server }}"
+            share: "{{ unraid_nfs_share }}"
+          reclaimPolicy: Retain
+          volumeBindingMode: Immediate
+          mountOptions:
+            - nfsvers=4.1
