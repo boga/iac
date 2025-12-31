@@ -9,7 +9,7 @@
     nfs_csi_repo_base: "https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/{{ nfs_csi_version }}/deploy/{{ nfs_csi_version }}"
     nfs_csi_version: "v4.12.1"
     nfs_storageclass_name: "nfs-unraid"
-    unraid_nfs_server: "192.168.88.26"
+    unraid_nfs_server: "192.168.88.178"
     unraid_nfs_share: "/mnt/user/k8s-nfs"
   tasks:
     - name: "Apply NFS CSI driver manifests: {{ nfs_csi_version }}"
