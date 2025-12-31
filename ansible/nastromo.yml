@@ -1,22 +1,16 @@
-- name: k8s
-  connection: local
+---
+- name: Install NFS CSI driver
+  hosts: localhost
   gather_facts: false
-  vars:
-#    docker_pid: 568
-#    docker_volumes_dir: "/mnt/top/docker"
-
   tasks:
-    - name: Create shared Docker network for socket proxy
-      community.docker.docker_network:
-        name: docker-socket-proxy-net
-        state: present
+    - name: Apply NFS CSI driver manifest
+      ansible.builtin.command: >
+        kubectl --kubeconfig {{ kubeconfig_path }}
+        apply -f https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/v4.6.0/deploy/install-driver.yaml
+      changed_when: true
 
-    - name: Docker Socket Proxy
-      community.docker.docker_compose_v2:
-        project_name: docker-proxy
-        state: present
-        definition:
-          version: '3.8'
-          services:
-            docker_socket_proxy:
-              image:
+    - name: Wait for nfs-csi pods
+      ansible.builtin.command: >
+        kubectl --kubeconfig {{ kubeconfig_path }}
+        -n kube-system rollout status deployment/csi-nfs-controller --timeout=180s
+      changed_when: false
