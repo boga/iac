@@ -1,0 +1,22 @@
+- name: k8s
+  connection: local
+  gather_facts: false
+  vars:
+#    docker_pid: 568
+#    docker_volumes_dir: "/mnt/top/docker"
+
+  tasks:
+    - name: Create shared Docker network for socket proxy
+      community.docker.docker_network:
+        name: docker-socket-proxy-net
+        state: present
+
+    - name: Docker Socket Proxy
+      community.docker.docker_compose_v2:
+        project_name: docker-proxy
+        state: present
+        definition:
+          version: '3.8'
+          services:
+            docker_socket_proxy:
+              image:
