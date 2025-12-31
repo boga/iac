@@ -1,0 +1,44 @@
+---
+- name: Install SigNoz stack into Talos-backed Kubernetes
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    k8s_namespace_name: o11y
+    signoz_cluster_name: talos-home
+
+  roles:
+    - role: k8s-create-namespace
+      vars:
+        namespace_name: "{{ k8s_namespace_name }}"
+
+    - role: helm-repo
+      vars:
+        repo_name: "signoz"
+        repo_url: "https://charts.signoz.io"
+        update_repo_cache: yes
+
+    - role: k8s-signoz
+      vars:
+        namespace_name: "{{ k8s_namespace_name }}"
+        signoz_cluster_name: "{{ signoz_cluster_name }}"
+        signoz_host_collector_name: "talos-host-collector"
+        signoz_otlp_grpc_nodeport: 32417
+        signoz_otlp_http_nodeport: 32418
+        signoz_clickhouse_size: 20Gi
+
+- name: Deploy SigNoz edge collector on Unraid
+  hosts: unraid
+  gather_facts: false
+
+  vars:
+    signoz_collector_dir: /opt/signoz-collector
+    signoz_otlp_http_endpoint: http://<talos-node-ip>:32418
+    signoz_otlp_grpc_endpoint: <talos-node-ip>:32417
+
+  roles:
+    - role: signoz-host-collector
+      vars:
+        collector_base_dir: "{{ signoz_collector_dir }}"
+        signoz_otlp_http_endpoint: "{{ signoz_otlp_http_endpoint }}"
+        signoz_otlp_grpc_endpoint: "{{ signoz_otlp_grpc_endpoint }}"

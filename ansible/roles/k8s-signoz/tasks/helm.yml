@@ -1,0 +1,102 @@
+---
+- name: Install SigNoz via Helm
+  kubernetes.core.helm:
+    chart_ref: signoz/signoz
+    name: signoz
+    namespace: "{{ namespace_name }}"
+    create_namespace: true
+    wait: true
+    wait_timeout: 10m
+    state: present
+    values:
+      global:
+        clusterName: "{{ signoz_cluster_name }}"
+      clickhouse:
+        persistence:
+          enabled: true
+          size: "{{ signoz_clickhouse_size }}"
+      queryService:
+        service:
+          type: ClusterIP
+      alertmanager:
+        enabled: true
+      otelCollector:
+        service:
+          type: ClusterIP
+      otelAgent:
+        enabled: true
+        config:
+          receivers:
+            hostmetrics:
+              collection_interval: 30s
+              scrapers:
+                cpu: {}
+                disk: {}
+                filesystem: {}
+                load: {}
+                memory: {}
+                network: {}
+                paging: {}
+                processes: {}
+            otlp:
+              protocols:
+                grpc: {}
+                http: {}
+          processors:
+            batch: {}
+            memory_limiter:
+              check_interval: 1s
+              limit_mib: 400
+              spike_limit_mib: 200
+            resourcedetection:
+              detectors: [env, system]
+          exporters:
+            otlp:
+              endpoint: "signoz-otel-collector:4317"
+              tls:
+                insecure: true
+          service:
+            telemetry:
+              logs: {}
+            pipelines:
+              metrics:
+                receivers: [hostmetrics, otlp]
+                processors: [memory_limiter, resourcedetection, batch]
+                exporters: [otlp]
+              logs:
+                receivers: [otlp]
+                processors: [batch]
+                exporters: [otlp]
+              traces:
+                receivers: [otlp]
+                processors: [batch]
+                exporters: [otlp]
+
+- name: Expose SigNoz OTLP collector externally
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: signoz-otel-collector-nodeport
+        labels:
+          app.kubernetes.io/instance: signoz
+          app.kubernetes.io/name: signoz-otel-collector
+      spec:
+        type: NodePort
+        selector:
+          app.kubernetes.io/component: otel-collector
+          app.kubernetes.io/instance: signoz
+        ports:
+          - name: otlp-grpc
+            port: 4317
+            targetPort: 4317
+            protocol: TCP
+            nodePort: "{{ signoz_otlp_grpc_nodeport }}"
+          - name: otlp-http
+            port: 4318
+            targetPort: 4318
+            protocol: TCP
+            nodePort: "{{ signoz_otlp_http_nodeport }}"

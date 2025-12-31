@@ -1,0 +1,29 @@
+---
+- name: Ensure SigNoz collector directory exists
+  ansible.builtin.file:
+    path: "{{ collector_base_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Render SigNoz edge collector configuration
+  ansible.builtin.template:
+    src: otel-collector-config.yaml.j2
+    dest: "{{ collector_base_dir }}/otel-collector-config.yaml"
+    mode: '0644'
+
+- name: Render docker compose file for SigNoz collector
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ collector_base_dir }}/docker-compose.yml"
+    mode: '0644'
+
+- name: Launch SigNoz edge collector
+  community.docker.docker_compose:
+    project_src: "{{ collector_base_dir }}"
+    state: present
+    restarted: true
+  register: compose_output
+
+- name: Show compose changes
+  ansible.builtin.debug:
+    var: compose_output

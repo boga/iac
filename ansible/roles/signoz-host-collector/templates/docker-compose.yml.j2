@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  signoz-edge-collector:
+    image: otel/opentelemetry-collector-contrib:0.99.0
+    container_name: signoz-edge-collector
+    restart: unless-stopped
+    command: ["--config", "/conf/otel-collector-config.yaml"]
+    volumes:
+      - {{ collector_base_dir }}/otel-collector-config.yaml:/conf/otel-collector-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=unraid

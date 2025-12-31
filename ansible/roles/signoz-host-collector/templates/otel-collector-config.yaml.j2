@@ -1,0 +1,78 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu: {}
+      disk: {}
+      filesystem: {}
+      load: {}
+      memory: {}
+      network: {}
+      paging: {}
+      processes: {}
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 60s
+  filelog:
+    include:
+      - /var/lib/docker/containers/*/*-json.log
+    start_at: end
+    include_file_name: false
+    include_file_path: true
+    operators:
+      - type: json_parser
+        parse_from: body
+        timestamp:
+          parse_from: attributes.time
+          layout: "%Y-%m-%dT%H:%M:%S.%LZ"
+      - type: move
+        from: attributes.log
+        to: body
+
+processors:
+  batch: {}
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 800
+    spike_limit_mib: 400
+  resourcedetection:
+    detectors: [env, system]
+    override: false
+  resource:
+    attributes:
+      - key: signoz.edge
+        value: "unraid"
+        action: upsert
+
+exporters:
+  otlphttp/signoz:
+    endpoint: "{{ signoz_otlp_http_endpoint }}"
+    tls:
+      insecure: true
+  otlp/signoz:
+    endpoint: "{{ signoz_otlp_grpc_endpoint }}"
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    logs: {}
+  pipelines:
+    metrics:
+      receivers: [hostmetrics, docker_stats, otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters: [otlp/signoz]
+    logs:
+      receivers: [filelog, otlp]
+      processors: [resource, batch]
+      exporters: [otlphttp/signoz]
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp/signoz]

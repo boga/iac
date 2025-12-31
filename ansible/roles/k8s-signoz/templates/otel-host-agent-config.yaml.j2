@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ signoz_host_collector_name }}-config
+  labels:
+    app.kubernetes.io/name: signoz-host-collector
+    app.kubernetes.io/component: telemetry
+    app.kubernetes.io/instance: {{ signoz_host_collector_name }}
+    app.kubernetes.io/part-of: signoz
+  namespace: {{ namespace_name }}
+data:
+  collector.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+          http: {}
+      hostmetrics:
+        collection_interval: 30s
+        scrapers:
+          cpu: {}
+          disk: {}
+          filesystem: {}
+          load: {}
+          memory: {}
+          network: {}
+          paging: {}
+          processes: {}
+      filelog:
+        include:
+          - /var/log/containers/*.log
+        start_at: end
+        include_file_name: false
+        include_file_path: true
+        operators:
+          - type: move
+            from: attributes["log.file.path"]
+            to: resource["log.file.path"]
+      kubeletstats:
+        collection_interval: 60s
+        auth_type: serviceAccount
+        insecure_skip_verify: true
+        endpoint: https://${NODE_IP}:10250
+      k8s_cluster:
+        auth_type: serviceAccount
+        collection_interval: 60s
+
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 800
+        spike_limit_mib: 400
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata: [podName, namespace, nodeName, clusterName]
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+
+    exporters:
+      otlp:
+        endpoint: signoz-otel-collector:4317
+        tls:
+          insecure: true
+
+    service:
+      telemetry:
+        logs: {}
+      pipelines:
+        metrics:
+          receivers: [hostmetrics, kubeletstats, otlp, k8s_cluster]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlp]
+        logs:
+          receivers: [filelog, otlp]
+          processors: [k8sattributes, batch]
+          exporters: [otlp]
+        traces:
+          receivers: [otlp]
+          processors: [k8sattributes, batch]
+          exporters: [otlp]

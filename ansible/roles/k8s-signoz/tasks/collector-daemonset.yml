@@ -1,0 +1,58 @@
+---
+- name: Create RBAC for SigNoz host collector
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: "{{ signoz_host_collector_name }}"
+
+- name: Bind cluster permissions for host collector
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: "{{ signoz_host_collector_name }}"
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "nodes", "namespaces"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["nodes/proxy"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["events"]
+          verbs: ["watch", "list"]
+
+- name: Bind host collector service account
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: "{{ signoz_host_collector_name }}"
+      subjects:
+        - kind: ServiceAccount
+          name: "{{ signoz_host_collector_name }}"
+          namespace: "{{ namespace_name }}"
+      roleRef:
+        kind: ClusterRole
+        name: "{{ signoz_host_collector_name }}"
+        apiGroup: rbac.authorization.k8s.io
+
+- name: Configure host collector ConfigMap
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition: "{{ lookup('template', 'templates/otel-host-agent-config.yaml.j2') | from_yaml }}"
+
+- name: Deploy host collector DaemonSet
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition: "{{ lookup('template', 'templates/otel-host-agent-daemonset.yaml.j2') | from_yaml }}"
