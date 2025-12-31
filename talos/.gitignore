@@ -1,0 +1,4 @@
+# Talos generated configs
+*
+!patch.yml
+!.gitignore
