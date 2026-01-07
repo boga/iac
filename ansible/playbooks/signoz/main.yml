@@ -11,10 +11,6 @@
     signoz_otlp_http_port: 4318
 
   roles:
-    - role: k8s-create-namespace
-      vars:
-        namespace_name: "{{ k8s_namespace_name }}"
-
     - role: helm-repo
       vars:
         repo_name: "signoz"
