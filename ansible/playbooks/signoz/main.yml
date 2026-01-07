@@ -9,6 +9,7 @@
     signoz_otlp_tailscale_hostname: signoz-otel-collector
     signoz_otlp_grpc_port: 4317
     signoz_otlp_http_port: 4318
+    signoz_clickhouse_storage_class: nfs-unraid
 
   roles:
     - role: helm-repo
@@ -20,11 +21,7 @@
     - role: k8s-signoz
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
-        signoz_cluster_name: "{{ signoz_cluster_name }}"
         signoz_host_collector_name: "talos-host-collector"
-        signoz_otlp_tailscale_hostname: "{{ signoz_otlp_tailscale_hostname }}"
-        signoz_otlp_grpc_port: "{{ signoz_otlp_grpc_port }}"
-        signoz_otlp_http_port: "{{ signoz_otlp_http_port }}"
         signoz_clickhouse_size: 20Gi
 
 - name: Deploy SigNoz edge collector on Unraid
@@ -33,6 +30,9 @@
 
   vars:
     signoz_collector_dir: /opt/signoz-collector
+    signoz_otlp_tailscale_hostname: signoz-otel-collector
+    signoz_otlp_grpc_port: 4317
+    signoz_otlp_http_port: 4318
     signoz_otlp_tailscale_fqdn: "{{ signoz_otlp_tailscale_hostname }}.{{ tailscale_tailnet_name }}"
     signoz_otlp_http_endpoint: "http://{{ signoz_otlp_tailscale_fqdn }}:{{ signoz_otlp_http_port }}"
     signoz_otlp_grpc_endpoint: "{{ signoz_otlp_tailscale_fqdn }}:{{ signoz_otlp_grpc_port }}"
