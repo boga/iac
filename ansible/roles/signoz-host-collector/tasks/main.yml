@@ -18,10 +18,10 @@
     mode: '0644'
 
 - name: Launch SigNoz edge collector
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ collector_base_dir }}"
     state: present
-    restarted: true
+    recreate: always
   register: compose_output
 
 - name: Show compose changes

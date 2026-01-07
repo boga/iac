@@ -72,7 +72,7 @@
                 processors: [batch]
                 exporters: [otlp]
 
-- name: Expose SigNoz OTLP collector externally
+- name: Expose SigNoz OTLP collector via Tailscale
   kubernetes.core.k8s:
     state: present
     namespace: "{{ namespace_name }}"
@@ -84,19 +84,20 @@
         labels:
           app.kubernetes.io/instance: signoz
           app.kubernetes.io/name: signoz-otel-collector
+        annotations:
+          tailscale.com/hostname: "{{ signoz_otlp_tailscale_hostname }}"
       spec:
-        type: NodePort
+        type: LoadBalancer
+        loadBalancerClass: tailscale
         selector:
           app.kubernetes.io/component: otel-collector
           app.kubernetes.io/instance: signoz
         ports:
           - name: otlp-grpc
-            port: 4317
-            targetPort: 4317
+            port: "{{ signoz_otlp_grpc_port }}"
+            targetPort: "{{ signoz_otlp_grpc_port }}"
             protocol: TCP
-            nodePort: "{{ signoz_otlp_grpc_nodeport }}"
           - name: otlp-http
-            port: 4318
-            targetPort: 4318
+            port: "{{ signoz_otlp_http_port }}"
+            targetPort: "{{ signoz_otlp_http_port }}"
             protocol: TCP
-            nodePort: "{{ signoz_otlp_http_nodeport }}"
