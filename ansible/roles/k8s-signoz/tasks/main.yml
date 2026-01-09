@@ -1,0 +1,58 @@
+---
+- name: Install SigNoz
+  kubernetes.core.helm:
+    chart_ref: signoz/signoz
+    name: signoz
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ (signoz_chart_version | default('') | length > 0) | ternary(signoz_chart_version, omit) }}"
+    state: present
+    values:
+      global:
+        storageClass: "{{ signoz_storage_class }}"
+      clickhouse:
+        persistence:
+          storageClass: "{{ signoz_storage_class }}"
+      zookeeper:
+        persistence:
+          storageClass: "{{ signoz_storage_class }}"
+      alertmanager:
+        persistence:
+          storageClass: "{{ signoz_storage_class }}"
+
+- name: Install SigNoz k8s-infra
+  kubernetes.core.helm:
+    chart_ref: signoz/k8s-infra
+    name: signoz-k8s-infra
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ (signoz_k8s_infra_chart_version | default('') | length > 0) | ternary(signoz_k8s_infra_chart_version, omit) }}"
+    state: present
+    values:
+      otelCollectorEndpoint: "http://signoz-otel-collector.{{ namespace_name }}.svc.cluster.local:4317"
+      logs:
+        enabled: true
+      metrics:
+        enabled: true
+
+- name: Create Tailscale Ingress for SigNoz
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: signoz-tailscale
+        annotations:
+          tailscale.com/hostname: "{{ signoz_tailscale_hostname }}"
+      spec:
+        ingressClassName: tailscale
+        rules:
+          - http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "{{ signoz_frontend_service_name }}"
+                      port:
+                        name: "{{ signoz_frontend_service_port_name }}"

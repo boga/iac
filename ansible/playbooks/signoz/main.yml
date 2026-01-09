@@ -1,0 +1,22 @@
+---
+- name: Install SigNoz
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    signoz_namespace_name: o11y
+
+  roles:
+    - role: k8s-create-namespace
+      vars:
+        namespace_name: "{{ signoz_namespace_name }}"
+
+    - role: helm-repo
+      vars:
+        repo_name: "signoz"
+        repo_url: "https://charts.signoz.io"
+        update_repo_cache: yes
+
+    - role: k8s-signoz
+      vars:
+        namespace_name: "{{ signoz_namespace_name }}"
