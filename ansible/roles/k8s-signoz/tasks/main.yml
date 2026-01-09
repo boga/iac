@@ -42,10 +42,11 @@
       kind: Ingress
       metadata:
         name: signoz-tailscale
-        annotations:
-          tailscale.com/hostname: "{{ signoz_tailscale_hostname }}"
       spec:
         ingressClassName: tailscale
+        tls:
+          - hosts:
+              - "{{ signoz_tailscale_hostname }}"
         rules:
           - http:
               paths:
