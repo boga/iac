@@ -3,11 +3,4 @@
   kubernetes.core.helm_repository:
     name: "{{ repo_name }}"
     repo_url: "{{ repo_url }}"
-
-- name: Update Helm cache
-  kubernetes.core.helm:
-    name: dummy
-    namespace: kube-system
-    state: absent
-    update_repo_cache: true
-  when: update_repo_cache
+    force_update: "{{ update_repo_cache | default(false) }}"
