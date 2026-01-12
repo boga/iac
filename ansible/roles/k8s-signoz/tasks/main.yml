@@ -12,6 +12,7 @@
       clickhouse:
         persistence:
           storageClass: "{{ signoz_storage_class }}"
+        resources: "{{ signoz_clickhouse_resources }}"
       zookeeper:
         persistence:
           storageClass: "{{ signoz_storage_class }}"
