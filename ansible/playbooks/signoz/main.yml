@@ -1,0 +1,27 @@
+---
+- name: Install SigNoz
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    signoz_namespace_name: o11y
+
+  roles:
+    - role: k8s-create-namespace
+      vars:
+        namespace_name: "{{ signoz_namespace_name }}"
+        namespace_labels:
+          # SigNoz k8s-infra agent needs hostPath/hostPort; PSA must allow privileged pods.
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/warn: privileged
+          pod-security.kubernetes.io/audit: privileged
+
+    - role: helm-repo
+      vars:
+        repo_name: "signoz"
+        repo_url: "https://charts.signoz.io"
+        update_repo_cache: yes
+
+    - role: k8s-signoz
+      vars:
+        namespace_name: "{{ signoz_namespace_name }}"

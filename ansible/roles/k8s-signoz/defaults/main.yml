@@ -1,0 +1,13 @@
+---
+namespace_name: o11y
+signoz_chart_version: "0.106.0"
+signoz_k8s_infra_chart_version: "0.15.0"
+signoz_storage_class: nfs-unraid
+signoz_tailscale_hostname: observability
+signoz_frontend_service_name: signoz
+signoz_frontend_service_port_name: http
+signoz_clickhouse_resources:
+  requests:
+    memory: 4Gi
+  limits:
+    memory: 4Gi
