@@ -11,6 +11,7 @@
       vars:
         namespace_name: "{{ signoz_namespace_name }}"
         namespace_labels:
+          # SigNoz k8s-infra agent needs hostPath/hostPort; PSA must allow privileged pods.
           pod-security.kubernetes.io/enforce: privileged
           pod-security.kubernetes.io/warn: privileged
           pod-security.kubernetes.io/audit: privileged
