@@ -22,11 +22,6 @@
         namespace_name: "{{ k8s_namespace_name }}"
         grafana_chart_version: "7.0.8"
 
-    - role: k8s-loki
+    - role: k8s-victoria-metrics
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
-        loki_chart_version: "5.36.3"
-
-    - role: k8s-prometheus
-      vars:
-        namespace_name: o11y
