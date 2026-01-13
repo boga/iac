@@ -1,3 +1,2 @@
 ---
 grafana_ingress_host: "grafana"
-grafana_ingress_annotations: {}
