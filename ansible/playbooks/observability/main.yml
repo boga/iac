@@ -14,7 +14,7 @@
     - role: k8s-grafana
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
-        grafana_chart_version: "7.0.8"
+        grafana_chart_version: "10.5.5"
 
     - role: k8s-victoria-metrics
       vars:
