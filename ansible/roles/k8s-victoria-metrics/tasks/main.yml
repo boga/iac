@@ -20,10 +20,10 @@
         persistentVolume:
           storageClassName: "{{ victoria_metrics_storage_class }}"
           size: "{{ victoria_metrics_storage_size }}"
-  register: grafana_install_result
+  register: victoria_metrics_install_result
   retries: 3
   delay: 10
-  until: grafana_install_result is succeeded
+  until: victoria_metrics_install_result is succeeded
 
 - name: "Install Grafana ConfigMap: VictoriaMetrics datasource"
   kubernetes.core.k8s:
