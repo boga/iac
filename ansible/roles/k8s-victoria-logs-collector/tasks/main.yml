@@ -1,0 +1,47 @@
+---
+- name: Add victoria-metrics chart repo
+  kubernetes.core.helm_repository:
+    name: victoria-metrics
+    repo_url: "https://victoriametrics.github.io/helm-charts"
+
+- name: Install VictoriaLogs Collector
+  kubernetes.core.helm:
+    chart_ref: victoria-metrics/victoria-logs-collector
+    name: "{{ victoria_logs_collector_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ victoria_logs_collector_chart_version }}"
+    state: present
+    update_repo_cache: true
+    values:
+      fullnameOverride: "{{ victoria_logs_collector_release_name }}"
+      remoteWrite:
+        - url: "http://{{ victoria_logs_release_name }}.{{ namespace_name }}.svc.cluster.local:9428/insert/native"
+  register: victoria_logs_collector_install_result
+  # To overcome the issue with "helm --all" in kubernetes.core.helm:
+  retries: 3
+  delay: 10
+  until: victoria_logs_collector_install_result is succeeded
+
+- name: "Install Grafana ConfigMap: VictoriaLogs datasource"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-datasource-victoria-logs
+        labels:
+          grafana_datasource: "1"
+          namespace: o11y
+      data:
+        datasource.yaml: |-
+          apiVersion: 1
+          datasources:
+          - access: proxy
+            basicAuth: false
+            editable: false
+            isDefault: false
+            name: VictoriaLogs
+            type: victoriametrics-logs-datasource
+            url: http://{{ victoria_logs_release_name }}.{{ namespace_name }}.svc.cluster.local:9428
