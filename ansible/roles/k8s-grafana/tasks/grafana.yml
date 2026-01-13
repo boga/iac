@@ -1,3 +1,8 @@
+- name: Add Grafana chart repo
+  kubernetes.core.helm_repository:
+    name: grafana
+    repo_url: "https://grafana.github.io/helm-charts"
+
 - name: Install Grafana
   kubernetes.core.helm:
     chart_ref: grafana/grafana
@@ -5,18 +10,17 @@
     namespace: "{{ namespace_name }}"
     chart_version: "{{ grafana_chart_version }}"
     state: present
+    update_repo_cache: true
     values:
-      loki:
-        commonConfig:
-          replication_factor: 1
-        storage:
-          type: 'filesystem'
-      singleBinary:
-        replicas: 1
       sidecar:
         datasources:
           enabled: true
           skipReload: false
+  register: grafana_install_result
+  # To overcome the issue with "helm --all" in kubernetes.core.helm:
+  retries: 3
+  delay: 10
+  until: grafana_install_result is succeeded
 
 - name: "Create Ingress for Grafana"
   kubernetes.core.k8s:
@@ -29,11 +33,10 @@
         name: grafana
         labels:
           app: grafana
-        annotations:
-          ingress.kubernetes.io/rewrite-target: /
       spec:
+        ingressClassName: tailscale
         rules:
-          - host: "grafana.looner.lan"
+          - host: "{{ grafana_ingress_host }}"
             http:
               paths:
                 - backend:
@@ -43,3 +46,6 @@
                         name: service
                   path: /
                   pathType: Prefix
+        tls:
+          - hosts:
+              - "{{ grafana_ingress_host }}"

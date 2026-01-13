@@ -1,0 +1,6 @@
+---
+namespace_name: o11y
+victoria_metrics_chart_version: "0.28.0"
+victoria_metrics_release_name: "victoria-metrics"
+victoria_metrics_storage_class: "nfs-unraid"
+victoria_metrics_storage_size: "16Gi"
