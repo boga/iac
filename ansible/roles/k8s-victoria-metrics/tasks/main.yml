@@ -4,6 +4,11 @@
     name: victoria-metrics
     repo_url: "https://victoriametrics.github.io/helm-charts"
 
+- name: Add prometheus-community chart repo
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: "https://prometheus-community.github.io/helm-charts"
+
 - name: Install VictoriaMetrics
   kubernetes.core.helm:
     chart_ref: victoria-metrics/victoria-metrics-single
@@ -25,6 +30,25 @@
   retries: 3
   delay: 10
   until: victoria_metrics_install_result is succeeded
+
+- name: Install kube-state-metrics
+  kubernetes.core.helm:
+    chart_ref: prometheus-community/kube-state-metrics
+    name: "{{ kube_state_metrics_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ kube_state_metrics_chart_version }}"
+    state: present
+    update_repo_cache: true
+    values:
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
+  register: kube_state_metrics_install_result
+  # To overcome the issue with "helm --all" in kubernetes.core.helm:
+  retries: 3
+  delay: 10
+  until: kube_state_metrics_install_result is succeeded
 
 - name: "Install Grafana ConfigMap: VictoriaMetrics datasource"
   kubernetes.core.k8s:
