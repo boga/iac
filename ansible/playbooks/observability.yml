@@ -19,3 +19,9 @@
     - role: k8s-victoria-metrics
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
+
+    - role: k8s-victoria-logs
+      vars:
+        namespace_name: "{{ k8s_namespace_name }}"
+        victoria_logs_chart_version: "0.11.24"
+        victoria_logs_storage_size: "16Gi"
