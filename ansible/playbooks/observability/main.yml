@@ -4,18 +4,12 @@
   gather_facts: false
 
   vars:
-    - k8s_namespace_name: o11y
+    k8s_namespace_name: o11y
 
   roles:
     - role: k8s-create-namespace
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
-
-    - role: helm-repo
-      vars:
-        repo_name: "grafana"
-        repo_url: "https://grafana.github.io/helm-charts"
-        update_repo_cache: yes
 
     - role: k8s-grafana
       vars:

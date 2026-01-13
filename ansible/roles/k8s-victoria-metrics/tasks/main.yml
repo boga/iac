@@ -1,0 +1,46 @@
+---
+- name: Add victoria-metrics chart repo
+  kubernetes.core.helm_repository:
+    name: victoria-metrics
+    repo_url: "https://victoriametrics.github.io/helm-charts"
+
+- name: Install VictoriaMetrics
+  kubernetes.core.helm:
+    chart_ref: victoria-metrics/victoria-metrics-single
+    name: "{{ victoria_metrics_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ victoria_metrics_chart_version }}"
+    state: present
+    update_repo_cache: true
+    values:
+      server:
+        fullnameOverride: "{{ victoria_metrics_release_name }}"
+        scrape:
+          enabled: true
+        persistentVolume:
+          storageClassName: "{{ victoria_metrics_storage_class }}"
+          size: "{{ victoria_metrics_storage_size }}"
+
+- name: "Install Grafana ConfigMap: VictoriaMetrics datasource"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-datasource-victoria-metrics
+        labels:
+          grafana_datasource: "1"
+          namespace: o11y
+      data:
+        datasource.yaml: |-
+          apiVersion: 1
+          datasources:
+          - access: proxy
+            basicAuth: false
+            editable: false
+            isDefault: true
+            name: VictoriaMetrics
+            type: prometheus
+            url: http://{{ victoria_metrics_release_name }}.{{ namespace_name }}.svc.cluster.local:8428
