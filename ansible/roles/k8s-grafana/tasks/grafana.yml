@@ -16,6 +16,10 @@
         datasources:
           enabled: true
           skipReload: false
+  register: grafana_install_result
+  retries: 3
+  delay: 10
+  until: grafana_install_result is succeeded
 
 - name: "Create Ingress for Grafana"
   kubernetes.core.k8s:
