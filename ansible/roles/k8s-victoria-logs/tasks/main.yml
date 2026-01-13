@@ -1,0 +1,26 @@
+---
+- name: Add victoria-metrics chart repo
+  kubernetes.core.helm_repository:
+    name: victoria-metrics
+    repo_url: "https://victoriametrics.github.io/helm-charts"
+
+- name: Install VictoriaLogs
+  kubernetes.core.helm:
+    chart_ref: victoria-metrics/victoria-logs-single
+    name: "{{ victoria_logs_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ victoria_logs_chart_version }}"
+    state: present
+    update_repo_cache: true
+    values:
+      server:
+        fullnameOverride: "{{ victoria_logs_release_name }}"
+        persistentVolume:
+          enabled: true
+          storageClassName: "{{ victoria_logs_storage_class }}"
+          size: "{{ victoria_logs_storage_size }}"
+  register: victoria_logs_install_result
+  # To overcome the issue with "helm --all" in kubernetes.core.helm:
+  retries: 3
+  delay: 10
+  until: victoria_logs_install_result is succeeded

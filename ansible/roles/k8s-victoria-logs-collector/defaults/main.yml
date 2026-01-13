@@ -1,0 +1,5 @@
+---
+namespace_name: o11y
+victoria_logs_release_name: "victoria-logs"
+victoria_logs_collector_release_name: "victoria-logs-collector"
+victoria_logs_collector_chart_version: "0.2.6"
