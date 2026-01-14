@@ -1,0 +1,83 @@
+---
+- name: Install Immich
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    immich_release_name: immich
+    immich_namespace: immich
+    immich_library_pvc_name: immich-library
+    immich_library_storage_size: 15Gi
+    immich_storage_class: nfs-unraid
+    immich_chart_version: 0.10.3
+    immich_db_hostname: immich-postgres
+    immich_db_port: 5432
+    immich_db_username: immich
+    immich_db_password: "{{ immich_db_password }}"
+    immich_db_name: immich
+
+  tasks:
+    - name: Create Immich namespace
+      kubernetes.core.k8s:
+        name: "{{ immich_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create Immich library PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: "{{ immich_library_pvc_name }}"
+            namespace: "{{ immich_namespace }}"
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ immich_library_storage_size }}"
+            storageClassName: "{{ immich_storage_class }}"
+
+    - name: Add Immich chart repo
+      kubernetes.core.helm_repository:
+        name: immich
+        repo_url: "https://immich-app.github.io/immich-charts"
+
+    - name: Install Immich chart
+      kubernetes.core.helm:
+        chart_ref: immich/immich
+        name: "{{ immich_release_name }}"
+        namespace: "{{ immich_namespace }}"
+        create_namespace: true
+        chart_version: "{{ immich_chart_version }}"
+        values:
+          controllers:
+            main:
+              containers:
+                main:
+                  env:
+                    DB_HOSTNAME: "{{ immich_db_hostname }}"
+                    DB_PORT: "{{ immich_db_port }}"
+                    DB_USERNAME: "{{ immich_db_username }}"
+                    DB_PASSWORD: "{{ immich_db_password }}"
+                    DB_DATABASE_NAME: "{{ immich_db_name }}"
+          immich:
+            persistence:
+              library:
+                existingClaim: "{{ immich_library_pvc_name }}"
+          valkey:
+            enabled: true
+            persistence:
+              data:
+                size: 1Gi
+                storageClass: "{{ immich_storage_class }}"
+          machine-learning:
+            persistence:
+              cache:
+                size: 2Gi
+                storageClass: "{{ immich_storage_class }}"
+        wait: true
+        state: present
