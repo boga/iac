@@ -1,0 +1,21 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: Add CloudNativePG chart repo
+  kubernetes.core.helm_repository:
+    name: cloudnative-pg
+    repo_url: "https://cloudnative-pg.io/charts/"
+
+- name: Install CloudNativePG operator
+  kubernetes.core.helm:
+    chart_ref: cloudnative-pg/cloudnative-pg
+    name: "{{ cnpg_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ cnpg_chart_version }}"
+    state: present
+    update_repo_cache: true
