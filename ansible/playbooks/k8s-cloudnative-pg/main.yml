@@ -1,0 +1,10 @@
+---
+- name: Install CloudNativePG operator
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-cloudnative-pg
+      vars:
+        namespace_name: cnpg-system
+        cnpg_chart_version: 0.27.0

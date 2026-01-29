@@ -11,13 +11,6 @@
     name: cloudnative-pg
     repo_url: "https://cloudnative-pg.io/charts/"
 
-- name: Update Helm cache
-  kubernetes.core.helm:
-    name: dummy
-    namespace: kube-system
-    state: absent
-    update_repo_cache: true
-
 - name: Install CloudNativePG operator
   kubernetes.core.helm:
     chart_ref: cloudnative-pg/cloudnative-pg
@@ -25,3 +18,4 @@
     namespace: "{{ namespace_name }}"
     chart_version: "{{ cnpg_chart_version }}"
     state: present
+    update_repo_cache: true
