@@ -6,11 +6,10 @@
     name: "{{ namespace_name }}"
     state: present
 
-- name: "Add operators charts repos"
+- name: Add CloudNativePG chart repo
   kubernetes.core.helm_repository:
-    name: "{{ item.repo_name }}"
-    repo_url: "{{ item.repo_url }}"
-  loop: "{{ charts }}"
+    name: cloudnative-pg
+    repo_url: "https://cloudnative-pg.io/charts/"
 
 - name: Update Helm cache
   kubernetes.core.helm:
@@ -19,11 +18,10 @@
     state: absent
     update_repo_cache: true
 
-- name: Install the operator
+- name: Install CloudNativePG operator
   kubernetes.core.helm:
-    chart_ref: "{{ item.chart_ref }}"
-    name: "{{ item.release_name }}"
+    chart_ref: cloudnative-pg/cloudnative-pg
+    name: "{{ cnpg_release_name }}"
     namespace: "{{ namespace_name }}"
-    chart_version: "{{ postgres_operator_chart_version }}"
+    chart_version: "{{ cnpg_chart_version }}"
     state: present
-  loop: "{{ charts }}"

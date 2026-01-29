@@ -1,0 +1,4 @@
+---
+namespace_name: cnpg-system
+cnpg_release_name: cloudnative-pg
+cnpg_chart_version: 0.27.0
