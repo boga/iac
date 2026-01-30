@@ -4,7 +4,7 @@
   gather_facts: false
 
   roles:
-    - role: k8s-cnpg-cluster
+    - role: k8s-cloudnative-postgres-cluster
       vars:
         namespace_name: cnpg-test-ns
         cnpg_cluster_name: cnpg-test-cl
