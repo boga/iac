@@ -1,0 +1,8 @@
+---
+namespace_name: nfs-csi
+nfs_csi_release_name: nfs-csi
+nfs_csi_chart_ref: csi-driver-nfs/csi-driver-nfs
+nfs_csi_chart_version: "4.12.1"
+nfs_csi_server: 192.168.88.178
+nfs_csi_share: /mnt/user/k8s-nfs-csi
+nfs_csi_storage_class_name: nfs-csi-unraid

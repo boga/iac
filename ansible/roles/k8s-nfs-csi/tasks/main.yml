@@ -1,0 +1,69 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: Add NFS CSI chart repo
+  kubernetes.core.helm_repository:
+    name: csi-driver-nfs
+    repo_url: "https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts"
+
+- name: Install NFS CSI driver
+  kubernetes.core.helm:
+    chart_ref: "{{ nfs_csi_chart_ref }}"
+    name: "{{ nfs_csi_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ nfs_csi_chart_version | default(omit, true) }}"
+    state: present
+    update_repo_cache: true
+  register: nfs_csi_install_result
+  retries: 3
+  delay: 10
+  until: nfs_csi_install_result is succeeded
+
+- name: Get a list of all storage classes
+  kubernetes.core.k8s_info:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+  register: storage_class_list
+
+- name: Postprocess storage classes list
+  ansible.builtin.set_fact:
+    storage_classes: "{{ storage_classes | default([]) + [ { 'name': item.metadata.name, 'isDefault': (item.metadata.annotations | default({})).get('storageclass.kubernetes.io/is-default-class', 'false') } ] }}"
+  with_items: "{{ storage_class_list.resources }}"
+
+- name: Remove default flag from other storage classes
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: "{{ item.name }}"
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "false"
+  when: item.isDefault == "true" and item.name != nfs_csi_storage_class_name
+  with_items: "{{ storage_classes | default([]) }}"
+
+- name: Create NFS CSI storage class
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: "{{ nfs_csi_storage_class_name }}"
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"
+      provisioner: nfs.csi.k8s.io
+      allowVolumeExpansion: true
+      reclaimPolicy: Delete
+      volumeBindingMode: Immediate
+      parameters:
+        server: "{{ nfs_csi_server }}"
+        share: "{{ nfs_csi_share }}"
+        subDir: "${pvc.metadata.namespace}/${pvc.metadata.name}"
+        onDelete: delete
