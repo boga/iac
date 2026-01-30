@@ -1,0 +1,13 @@
+---
+- name: Create CNPG cluster
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-cloudnative-postgres-cluster
+      vars:
+        namespace_name: cnpg-test-ns
+        cnpg_cluster_name: cnpg-test-cl
+        cnpg_instances: 1
+        cnpg_storage_size: 1Gi
+        cnpg_storage_class: nfs-unraid
