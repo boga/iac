@@ -85,3 +85,4 @@
         wait_timeout: 180
 
 - ansible.builtin.import_playbook: "playbooks/observability/main.yml"
+- ansible.builtin.import_playbook: "playbooks/immich/main.yml"

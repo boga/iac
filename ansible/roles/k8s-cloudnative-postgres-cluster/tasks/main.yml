@@ -17,10 +17,27 @@
   ansible.builtin.set_fact:
     cnpg_bootstrap_initdb_spec: {}
 
+- name: Initialize CNPG postgresql spec
+  ansible.builtin.set_fact:
+    cnpg_postgresql_spec: {}
+
 - name: Build CNPG bootstrap initdb spec
   ansible.builtin.set_fact:
-    cnpg_bootstrap_initdb_spec: "{{ {'database': cnpg_bootstrap_database, 'owner': cnpg_bootstrap_owner} | combine(((cnpg_db_secret_name | length) > 0) | ternary({'secret': {'name': cnpg_db_secret_name}}, {})) }}"
+    cnpg_bootstrap_initdb_spec: >-
+      {{
+        {'database': cnpg_bootstrap_database, 'owner': cnpg_bootstrap_owner}
+        | combine(((cnpg_db_secret_name | length) > 0) | ternary({'secret': {'name': cnpg_db_secret_name}}, {}))
+        | combine(((cnpg_post_init_application_sql | length) > 0) | ternary({'postInitApplicationSQL': cnpg_post_init_application_sql}, {}))
+      }}
   when: cnpg_bootstrap_initdb | bool
+
+- name: Build CNPG postgresql spec
+  ansible.builtin.set_fact:
+    cnpg_postgresql_spec: >-
+      {{
+        ((cnpg_postgresql_shared_preload_libraries | length) > 0)
+        | ternary({'shared_preload_libraries': cnpg_postgresql_shared_preload_libraries}, {})
+      }}
 
 - name: Build CNPG cluster spec
   ansible.builtin.set_fact:
@@ -30,6 +47,7 @@
         | combine(((cnpg_image_name | length) > 0) | ternary({'imageName': cnpg_image_name}, {}))
         | combine((cnpg_enable_superuser_access | bool) | ternary({'enableSuperuserAccess': true}, {}))
         | combine((cnpg_bootstrap_initdb | bool) | ternary({'bootstrap': {'initdb': cnpg_bootstrap_initdb_spec}}, {}))
+        | combine(((cnpg_postgresql_spec | length) > 0) | ternary({'postgresql': cnpg_postgresql_spec}, {}))
       }}
 
 - name: Create CNPG credentials secret

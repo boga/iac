@@ -5,9 +5,11 @@ cnpg_instances: 1
 cnpg_storage_size: 10Gi
 cnpg_storage_class: ""
 cnpg_image_name: ""
+cnpg_postgresql_shared_preload_libraries: []
 cnpg_bootstrap_initdb: false
 cnpg_bootstrap_database: ""
 cnpg_bootstrap_owner: ""
+cnpg_post_init_application_sql: []
 cnpg_db_secret_name: ""
 cnpg_db_username: ""
 cnpg_db_password: ""

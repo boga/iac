@@ -2,3 +2,4 @@
 tailscale_operator_client_id: "{{ vault_tailscale_client_id }}"
 tailscale_operator_client_secret: "{{ vault_tailscale_client_secret }}"
 tailscale_tailnet_name: "saiga-boga.ts.net"
+immich_db_password: "{{ vault_immich_db_password }}"

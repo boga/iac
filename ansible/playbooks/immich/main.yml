@@ -1,0 +1,31 @@
+---
+- name: Install Immich
+  hosts: localhost
+  gather_facts: false
+  vars:
+    immich_library_storage_size: 15Gi
+    immich_storage_class: nfs-unraid
+    immich_chart_version: 0.10.3
+    immich_postgres_storage_size: 1Gi
+
+  roles:
+    - role: k8s-cloudnative-postgres-cluster
+      vars:
+        namespace_name: "{{ immich_namespace }}"
+        cnpg_cluster_name: "{{ immich_postgres_cluster_name }}"
+        cnpg_instances: 1
+        cnpg_storage_size: "{{ immich_postgres_storage_size }}"
+        cnpg_storage_class: "{{ immich_storage_class }}"
+        cnpg_image_name: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
+        cnpg_bootstrap_initdb: true
+        cnpg_bootstrap_database: "{{ immich_db_name }}"
+        cnpg_bootstrap_owner: "{{ immich_db_username }}"
+        cnpg_db_secret_name: "{{ immich_db_secret_name }}"
+        cnpg_db_username: "{{ immich_db_username }}"
+        cnpg_db_password: "{{ immich_db_password }}"
+        cnpg_postgresql_shared_preload_libraries:
+          - vchord.so
+        cnpg_post_init_application_sql:
+          - CREATE EXTENSION vchord CASCADE;
+          - CREATE EXTENSION earthdistance CASCADE;
+    - role: immich
