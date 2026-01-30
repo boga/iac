@@ -10,3 +10,6 @@
 | nfs_mount_options     | Mount options for the StorageClass | [nfsvers=4.1]                                                                                                      |
 
 This role installs the NFS CSI driver using upstream manifests and creates a StorageClass.
+
+Notes:
+- The role relies on `KUBECONFIG` being set in the environment.
