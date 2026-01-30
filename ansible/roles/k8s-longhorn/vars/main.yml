@@ -1,0 +1,8 @@
+---
+namespace_name: longhorn-system
+longhorn_release_name: longhorn
+longhorn_chart_version: 1.5.1
+longhorn_data_path: /var/lib/longhorn-nfs
+longhorn_replicas: "1"
+longhorn_storage_class_name: longhorn-nfs-unraid
+longhorn_ui_host: "longhorn.{{ tailscale_tailnet_name }}"

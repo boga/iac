@@ -1,0 +1,9 @@
+---
+- name: Install Longhorn
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-longhorn
+      vars:
+        namespace_name: longhorn-system
