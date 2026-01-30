@@ -13,16 +13,20 @@
 
 - name: Install Longhorn
   kubernetes.core.helm:
-    chart_ref: longhorn/longhorn
+    chart_ref: "{{ longhorn_chart_ref }}"
     name: "{{ longhorn_release_name }}"
     namespace: "{{ namespace_name }}"
-    chart_version: "{{ longhorn_chart_version }}"
+    chart_version: "{{ longhorn_chart_version | default(omit, true) }}"
     state: present
     update_repo_cache: true
     values:
       defaultSettings:
         defaultDataPath: "{{ longhorn_data_path }}"
         defaultReplicaCount: "{{ longhorn_replicas }}"
+  register: longhorn_install_result
+  retries: 3
+  delay: 10
+  until: longhorn_install_result is succeeded
 
 - name: Create Longhorn UI ingress
   kubernetes.core.k8s:
@@ -60,7 +64,7 @@
 
 - name: Postprocess storage classes list
   ansible.builtin.set_fact:
-    storage_classes: "{{ storage_classes | default([]) + [ { 'name': item.metadata.name, 'isDefault': item.metadata.annotations['storageclass.kubernetes.io/is-default-class'] | default('false') } ] }}"
+    storage_classes: "{{ storage_classes | default([]) + [ { 'name': item.metadata.name, 'isDefault': (item.metadata.annotations | default({})).get('storageclass.kubernetes.io/is-default-class', 'false') } ] }}"
   with_items: "{{ storage_class_list.resources }}"
 
 - name: Remove default flag from other storage classes

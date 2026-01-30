@@ -5,5 +5,3 @@
 
   roles:
     - role: k8s-longhorn
-      vars:
-        namespace_name: longhorn-system
