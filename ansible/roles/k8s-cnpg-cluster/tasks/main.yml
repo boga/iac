@@ -1,0 +1,62 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ namespace_name }}"
+        labels: "{{ namespace_labels | default({}) }}"
+
+- name: Build CNPG storage spec
+  ansible.builtin.set_fact:
+    cnpg_storage_spec: "{{ {'size': cnpg_storage_size} | combine(cnpg_storage_class | length > 0 | ternary({'storageClass': cnpg_storage_class}, {})) }}"
+
+- name: Initialize CNPG bootstrap spec
+  ansible.builtin.set_fact:
+    cnpg_bootstrap_initdb_spec: {}
+
+- name: Build CNPG bootstrap initdb spec
+  ansible.builtin.set_fact:
+    cnpg_bootstrap_initdb_spec: "{{ {'database': cnpg_bootstrap_database, 'owner': cnpg_bootstrap_owner} | combine(cnpg_db_secret_name | length > 0 | ternary({'secret': {'name': cnpg_db_secret_name}}, {})) }}"
+  when: cnpg_bootstrap_initdb | bool
+
+- name: Build CNPG cluster spec
+  ansible.builtin.set_fact:
+    cnpg_cluster_spec: >-
+      {{
+        {'instances': cnpg_instances, 'storage': cnpg_storage_spec}
+        | combine(cnpg_image_name | length > 0 | ternary({'imageName': cnpg_image_name}, {}))
+        | combine(cnpg_enable_superuser_access | bool | ternary({'enableSuperuserAccess': true}, {}))
+        | combine(cnpg_bootstrap_initdb | bool | ternary({'bootstrap': {'initdb': cnpg_bootstrap_initdb_spec}}, {}))
+      }}
+
+- name: Create CNPG credentials secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ cnpg_db_secret_name }}"
+        namespace: "{{ namespace_name }}"
+      type: Opaque
+      stringData:
+        username: "{{ cnpg_db_username }}"
+        password: "{{ cnpg_db_password }}"
+  when:
+    - cnpg_db_secret_name | length > 0
+    - cnpg_db_username | length > 0
+    - cnpg_db_password | length > 0
+
+- name: "Create CNPG cluster: {{ cnpg_cluster_name }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: "{{ cnpg_cluster_name }}"
+        namespace: "{{ namespace_name }}"
+      spec: "{{ cnpg_cluster_spec }}"
