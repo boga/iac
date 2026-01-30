@@ -1,0 +1,50 @@
+---
+- name: "Apply NFS CSI driver manifests: {{ nfs_csi_version }}"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    src: "{{ nfs_csi_repo_base }}/{{ item }}"
+  loop:
+    - rbac-csi-nfs.yaml
+    - csi-nfs-driverinfo.yaml
+    - csi-nfs-controller.yaml
+    - csi-nfs-node.yaml
+
+- name: Wait for NFS CSI controller deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    api_version: apps/v1
+    kind: Deployment
+    name: csi-nfs-controller
+    namespace: kube-system
+    wait: true
+    wait_timeout: 180
+
+- name: Wait for NFS CSI node daemonset
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    api_version: apps/v1
+    kind: DaemonSet
+    name: csi-nfs-node
+    namespace: kube-system
+    wait: true
+    wait_timeout: 180
+
+# StorageClass parameters are immutable; changing unraid_nfs_server or unraid_nfs_share
+# requires deleting and recreating the StorageClass or using a new name.
+- name: "Add StorageClass: {{ nfs_storageclass_name }}"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: "{{ nfs_storageclass_name }}"
+      provisioner: nfs.csi.k8s.io
+      parameters:
+        server: "{{ unraid_nfs_server }}"
+        share: "{{ unraid_nfs_share }}"
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      mountOptions: "{{ nfs_mount_options }}"

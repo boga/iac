@@ -1,0 +1,12 @@
+---
+kubeconfig_path: "./kubeconfig"
+nfs_csi_version: "v4.12.1"
+nfs_csi_repo_base: "https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/{{ nfs_csi_version }}/deploy/{{ nfs_csi_version }}"
+nfs_storageclass_name: "nfs-unraid"
+
+# StorageClass parameters are immutable; changing unraid_nfs_server or unraid_nfs_share
+# requires deleting and recreating the StorageClass or using a new name.
+unraid_nfs_server: "192.168.88.178"
+unraid_nfs_share: "/mnt/user/k8s-nfs"
+nfs_mount_options:
+  - nfsvers=4.1

@@ -1,0 +1,9 @@
+---
+- name: Install NFS CSI driver
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - kubernetes.core
+
+  roles:
+    - role: k8s-nfs-csi
