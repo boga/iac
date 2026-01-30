@@ -72,3 +72,28 @@
   retries: 3
   delay: 10
   until: immich_install_result is succeeded
+
+- name: Create Tailscale Ingress for Immich
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ immich_namespace }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: immich-tailscale
+      spec:
+        ingressClassName: tailscale
+        tls:
+          - hosts:
+              - "{{ immich_tailscale_hostname }}"
+        rules:
+          - http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "{{ immich_service_name }}"
+                      port:
+                        name: "{{ immich_service_port_name }}"

@@ -11,3 +11,6 @@ immich_db_name: immich
 immich_db_secret_name: immich-postgres-credentials
 immich_postgres_cluster_name: immich-database
 immich_postgres_storage_size: 1Gi
+immich_service_name: "{{ immich_release_name }}-server"
+immich_service_port_name: http
+immich_tailscale_hostname: "immich.{{ tailscale_tailnet_name }}"
