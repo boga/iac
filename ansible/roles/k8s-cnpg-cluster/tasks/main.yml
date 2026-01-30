@@ -11,7 +11,7 @@
 
 - name: Build CNPG storage spec
   ansible.builtin.set_fact:
-    cnpg_storage_spec: "{{ {'size': cnpg_storage_size} | combine(cnpg_storage_class | length > 0 | ternary({'storageClass': cnpg_storage_class}, {})) }}"
+    cnpg_storage_spec: "{{ {'size': cnpg_storage_size} | combine(((cnpg_storage_class | length) > 0) | ternary({'storageClass': cnpg_storage_class}, {})) }}"
 
 - name: Initialize CNPG bootstrap spec
   ansible.builtin.set_fact:
@@ -19,7 +19,7 @@
 
 - name: Build CNPG bootstrap initdb spec
   ansible.builtin.set_fact:
-    cnpg_bootstrap_initdb_spec: "{{ {'database': cnpg_bootstrap_database, 'owner': cnpg_bootstrap_owner} | combine(cnpg_db_secret_name | length > 0 | ternary({'secret': {'name': cnpg_db_secret_name}}, {})) }}"
+    cnpg_bootstrap_initdb_spec: "{{ {'database': cnpg_bootstrap_database, 'owner': cnpg_bootstrap_owner} | combine(((cnpg_db_secret_name | length) > 0) | ternary({'secret': {'name': cnpg_db_secret_name}}, {})) }}"
   when: cnpg_bootstrap_initdb | bool
 
 - name: Build CNPG cluster spec
@@ -27,9 +27,9 @@
     cnpg_cluster_spec: >-
       {{
         {'instances': cnpg_instances, 'storage': cnpg_storage_spec}
-        | combine(cnpg_image_name | length > 0 | ternary({'imageName': cnpg_image_name}, {}))
-        | combine(cnpg_enable_superuser_access | bool | ternary({'enableSuperuserAccess': true}, {}))
-        | combine(cnpg_bootstrap_initdb | bool | ternary({'bootstrap': {'initdb': cnpg_bootstrap_initdb_spec}}, {}))
+        | combine(((cnpg_image_name | length) > 0) | ternary({'imageName': cnpg_image_name}, {}))
+        | combine((cnpg_enable_superuser_access | bool) | ternary({'enableSuperuserAccess': true}, {}))
+        | combine((cnpg_bootstrap_initdb | bool) | ternary({'bootstrap': {'initdb': cnpg_bootstrap_initdb_spec}}, {}))
       }}
 
 - name: Create CNPG credentials secret

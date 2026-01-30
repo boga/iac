@@ -19,3 +19,8 @@
     chart_version: "{{ cnpg_chart_version }}"
     state: present
     update_repo_cache: true
+  register: cnpg_operator_install_result
+  # To overcome the issue with "helm --all" in kubernetes.core.helm:
+  retries: 3
+  delay: 10
+  until: cnpg_operator_install_result is succeeded
