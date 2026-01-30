@@ -1,5 +1,4 @@
 ---
-kubeconfig_path: "./kubeconfig"
 nfs_csi_version: "v4.12.1"
 nfs_csi_repo_base: "https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/{{ nfs_csi_version }}/deploy/{{ nfs_csi_version }}"
 nfs_storageclass_name: "nfs-unraid"

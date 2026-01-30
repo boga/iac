@@ -1,7 +1,6 @@
 ---
 - name: "Apply NFS CSI driver manifests: {{ nfs_csi_version }}"
   kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig_path }}"
     state: present
     src: "{{ nfs_csi_repo_base }}/{{ item }}"
   loop:
@@ -12,7 +11,6 @@
 
 - name: Wait for NFS CSI controller deployment
   kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig_path }}"
     api_version: apps/v1
     kind: Deployment
     name: csi-nfs-controller
@@ -22,7 +20,6 @@
 
 - name: Wait for NFS CSI node daemonset
   kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig_path }}"
     api_version: apps/v1
     kind: DaemonSet
     name: csi-nfs-node
@@ -34,7 +31,6 @@
 # requires deleting and recreating the StorageClass or using a new name.
 - name: "Add StorageClass: {{ nfs_storageclass_name }}"
   kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig_path }}"
     state: present
     definition:
       apiVersion: storage.k8s.io/v1
