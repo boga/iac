@@ -1,0 +1,14 @@
+---
+namespace_name: default
+cnpg_cluster_name: postgres
+cnpg_instances: 1
+cnpg_storage_size: 10Gi
+cnpg_storage_class: ""
+cnpg_image_name: ""
+cnpg_bootstrap_initdb: false
+cnpg_bootstrap_database: ""
+cnpg_bootstrap_owner: ""
+cnpg_db_secret_name: ""
+cnpg_db_username: ""
+cnpg_db_password: ""
+cnpg_enable_superuser_access: false
