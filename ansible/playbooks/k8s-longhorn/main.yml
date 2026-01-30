@@ -5,3 +5,9 @@
 
   roles:
     - role: k8s-longhorn
+      vars:
+        namespace_name: longhorn-system
+        longhorn_chart_version: "1.11.0"
+        longhorn_data_path: /var/lib/longhorn-nfs
+        longhorn_storage_class_name: longhorn-nfs-unraid
+        longhorn_ui_host: "longhorn.{{ tailscale_tailnet_name }}"
