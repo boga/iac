@@ -1,0 +1,9 @@
+---
+- name: Install Homepage
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-homepage
+      vars:
+        namespace_name: homepage
