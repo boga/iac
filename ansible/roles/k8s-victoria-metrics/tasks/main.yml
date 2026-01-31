@@ -22,6 +22,18 @@
         fullnameOverride: "{{ victoria_metrics_release_name }}"
         scrape:
           enabled: true
+          extraScrapeConfigs:
+            - job_name: kube-state-metrics
+              honor_labels: true
+              static_configs:
+                - targets:
+                    - "{{ kube_state_metrics_release_name }}.{{ namespace_name }}.svc.cluster.local:8080"
+        relabel:
+          enabled: true
+          config:
+            - action: replace
+              target_label: cluster
+              replacement: "{{ victoria_metrics_cluster_name }}"
         persistentVolume:
           storageClassName: "{{ victoria_metrics_storage_class }}"
           size: "{{ victoria_metrics_storage_size }}"
@@ -41,14 +53,77 @@
     update_repo_cache: true
     values:
       service:
-        annotations:
-          prometheus.io/scrape: "true"
-          prometheus.io/port: "8080"
+        annotations: {}
   register: kube_state_metrics_install_result
   # To overcome the issue with "helm --all" in kubernetes.core.helm:
   retries: 3
   delay: 10
   until: kube_state_metrics_install_result is succeeded
+
+- name: Install VictoriaMetrics Alert (vmalert)
+  kubernetes.core.helm:
+    chart_ref: victoria-metrics/victoria-metrics-alert
+    name: "{{ victoria_metrics_alert_release_name }}"
+    namespace: "{{ namespace_name }}"
+    chart_version: "{{ victoria_metrics_alert_chart_version }}"
+    state: present
+    update_repo_cache: true
+    values:
+      server:
+        datasource:
+          url: http://{{ victoria_metrics_release_name }}.{{ namespace_name }}.svc.cluster.local:8428
+        remote:
+          write:
+            url: http://{{ victoria_metrics_release_name }}.{{ namespace_name }}.svc.cluster.local:8428
+        config:
+          alerts:
+            groups:
+              - name: kubernetes-mixin-minimal
+                rules:
+                  - record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
+                    expr: sum by (namespace, pod, container, node) (rate(container_cpu_usage_seconds_total{container!="", image!=""}[5m]))
+                    labels:
+                      cluster: "{{ victoria_metrics_cluster_name }}"
+                  - record: mixin_pod_workload
+                    expr: |
+                      max by (namespace, pod, workload, workload_type) (
+                        (
+                          label_replace(
+                            label_replace(
+                              kube_pod_owner{owner_kind="ReplicaSet"},
+                              "replicaset", "$1", "owner_name", "(.*)"
+                            ),
+                            "workload_type", "deployment", "owner_kind", "ReplicaSet"
+                          )
+                          * on(namespace, replicaset) group_left(workload)
+                            label_replace(
+                              kube_replicaset_owner{owner_kind="Deployment"},
+                              "workload", "$1", "owner_name", "(.*)"
+                            )
+                        )
+                        or
+                        label_replace(
+                          label_replace(
+                            kube_pod_owner{owner_kind!="ReplicaSet", owner_kind!="Job"},
+                            "workload", "$1", "owner_name", "(.*)"
+                          ),
+                          "workload_type", "$1", "owner_kind", "(.*)"
+                        )
+                        or
+                        label_replace(
+                          label_replace(
+                            kube_pod_owner{owner_kind="Job"},
+                            "workload", "$1", "owner_name", "(.*)"
+                          ),
+                          "workload_type", "job", "owner_kind", "Job"
+                        )
+                      )
+                    labels:
+                      cluster: "{{ victoria_metrics_cluster_name }}"
+  register: victoria_metrics_alert_install_result
+  retries: 3
+  delay: 10
+  until: victoria_metrics_alert_install_result is succeeded
 
 - name: "Install Grafana ConfigMap: VictoriaMetrics datasource"
   kubernetes.core.k8s:
