@@ -21,18 +21,11 @@ homepage_bookmarks_yaml: |
           - abbr: GH
             href: https://github.com/
 homepage_services_yaml: |
-  - My First Group:
-      - My First Service:
-          href: http://localhost/
-          description: Homepage is awesome
-  - My Second Group:
-      - My Second Service:
-          href: http://localhost/
-          description: Homepage is the best
-  - My Third Group:
-      - My Third Service:
-          href: http://localhost/
-          description: Homepage is
+  - Apps:
+      - Home Assistant:
+          href: https://home-assistant.saiga-boga.ts.net
+          description: Home automation
+          icon: home-assistant.png
 homepage_widgets_yaml: |
   - kubernetes:
       cluster:
