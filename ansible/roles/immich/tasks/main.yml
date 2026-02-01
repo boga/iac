@@ -82,13 +82,21 @@
       kind: Ingress
       metadata:
         name: immich-tailscale
+        annotations:
+          gethomepage.dev/description: "Immich photo management"
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: "Apps"
+          gethomepage.dev/icon: "immich.png"
+          gethomepage.dev/name: "Immich"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=server,app.kubernetes.io/instance={{ immich_release_name }}"
       spec:
         ingressClassName: tailscale
         tls:
           - hosts:
               - "{{ immich_tailscale_hostname }}"
         rules:
-          - http:
+          - host: "{{ immich_tailscale_hostname }}"
+            http:
               paths:
                 - path: /
                   pathType: Prefix

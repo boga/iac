@@ -1,0 +1,51 @@
+---
+namespace_name: "homepage"
+
+homepage_name: "homepage"
+homepage_image: "ghcr.io/gethomepage/homepage:latest"
+homepage_image_pull_policy: "Always"
+homepage_replicas: 1
+
+homepage_ingress_class_name: "tailscale"
+homepage_ingress_host: "home.{{ tailscale_tailnet_name }}"
+homepage_ingress_path: "/"
+homepage_ingress_path_type: "Prefix"
+homepage_allowed_hosts: "{{ homepage_ingress_host }}"
+
+homepage_kubernetes_yaml: |
+  mode: cluster
+homepage_settings_yaml: ""
+homepage_bookmarks_yaml: |
+  - Developer:
+      - Github:
+          - abbr: GH
+            href: https://github.com/
+homepage_services_yaml: |
+  - Apps:
+      - Home Assistant:
+          href: https://home-assistant.saiga-boga.ts.net
+          description: Home automation
+          icon: home-assistant.png
+homepage_widgets_yaml: |
+  - kubernetes:
+      cluster:
+        show: true
+        cpu: true
+        memory: true
+        showLabel: true
+        label: "cluster"
+      nodes:
+        show: true
+        cpu: true
+        memory: true
+        showLabel: true
+  - resources:
+      backend: resources
+      expanded: true
+      cpu: true
+      memory: true
+      network: default
+  - search:
+      provider: duckduckgo
+      target: _blank
+homepage_docker_yaml: ""

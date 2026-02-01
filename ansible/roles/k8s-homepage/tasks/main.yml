@@ -1,0 +1,25 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace_name }}"
+    state: present
+
+- name: "Create Homepage RBAC"
+  kubernetes.core.k8s:
+    state: present
+    template: rbac.yml.j2
+
+- name: "Deploy Homepage to k8s"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - serviceaccount.yml.j2
+    - secret.yml.j2
+    - configmap.yml.j2
+    - service.yml.j2
+    - deployment.yml.j2
+    - ingress.yml.j2

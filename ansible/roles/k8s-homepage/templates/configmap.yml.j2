@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ homepage_name }}
+  namespace: {{ namespace_name }}
+  labels:
+    app.kubernetes.io/name: {{ homepage_name }}
+data:
+  kubernetes.yaml: |-
+{{ homepage_kubernetes_yaml | indent(4, true) }}
+  settings.yaml: |-
+{{ homepage_settings_yaml | indent(4, true) }}
+  bookmarks.yaml: |-
+{{ homepage_bookmarks_yaml | indent(4, true) }}
+  services.yaml: |-
+{{ homepage_services_yaml | indent(4, true) }}
+  widgets.yaml: |-
+{{ homepage_widgets_yaml | indent(4, true) }}
+  docker.yaml: |-
+{{ homepage_docker_yaml | indent(4, true) }}
