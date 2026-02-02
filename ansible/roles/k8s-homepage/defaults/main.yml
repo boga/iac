@@ -47,5 +47,7 @@ homepage_widgets_yaml: |
       network: default
   - search:
       provider: duckduckgo
-      target: _blank
+      target: _self
+      focus: true
+      showSearchSuggestions: true
 homepage_docker_yaml: ""
