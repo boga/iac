@@ -6,3 +6,5 @@ id_ed*
 tmp
 .idea
 *.iml
+**/.terragrunt-cache/
+**/terraform.tfvars
