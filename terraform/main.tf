@@ -13,7 +13,7 @@ provider "proxmox" {
   }
 }
 
-resource "proxmox_virtual_environment_download_file" "cloud_image" {
+resource "proxmox_download_file" "cloud_image" {
   content_type        = var.image_content_type
   datastore_id        = var.image_datastore_id
   node_name           = var.proxmox_node
@@ -52,7 +52,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   disk {
     datastore_id = var.disk_datastore_id
-    import_from  = proxmox_virtual_environment_download_file.cloud_image.id
+    import_from  = proxmox_download_file.cloud_image.id
     interface    = var.disk_interface
     size         = var.disk_size_gb
     file_format  = var.disk_file_format
