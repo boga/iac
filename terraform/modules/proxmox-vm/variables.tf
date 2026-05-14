@@ -43,7 +43,7 @@ variable "image_datastore_id" {
 variable "image_content_type" {
   description = "Proxmox content type for the downloaded image."
   type        = string
-  default     = "iso"
+  default     = "import"
 }
 
 variable "image_checksum" {
@@ -56,14 +56,14 @@ variable "image_checksum" {
 variable "image_checksum_algorithm" {
   description = "Checksum algorithm for the downloaded image."
   type        = string
-  default     = null
-  nullable    = true
+  default     = "sha512"
+  nullable    = false
 }
 
 variable "image_overwrite" {
   description = "Overwrite an existing managed file."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "image_overwrite_unmanaged" {
@@ -128,7 +128,7 @@ variable "disk_interface" {
 variable "disk_size_gb" {
   description = "Disk size in GB."
   type        = number
-  default     = 40
+  default     = 10
 }
 
 variable "disk_file_format" {
@@ -151,7 +151,7 @@ variable "cloud_init_datastore_id" {
 variable "vm_user" {
   description = "Default cloud-init username."
   type        = string
-  default     = "debian"
+  default     = "r00t"
 }
 
 variable "vm_password" {

@@ -2,40 +2,28 @@ module "proxmox_vm" {
   source = "./modules/proxmox-vm"
 
   proxmox_node = var.proxmox_node
-  vm_id        = var.vm_id
-  vm_name      = var.vm_name
 
-  vm_description = var.vm_description
-  tags           = var.tags
+  vm_id          = 501
+  vm_name        = "debian-01"
+  vm_description = "Debian VM managed by Terraform"
 
-  image_url                 = var.image_url
-  image_file_name           = var.image_file_name
-  image_datastore_id        = var.image_datastore_id
-  image_content_type        = var.image_content_type
-  image_checksum            = var.image_checksum
-  image_checksum_algorithm  = var.image_checksum_algorithm
-  image_overwrite           = var.image_overwrite
-  image_overwrite_unmanaged = var.image_overwrite_unmanaged
+  image_url          = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+  image_file_name    = "debian-13-genericcloud-amd64.qcow2"
+  image_checksum     = "902ea07fa2328d77b68a7052c30979535503acbfb5c4443c64f4aba7700dc0f1659e8c0debc2e620ed98186542aeb4e9a06d0d0b3b30c0f1074a4825b1a48f06"
+  image_datastore_id = var.image_datastore_id
 
-  on_boot = var.on_boot
-  started = var.started
+  cpu_cores   = 1
+  cpu_sockets = 1
 
-  cpu_cores   = var.cpu_cores
-  cpu_sockets = var.cpu_sockets
-  cpu_type    = var.cpu_type
-
-  memory_dedicated = var.memory_dedicated
-  memory_floating  = var.memory_floating
+  memory_dedicated = 512
+  memory_floating  = 512
 
   disk_datastore_id = var.disk_datastore_id
-  disk_interface    = var.disk_interface
-  disk_size_gb      = var.disk_size_gb
-  disk_file_format  = var.disk_file_format
-  disk_ssd          = var.disk_ssd
+  disk_size_gb      = 4
 
   cloud_init_datastore_id = var.cloud_init_datastore_id
   vm_user                 = var.vm_user
-  vm_password             = var.vm_password
+  vm_password             = var.debian_vm_password
   ssh_public_key          = var.ssh_public_key
 
   operating_system_type = var.operating_system_type
