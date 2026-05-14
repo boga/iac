@@ -121,9 +121,9 @@ Role definitions:
 
 ```sh
 pveum role add TerraformSys --privs "Sys.AccessNetwork Sys.Audit Sys.Modify"
-pveum role add TerraformStore --privs "Datastore.Audit Datastore.AllocateSpace Datastore.AllocateTemplate"
-pveum role add TerraformVM --privs "VM.Allocate VM.Clone VM.Config.CDROM VM.Config.Cloudinit VM.Config.CPU VM.Config.Disk VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Migrate VM.PowerMgmt"
-pveum role add TerraformSDN --privs "SDN.Use SDN.Audit"
+pveum role add TerraformStore --privs "Datastore.Allocate Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit"
+pveum role add TerraformVM --privs "VM.Allocate VM.Audit VM.Clone VM.Config.CDROM VM.Config.Cloudinit VM.Config.CPU VM.Config.Disk VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Migrate VM.PowerMgmt"
+pveum role add TerraformSDN --privs "SDN.Audit SDN.Use"
 ```
 
 ACL assignment:
