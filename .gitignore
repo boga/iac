@@ -2,7 +2,10 @@
 !sample.env
 id_ed*
 .terraform*
+terraform/**/terraform.tfstate*
 !.terraform*lock*
 tmp
 .idea
 *.iml
+**/.terragrunt-cache/
+**/terraform.tfvars
