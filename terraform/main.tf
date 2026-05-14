@@ -25,7 +25,7 @@ resource "proxmox_download_file" "cloud_image" {
   overwrite_unmanaged = var.image_overwrite_unmanaged
 }
 
-resource "proxmox_vm" "vm" {
+resource "proxmox_virtual_environment_vm" "vm" {
   name        = var.vm_name
   description = var.vm_description
   tags        = var.tags
