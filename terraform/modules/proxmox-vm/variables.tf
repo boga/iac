@@ -167,6 +167,19 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "ipv4_address" {
+  description = "IPv4 address in CIDR notation or dhcp."
+  type        = string
+  default     = "dhcp"
+}
+
+variable "ipv4_gateway" {
+  description = "IPv4 gateway."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "operating_system_type" {
   description = "Proxmox operating system type."
   type        = string

@@ -48,6 +48,17 @@ resource "proxmox_virtual_environment_vm" "vm" {
       keys     = [var.ssh_public_key]
       password = var.vm_password
     }
+
+    ip_config {
+      ipv4 {
+        address = var.ipv4_address
+        gateway = var.ipv4_gateway
+      }
+    }
+  }
+
+  // Docs say network_device is optional and has defaults. Yet the block is not being created if it's not configured
+  network_device {
   }
 
   operating_system {
