@@ -119,12 +119,6 @@ variable "started" {
   default     = true
 }
 
-variable "agent_enabled" {
-  description = "Enable the QEMU guest agent."
-  type        = bool
-  default     = true
-}
-
 variable "cpu_cores" {
   description = "Number of CPU cores."
   type        = number
@@ -224,12 +218,6 @@ variable "network_bridge" {
   description = "Proxmox bridge for the primary NIC."
   type        = string
   default     = "vmbr0"
-}
-
-variable "network_model" {
-  description = "NIC model."
-  type        = string
-  default     = "virtio"
 }
 
 variable "network_vlan_id" {

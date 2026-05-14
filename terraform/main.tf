@@ -35,10 +35,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
   on_boot   = var.on_boot
   started   = var.started
 
-  agent {
-    enabled = var.agent_enabled
-  }
-
   cpu {
     cores   = var.cpu_cores
     sockets = var.cpu_sockets
@@ -62,13 +58,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
   initialization {
     datastore_id = var.cloud_init_datastore_id
 
-    ip_config {
-      ipv4 {
-        address = var.ipv4_address
-        gateway = var.ipv4_gateway
-      }
-    }
-
     user_account {
       username = var.vm_user
       keys     = [var.ssh_public_key]
@@ -76,17 +65,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     }
   }
 
-  network_device {
-    bridge  = var.network_bridge
-    model   = var.network_model
-    vlan_id = var.network_vlan_id
-  }
-
   operating_system {
     type = var.operating_system_type
-  }
-
-  serial_device {
-    device = "socket"
   }
 }
