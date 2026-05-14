@@ -108,12 +108,14 @@ Proxmox permissions are assigned through ACL roles on paths such as `/`, `/stora
 - `/storage/<image_datastore_id>`
 - `/storage/<disk_datastore_id>`
 - `/vms`
+- `/sdn`
 
-The current working setup uses three custom roles assigned to the user `terraform@pam`:
+The current working setup uses four custom roles assigned to the user `terraform@pam`:
 
 - `/` -> `TerraformSys`
 - `/storage/looner-ssd` -> `TerraformStore`
 - `/vms` -> `TerraformVM`
+- `/sdn` -> `TerraformSDN`
 
 Role definitions:
 
@@ -121,6 +123,7 @@ Role definitions:
 pveum role add TerraformSys --privs "Sys.AccessNetwork Sys.Audit Sys.Modify"
 pveum role add TerraformStore --privs "Datastore.Audit Datastore.AllocateSpace Datastore.AllocateTemplate"
 pveum role add TerraformVM --privs "VM.Allocate VM.Clone VM.Config.CDROM VM.Config.Cloudinit VM.Config.CPU VM.Config.Disk VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Migrate VM.PowerMgmt"
+pveum role add TerraformSDN --privs "SDN.Use SDN.Audit"
 ```
 
 ACL assignment:
@@ -129,6 +132,7 @@ ACL assignment:
 pveum acl modify / --users terraform@pam --roles TerraformSys
 pveum acl modify /storage/looner-ssd --users terraform@pam --roles TerraformStore
 pveum acl modify /vms --users terraform@pam --roles TerraformVM
+pveum acl modify /sdn --users terraform@pam --roles TerraformSDN
 ```
 
 Verification:
