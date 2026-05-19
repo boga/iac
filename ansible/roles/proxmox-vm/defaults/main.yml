@@ -11,6 +11,7 @@ proxmox_api:
 
 proxmox_vm_id: null
 proxmox_vm_name: ""
+proxmox_vm_tags: []
 proxmox_vm_cores: 1
 proxmox_vm_memory: 512
 proxmox_vm_disk_size: 5G

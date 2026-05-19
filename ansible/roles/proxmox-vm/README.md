@@ -58,6 +58,7 @@ The role merges this mapping with internal defaults, so callers may set only the
 ## Defaults
 
 ```yaml
+proxmox_vm_tags: []
 proxmox_vm_cores: 1
 proxmox_vm_memory: 512
 proxmox_vm_disk_size: 5G
@@ -124,6 +125,9 @@ proxmox_vm_searchdomain: example.test
           token_secret: "{{ vault_proxmox_api_token_secret }}"
         proxmox_vm_id: 100
         proxmox_vm_name: test-vm
+        proxmox_vm_tags:
+          - debian
+          - lab
         proxmox_vm_image_url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
         proxmox_vm_storage: local-lvm
 ```

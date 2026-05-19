@@ -17,8 +17,11 @@
 
         proxmox_vm_id: 300
         proxmox_vm_name: "sample-debian"
+        proxmox_vm_tags:
+          - "sample"
+          - "debian"
         proxmox_vm_cores: 1
-        proxmox_vm_memory: 1512
+        proxmox_vm_memory: 512
         proxmox_vm_disk_size: 6G
         proxmox_vm_image_url: "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
         proxmox_vm_image_checksum: "7752ad2adce1bc49dd964dae8300ed7a239d0bf3c13112f55953b111447fe642d2cc01afeead234aa6ebe3605513f2e7c0e7c56785d675c38ff40110d5c8332b"
