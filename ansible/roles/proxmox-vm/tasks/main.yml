@@ -1,0 +1,34 @@
+---
+- name: Validate Proxmox VM inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Check for existing Proxmox VM
+  community.proxmox.proxmox_vm_info:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    type: qemu
+  register: proxmox_vm_existing
+
+- name: Fail when Proxmox VM ID already exists
+  ansible.builtin.fail:
+    msg: "Proxmox VM ID {{ proxmox_vm_id }} already exists; this role does not update or recreate existing VMs."
+  when: proxmox_vm_existing.proxmox_vms | default([]) | length > 0
+
+- name: Download Proxmox VM image
+  ansible.builtin.include_tasks: download.yml
+
+- name: Create Proxmox VM
+  ansible.builtin.include_tasks: create-vm.yml
+
+- name: Configure optional Proxmox VM cloud-init
+  ansible.builtin.include_tasks: cloud-init.yml
+  when: proxmox_vm_cloud_init_enabled | bool
+
+- name: Start Proxmox VM
+  ansible.builtin.include_tasks: start.yml
+  when: proxmox_vm_start | bool

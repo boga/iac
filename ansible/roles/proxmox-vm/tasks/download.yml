@@ -1,0 +1,41 @@
+---
+- name: Download Proxmox VM image into storage
+  community.proxmox.proxmox_template:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    node: "{{ _proxmox_api.node }}"
+    storage: "{{ _proxmox_vm_image_storage }}"
+    content_type: "{{ _proxmox_vm_image_content_type }}"
+    url: "{{ proxmox_vm_image_url }}"
+    checksum_algorithm: "{{ proxmox_vm_image_checksum_algorithm if proxmox_vm_image_checksum | default('', true) | length > 0 else omit }}"
+    checksum: "{{ proxmox_vm_image_checksum if proxmox_vm_image_checksum | default('', true) | length > 0 else omit }}"
+    force: "{{ proxmox_vm_image_force | bool }}"
+    state: present
+  when: _proxmox_vm_template_download | bool
+
+- name: Ensure local Proxmox VM image directory exists
+  ansible.builtin.file:
+    path: "{{ proxmox_vm_image_dir }}"
+    state: directory
+    mode: "0755"
+  when: _proxmox_vm_local_download | bool
+
+- name: Download Proxmox VM image to local path
+  ansible.builtin.get_url:
+    url: "{{ proxmox_vm_image_url }}"
+    dest: "{{ _proxmox_vm_local_image_path }}"
+    checksum: >-
+      {{
+        (
+          proxmox_vm_image_checksum
+          if ':' in proxmox_vm_image_checksum
+          else proxmox_vm_image_checksum_algorithm ~ ':' ~ proxmox_vm_image_checksum
+        )
+        if proxmox_vm_image_checksum | default('', true) | length > 0
+        else omit
+      }}
+    mode: "0644"
+  when: _proxmox_vm_local_download | bool

@@ -1,0 +1,40 @@
+---
+proxmox_api:
+  host: "{{ inventory_hostname }}"
+  user: root@pam
+  token_id: root@pam!ansible
+  token_secret: ""
+  node: "{{ inventory_hostname }}"
+  validate_certs: false
+
+proxmox_vm_id: null
+proxmox_vm_name: ""
+proxmox_vm_cores: 1
+proxmox_vm_memory: 512
+proxmox_vm_disk_size: 5G
+proxmox_vm_storage: ""
+proxmox_vm_image_url: ""
+proxmox_vm_image_checksum: ""
+proxmox_vm_image_checksum_algorithm: sha256
+proxmox_vm_image_content_type: import
+proxmox_vm_image_download_method: auto
+proxmox_vm_image_dir: /var/lib/vz/template/qcow2
+proxmox_vm_image_file: ""
+proxmox_vm_image_force: false
+proxmox_vm_image_storage: "{{ proxmox_vm_storage }}"
+
+proxmox_vm_bridge: vmbr0
+proxmox_vm_start: true
+proxmox_vm_scsihw: virtio-scsi-pci
+proxmox_vm_disk: scsi0
+proxmox_vm_disk_format: raw
+proxmox_vm_disk_ssd: true
+proxmox_vm_disk_discard: "on"
+
+proxmox_vm_cloud_init_enabled: false
+proxmox_vm_cloud_init_storage: "{{ proxmox_vm_storage }}"
+proxmox_vm_ciuser: ""
+proxmox_vm_ssh_keys: []
+proxmox_vm_ipconfig0: ip=dhcp
+proxmox_vm_nameservers: []
+proxmox_vm_searchdomain: ""

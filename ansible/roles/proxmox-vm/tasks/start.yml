@@ -1,0 +1,11 @@
+---
+- name: Start Proxmox VM
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    state: started

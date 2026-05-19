@@ -1,0 +1,59 @@
+---
+- name: Create Proxmox VM shell
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    name: "{{ proxmox_vm_name }}"
+    cores: "{{ proxmox_vm_cores }}"
+    memory: "{{ proxmox_vm_memory }}"
+    scsihw: "{{ proxmox_vm_scsihw }}"
+    net:
+      net0: "virtio,bridge={{ proxmox_vm_bridge }}"
+    boot: "order={{ proxmox_vm_disk }};net0"
+    state: present
+
+- name: Import Proxmox VM disk from downloaded image
+  community.proxmox.proxmox_disk:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    vmid: "{{ proxmox_vm_id }}"
+    disk: "{{ proxmox_vm_disk }}"
+    storage: "{{ proxmox_vm_storage }}"
+    import_from: "{{ _proxmox_vm_import_from }}"
+    format: "{{ proxmox_vm_disk_format }}"
+    ssd: "{{ proxmox_vm_disk_ssd | bool }}"
+    discard: "{{ proxmox_vm_disk_discard }}"
+    state: present
+
+- name: Resize Proxmox VM disk
+  community.proxmox.proxmox_disk:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    vmid: "{{ proxmox_vm_id }}"
+    disk: "{{ proxmox_vm_disk }}"
+    size: "{{ proxmox_vm_disk_size }}"
+    state: resized
+
+- name: Set Proxmox VM boot order
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ _proxmox_api.host }}"
+    api_user: "{{ _proxmox_api.user }}"
+    api_token_id: "{{ _proxmox_api.token_id }}"
+    api_token_secret: "{{ _proxmox_api.token_secret }}"
+    validate_certs: "{{ _proxmox_api.validate_certs }}"
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    boot: "order={{ proxmox_vm_disk }};net0"
+    update: true
+    state: present

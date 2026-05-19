@@ -3,6 +3,7 @@ collections:
   - name: ansible.utils
   - name: community.docker
   - name: community.general
+  - name: community.proxmox
   - name: https://github.com/techno-tim/k3s-ansible.git
     type: git
     version: master
