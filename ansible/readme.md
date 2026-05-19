@@ -4,6 +4,17 @@ This document describes **exactly how to create and install a Talos Linux VM on 
 
 Follow the steps **in order**. Do **not** skip verification steps.
 
+## Mise Setup
+
+Use `mise` from the repository root before running Ansible commands:
+
+```bash
+mise install
+mise run ansible-deps
+```
+
+This installs the configured Python runtime, Python packages from `ansible/requirements.txt`, and Ansible roles and collections from `ansible/requirements.yml`.
+
 ---
 
 ## 1. Create the VM in Unraid

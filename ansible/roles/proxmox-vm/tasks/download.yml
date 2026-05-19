@@ -1,11 +1,6 @@
 ---
 - name: Download Proxmox VM image into storage
   community.proxmox.proxmox_template:
-    api_host: "{{ _proxmox_api.host }}"
-    api_user: "{{ _proxmox_api.user }}"
-    api_token_id: "{{ _proxmox_api.token_id }}"
-    api_token_secret: "{{ _proxmox_api.token_secret }}"
-    validate_certs: "{{ _proxmox_api.validate_certs }}"
     node: "{{ _proxmox_api.node }}"
     storage: "{{ _proxmox_vm_image_storage }}"
     content_type: "{{ _proxmox_vm_image_content_type }}"

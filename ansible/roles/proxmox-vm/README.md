@@ -44,11 +44,14 @@ The role reports all missing required variables in one failure.
 proxmox_api:
   host: looner
   user: root@pam
-  token_id: root@pam!ansible
+  token_id: ansible
   token_secret: "{{ vault_proxmox_api_token_secret }}"
   node: looner
   validate_certs: false
 ```
+
+Set `token_id` to the token name only, not the full `user@realm!token` value.
+For example, use `token_id: iac` with `user: ans@pam` for a Proxmox token shown as `ans@pam!iac`.
 
 The role merges this mapping with internal defaults, so callers may set only the keys they need to override.
 
@@ -116,6 +119,8 @@ proxmox_vm_searchdomain: example.test
         proxmox_api:
           host: looner
           node: looner
+          user: ans@pam
+          token_id: iac
           token_secret: "{{ vault_proxmox_api_token_secret }}"
         proxmox_vm_id: 100
         proxmox_vm_name: test-vm

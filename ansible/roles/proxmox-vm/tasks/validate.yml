@@ -6,9 +6,10 @@
         {
           'host': inventory_hostname,
           'user': 'root@pam',
-          'token_id': 'root@pam!ansible',
+          'token_id': 'ansible',
           'token_secret': '',
           'node': inventory_hostname,
+          'port': 8006,
           'validate_certs': false
         } | combine(proxmox_api | default({}), recursive=True)
       }}

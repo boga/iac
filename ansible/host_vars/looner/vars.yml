@@ -1,0 +1,15 @@
+proxmox_api:
+  host: "{{ vault_proxmox_host }}"
+  port: "{{ vault_proxmox_port }}"
+  user: "{{ vault_proxmox_user }}"
+  token_id: "{{ vault_proxmox_token_id }}"
+  token_secret: "{{ vault_proxmox_token_secret }}"
+  node: "{{ vault_proxmox_node }}"
+  validate_certs: "{{ vault_proxmox_validate_certs }}"
+
+proxmox_vm_storage: "looner-ssd2"
+proxmox_vm_image_checksum_algorithm: "sha512"
+proxmox_vm_image_content_type: import
+proxmox_vm_image_download_method: auto
+proxmox_vm_image_dir: "/var/lib/vz/template/qcow2"
+proxmox_vm_image_force: false

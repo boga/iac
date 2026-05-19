@@ -1,0 +1,33 @@
+---
+- name: Create sample Proxmox VM from image
+  hosts: looner
+  gather_facts: false
+
+  roles:
+    - name: "Create sample Proxmox VM from image"
+      role: proxmox-vm
+      vars:
+#        proxmox_api:
+#          host: "{{ inventory_hostname }}"
+#          user: root@pam
+#          token_id: ansible
+#          token_secret: "{{ vault_proxmox_api_token_secret }}"
+#          node: "{{ inventory_hostname }}"
+#          validate_certs: false
+
+        proxmox_vm_id: 300
+        proxmox_vm_name: "sample-debian"
+        proxmox_vm_cores: 1
+        proxmox_vm_memory: 1512
+        proxmox_vm_disk_size: 6G
+        proxmox_vm_image_url: "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+        proxmox_vm_image_checksum: "7752ad2adce1bc49dd964dae8300ed7a239d0bf3c13112f55953b111447fe642d2cc01afeead234aa6ebe3605513f2e7c0e7c56785d675c38ff40110d5c8332b"
+        proxmox_vm_image_file: "debian-13-genericcloud-amd64.qcow2"
+
+#        proxmox_vm_cloud_init_enabled: false
+#        proxmox_vm_cloud_init_storage: "{{ proxmox_vm_storage }}"
+#        proxmox_vm_ciuser: ubuntu
+#        proxmox_vm_ssh_keys: []
+#        proxmox_vm_ipconfig0: ip=dhcp
+#        proxmox_vm_nameservers: []
+#        proxmox_vm_searchdomain: ""

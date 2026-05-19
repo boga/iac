@@ -2,9 +2,11 @@
 proxmox_api:
   host: "{{ inventory_hostname }}"
   user: root@pam
-  token_id: root@pam!ansible
+  # For community.proxmox, token_id should be token name only, not full user@realm!token.
+  token_id: ansible
   token_secret: ""
   node: "{{ inventory_hostname }}"
+  port: 8006
   validate_certs: false
 
 proxmox_vm_id: null
@@ -15,7 +17,7 @@ proxmox_vm_disk_size: 5G
 proxmox_vm_storage: ""
 proxmox_vm_image_url: ""
 proxmox_vm_image_checksum: ""
-proxmox_vm_image_checksum_algorithm: sha256
+proxmox_vm_image_checksum_algorithm: sha256 # "md5", "sha1", "sha224", "sha256", "sha384", "sha512"
 proxmox_vm_image_content_type: import
 proxmox_vm_image_download_method: auto
 proxmox_vm_image_dir: /var/lib/vz/template/qcow2
