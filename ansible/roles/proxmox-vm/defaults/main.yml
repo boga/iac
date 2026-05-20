@@ -36,8 +36,9 @@ proxmox_vm_disk_discard: "on"
 
 proxmox_vm_cloud_init_enabled: false
 proxmox_vm_cloud_init_storage: "{{ proxmox_vm_storage }}"
-proxmox_vm_ciuser: ""
-proxmox_vm_ssh_keys: []
-proxmox_vm_ipconfig0: ip=dhcp
-proxmox_vm_nameservers: []
-proxmox_vm_searchdomain: ""
+proxmox_vm_cloud_init_user: ""
+proxmox_vm_cloud_init_password: ""
+proxmox_vm_cloud_init_ssh_keys: []
+proxmox_vm_cloud_init_ipconfig0: ip=dhcp
+proxmox_vm_cloud_init_nameservers: []
+proxmox_vm_cloud_init_searchdomain: ""

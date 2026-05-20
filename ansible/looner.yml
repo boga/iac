@@ -27,10 +27,14 @@
         proxmox_vm_image_checksum: "7752ad2adce1bc49dd964dae8300ed7a239d0bf3c13112f55953b111447fe642d2cc01afeead234aa6ebe3605513f2e7c0e7c56785d675c38ff40110d5c8332b"
         proxmox_vm_image_file: "debian-13-genericcloud-amd64.qcow2"
 
+        proxmox_vm_cloud_init_enabled: true
+        proxmox_vm_cloud_init_user: "r00t"
+        proxmox_vm_cloud_init_password: "aabb"
 #        proxmox_vm_cloud_init_enabled: false
 #        proxmox_vm_cloud_init_storage: "{{ proxmox_vm_storage }}"
-#        proxmox_vm_ciuser: ubuntu
-#        proxmox_vm_ssh_keys: []
-#        proxmox_vm_ipconfig0: ip=dhcp
-#        proxmox_vm_nameservers: []
-#        proxmox_vm_searchdomain: ""
+#        proxmox_vm_cloud_init_user: ubuntu
+#        proxmox_vm_cloud_init_password: "{{ vault_proxmox_vm_cloud_init_password }}"
+#        proxmox_vm_cloud_init_ssh_keys: []
+#        proxmox_vm_cloud_init_ipconfig0: ip=dhcp
+#        proxmox_vm_cloud_init_nameservers: []
+#        proxmox_vm_cloud_init_searchdomain: ""

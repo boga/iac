@@ -98,13 +98,14 @@ Enable it explicitly:
 ```yaml
 proxmox_vm_cloud_init_enabled: true
 proxmox_vm_cloud_init_storage: local-lvm
-proxmox_vm_ciuser: ubuntu
-proxmox_vm_ssh_keys:
+proxmox_vm_cloud_init_user: ubuntu
+proxmox_vm_cloud_init_password: "{{ vault_proxmox_vm_cloud_init_password }}"
+proxmox_vm_cloud_init_ssh_keys:
   - "ssh-ed25519 AAAA... user@example"
-proxmox_vm_ipconfig0: ip=dhcp
-proxmox_vm_nameservers:
+proxmox_vm_cloud_init_ipconfig0: ip=dhcp
+proxmox_vm_cloud_init_nameservers:
   - 1.1.1.1
-proxmox_vm_searchdomain: example.test
+proxmox_vm_cloud_init_searchdomain: example.test
 ```
 
 ## Example Playbook

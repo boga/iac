@@ -13,7 +13,30 @@ mise install
 mise run ansible-deps
 ```
 
-This installs the configured Python runtime, Python packages from `ansible/requirements.txt`, and Ansible roles and collections from `ansible/requirements.yml`.
+This prepares the local control environment:
+
+- Installs the configured Python runtime.
+- Creates or uses the project Python environment.
+- Installs Python packages from `ansible/requirements.txt`.
+- Installs Ansible roles and collections from `ansible/requirements.yml`.
+
+Use this check before running a playbook:
+
+```bash
+mise run syntax-looner
+```
+
+If Ansible reports missing Python libraries such as `proxmoxer`, rerun:
+
+```bash
+mise run ansible-python-deps
+```
+
+If Ansible reports missing roles or collections, rerun:
+
+```bash
+mise run ansible-galaxy-deps
+```
 
 ---
 
