@@ -1,5 +1,8 @@
 all:
   hosts:
+    looner:
+      ansible_host: localhost
+      ansible_connection: local
     nas:
       ansible_host: nas
       ansible_user: ans

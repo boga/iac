@@ -1,0 +1,16 @@
+---
+- name: Configure Proxmox VM cloud-init
+  community.proxmox.proxmox_kvm:
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    ide:
+      ide2: "{{ proxmox_vm_cloud_init_storage }}:cloudinit"
+    ciuser: "{{ proxmox_vm_cloud_init_user if proxmox_vm_cloud_init_user | default('', true) | length > 0 else omit }}"
+    cipassword: "{{ proxmox_vm_cloud_init_password if proxmox_vm_cloud_init_password | default('', true) | length > 0 else omit }}"
+    sshkeys: "{{ proxmox_vm_cloud_init_ssh_keys | join('\n') if proxmox_vm_cloud_init_ssh_keys | default([]) | length > 0 else omit }}"
+    ipconfig:
+      ipconfig0: "{{ proxmox_vm_cloud_init_ipconfig0 }}"
+    nameservers: "{{ proxmox_vm_cloud_init_nameservers if proxmox_vm_cloud_init_nameservers | default([]) | length > 0 else omit }}"
+    searchdomains: "{{ [proxmox_vm_cloud_init_searchdomain] if proxmox_vm_cloud_init_searchdomain | default('', true) | length > 0 else omit }}"
+    update: true
+    state: present

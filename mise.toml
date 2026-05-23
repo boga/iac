@@ -1,0 +1,24 @@
+[tools]
+python = "3"
+
+[env]
+_.python.venv = { path = ".venv" }
+
+[tasks.ansible-python-deps]
+description = "Install Python dependencies for Ansible modules"
+run = "python -m pip install -r ansible/requirements.txt"
+
+[tasks.ansible-galaxy-deps]
+description = "Install Ansible roles and collections"
+run = [
+  "ansible-galaxy collection install -r ansible/requirements.yml",
+  "ansible-galaxy role install -r ansible/requirements.yml",
+]
+
+[tasks.ansible-deps]
+description = "Install all Ansible dependencies"
+depends = ["ansible-python-deps", "ansible-galaxy-deps"]
+
+[tasks.syntax-looner]
+description = "Run syntax check for the looner playbook"
+run = "ansible-playbook -i ansible/inventory.yml ansible/looner.yml --syntax-check"

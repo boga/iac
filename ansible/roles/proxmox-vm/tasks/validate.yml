@@ -1,0 +1,73 @@
+---
+- name: Build effective Proxmox API settings
+  ansible.builtin.set_fact:
+    _proxmox_api: >-
+      {{
+        {
+          'host': inventory_hostname,
+          'user': 'root@pam',
+          'token_id': 'ansible',
+          'token_secret': '',
+          'node': inventory_hostname,
+          'port': 8006,
+          'validate_certs': false
+        } | combine(proxmox_api | default({}), recursive=True)
+      }}
+
+- name: Derive Proxmox VM image facts
+  ansible.builtin.set_fact:
+    _proxmox_vm_image_file: >-
+      {{
+        proxmox_vm_image_file
+        | default('', true)
+        | ternary(
+            proxmox_vm_image_file,
+            (proxmox_vm_image_url | default('', true) | urlsplit('path') | basename)
+          )
+      }}
+    _proxmox_vm_image_storage: "{{ proxmox_vm_image_storage | default(proxmox_vm_storage, true) }}"
+    _proxmox_vm_image_content_type: "{{ proxmox_vm_image_content_type | default('import', true) }}"
+    _proxmox_vm_download_method: "{{ proxmox_vm_image_download_method | default('auto', true) }}"
+
+- name: Collect invalid Proxmox VM variables
+  ansible.builtin.set_fact:
+    _proxmox_vm_invalid_vars: >-
+      {{
+        []
+        + (["proxmox_api.host must be set"] if (_proxmox_api.host | default('', true) | string | length == 0) else [])
+        + (["proxmox_api.user must be set"] if (_proxmox_api.user | default('', true) | string | length == 0) else [])
+        + (["proxmox_api.token_id must be set"] if (_proxmox_api.token_id | default('', true) | string | length == 0) else [])
+        + (["proxmox_api.token_secret must be set"] if (_proxmox_api.token_secret | default('', true) | string | length == 0) else [])
+        + (["proxmox_api.node must be set"] if (_proxmox_api.node | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_id must be set"] if (proxmox_vm_id is none or proxmox_vm_id | string | length == 0) else [])
+        + (["proxmox_vm_name must be set"] if (proxmox_vm_name | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_image_url must be set"] if (proxmox_vm_image_url | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_storage must be set"] if (proxmox_vm_storage | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_image_storage must be set"] if (_proxmox_vm_image_storage | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_disk_size must be set"] if (proxmox_vm_disk_size | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_image_checksum_algorithm must be set when proxmox_vm_image_checksum is set"] if (proxmox_vm_image_checksum | default('', true) | string | length > 0 and proxmox_vm_image_checksum_algorithm | default('', true) | string | length == 0) else [])
+        + (["proxmox_vm_image_download_method must be one of auto, template, get_url"] if (_proxmox_vm_download_method not in ['auto', 'template', 'get_url']) else [])
+        + (["proxmox_vm_image_content_type must be one of import, iso, vztmpl"] if (_proxmox_vm_image_content_type not in ['import', 'iso', 'vztmpl']) else [])
+        + (["proxmox_vm_image_file could not be derived from proxmox_vm_image_url"] if (_proxmox_vm_image_file | default('', true) | string | length == 0) else [])
+      }}
+
+- name: Fail when Proxmox VM inputs are invalid
+  ansible.builtin.fail:
+    msg: |
+      Invalid Proxmox VM role variables:
+      {% for invalid_var in _proxmox_vm_invalid_vars %}
+      - {{ invalid_var }}
+      {% endfor %}
+  when: _proxmox_vm_invalid_vars | length > 0
+
+- name: Build Proxmox VM image source facts
+  ansible.builtin.set_fact:
+    _proxmox_vm_template_download: "{{ _proxmox_vm_download_method in ['auto', 'template'] }}"
+    _proxmox_vm_local_download: "{{ _proxmox_vm_download_method == 'get_url' }}"
+    _proxmox_vm_local_image_path: "{{ proxmox_vm_image_dir }}/{{ _proxmox_vm_image_file }}"
+    _proxmox_vm_import_from: >-
+      {{
+        (_proxmox_vm_image_storage ~ ':' ~ _proxmox_vm_image_content_type ~ '/' ~ _proxmox_vm_image_file)
+        if _proxmox_vm_download_method in ['auto', 'template']
+        else (proxmox_vm_image_dir ~ '/' ~ _proxmox_vm_image_file)
+      }}

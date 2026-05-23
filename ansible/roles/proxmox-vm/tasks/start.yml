@@ -1,0 +1,6 @@
+---
+- name: Start Proxmox VM
+  community.proxmox.proxmox_kvm:
+    node: "{{ _proxmox_api.node }}"
+    vmid: "{{ proxmox_vm_id }}"
+    state: started
