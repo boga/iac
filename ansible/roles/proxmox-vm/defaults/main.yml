@@ -28,6 +28,10 @@ proxmox_vm_image_storage: "{{ proxmox_vm_storage }}"
 
 proxmox_vm_bridge: vmbr0
 proxmox_vm_start: true
+proxmox_vm_agent: ""
+proxmox_vm_bios: "seabios"
+proxmox_vm_machine: "pc"
+proxmox_vm_efidisk: {}
 proxmox_vm_scsihw: virtio-scsi-pci
 proxmox_vm_disk: scsi0
 proxmox_vm_disk_format: raw

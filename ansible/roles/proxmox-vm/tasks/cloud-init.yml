@@ -13,4 +13,5 @@
     nameservers: "{{ proxmox_vm_cloud_init_nameservers if proxmox_vm_cloud_init_nameservers | default([]) | length > 0 else omit }}"
     searchdomains: "{{ [proxmox_vm_cloud_init_searchdomain] if proxmox_vm_cloud_init_searchdomain | default('', true) | length > 0 else omit }}"
     update: true
+    update_unsafe: true
     state: present

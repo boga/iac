@@ -1,15 +1,54 @@
 ---
-- name: Download Proxmox VM image into storage
+- name: Handle compressed xz image download and decompression
+  block:
+    - name: Download compressed image locally
+      ansible.builtin.get_url:
+        url: "{{ proxmox_vm_image_url }}"
+        dest: "/tmp/{{ _proxmox_vm_image_file }}.xz"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Decompress xz image locally
+      ansible.builtin.command:
+        cmd: "python3 -c \"import lzma; open('/tmp/{{ _proxmox_vm_image_file }}', 'wb').write(lzma.open('/tmp/{{ _proxmox_vm_image_file }}.xz').read())\""
+      delegate_to: localhost
+
+    - name: Upload decompressed image to Proxmox
+      community.proxmox.proxmox_template:
+        node: "{{ _proxmox_api.node }}"
+        storage: "{{ _proxmox_vm_image_storage }}"
+        content_type: "{{ _proxmox_vm_image_content_type }}"
+        src: "/tmp/{{ _proxmox_vm_image_file }}"
+        template: "{{ _proxmox_vm_image_file }}"
+        force: "{{ proxmox_vm_image_force | bool }}"
+        state: present
+
+    - name: Clean up temporary local files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/{{ _proxmox_vm_image_file }}.xz"
+        - "/tmp/{{ _proxmox_vm_image_file }}"
+      delegate_to: localhost
+  when:
+    - _proxmox_vm_template_download | bool
+    - proxmox_vm_image_url is search('\.xz$')
+
+- name: Download Proxmox VM image into storage (direct URL)
   community.proxmox.proxmox_template:
     node: "{{ _proxmox_api.node }}"
     storage: "{{ _proxmox_vm_image_storage }}"
     content_type: "{{ _proxmox_vm_image_content_type }}"
     url: "{{ proxmox_vm_image_url }}"
+    template: "{{ _proxmox_vm_image_file }}"
     checksum_algorithm: "{{ proxmox_vm_image_checksum_algorithm if proxmox_vm_image_checksum | default('', true) | length > 0 else omit }}"
     checksum: "{{ proxmox_vm_image_checksum if proxmox_vm_image_checksum | default('', true) | length > 0 else omit }}"
     force: "{{ proxmox_vm_image_force | bool }}"
     state: present
-  when: _proxmox_vm_template_download | bool
+  when:
+    - _proxmox_vm_template_download | bool
+    - not (proxmox_vm_image_url is search('\.xz$'))
 
 - name: Ensure local Proxmox VM image directory exists
   ansible.builtin.file:
