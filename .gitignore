@@ -1,6 +1,6 @@
 *env*
 !sample.env
-!.env.secret.example
+!.env.secret
 id_ed*
 .terraform*
 terraform/**/terraform.tfstate*

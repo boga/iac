@@ -7,7 +7,6 @@ Terraform uses an S3-compatible backend for remote state and 1Password for local
 Setup:
 
 ```sh
-cp .env.secret.example .env.secret
 mise install
 mise run tf:init
 mise run tf:plan
