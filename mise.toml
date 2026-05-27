@@ -1,5 +1,6 @@
 [tools]
 python = "3"
+terraform = "latest"
 
 [env]
 _.python.venv = { path = ".venv" }
@@ -22,3 +23,25 @@ depends = ["ansible-python-deps", "ansible-galaxy-deps"]
 [tasks.syntax-looner]
 description = "Run syntax check for the looner playbook"
 run = "ansible-playbook -i ansible/inventory.yml ansible/looner.yml --syntax-check"
+
+
+[tasks."tf:init"]
+description = "Initialize Terraform with the S3 backend"
+run = '''
+op run --env-file=.env.secret -- terraform -chdir=terraform init \
+  -backend-config="bucket=${TF_BACKEND_S3_BUCKET}" \
+  -backend-config="region=${AWS_REGION}" \
+  -backend-config="endpoints={s3=\"${TF_BACKEND_S3_ENDPOINT}\"}"
+'''
+
+[tasks."tf:plan"]
+description = "Plan Terraform changes"
+run = "op run --env-file=.env.secret -- terraform -chdir=terraform plan"
+
+[tasks."tf:apply"]
+description = "Apply Terraform changes"
+run = "op run --env-file=.env.secret -- terraform -chdir=terraform apply"
+
+[tasks."tf:fmt"]
+description = "Format Terraform files"
+run = "terraform -chdir=terraform fmt -recursive"
