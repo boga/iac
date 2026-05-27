@@ -24,12 +24,11 @@ depends = ["ansible-python-deps", "ansible-galaxy-deps"]
 description = "Run syntax check for the looner playbook"
 run = "ansible-playbook -i ansible/inventory.yml ansible/looner.yml --syntax-check"
 
-
 [tasks."tf:init"]
 description = "Initialize Terraform with the S3 backend"
 run = '''
 cd terraform
-op run --env-file=../.env.secret -- terraform init \
+op run --env-file=.env.secret -- terraform init \
   -backend-config="bucket=${TF_BACKEND_S3_BUCKET}" \
   -backend-config="region=${AWS_REGION}" \
   -backend-config="endpoints={s3=\"${TF_BACKEND_S3_ENDPOINT}\"}"
@@ -37,11 +36,11 @@ op run --env-file=../.env.secret -- terraform init \
 
 [tasks."tf:plan"]
 description = "Plan Terraform changes"
-run = "cd terraform && op run --env-file=../.env.secret -- terraform plan"
+run = "cd terraform && op run --env-file=.env.secret -- terraform plan"
 
 [tasks."tf:apply"]
 description = "Apply Terraform changes"
-run = "cd terraform && op run --env-file=../.env.secret -- terraform apply"
+run = "cd terraform && op run --env-file=.env.secret -- terraform apply"
 
 [tasks."tf:fmt"]
 description = "Format Terraform files"
