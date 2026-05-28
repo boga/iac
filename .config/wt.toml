@@ -6,6 +6,9 @@
 trust-mise = "mise trust mise.toml"
 
 [[pre-start]]
+trust-terraform-mise = "mise trust terraform/mise.toml"
+
+[[pre-start]]
 install-mise-tools = "mise install"
 
 [[pre-start]]
