@@ -9,7 +9,7 @@ trust-mise = "mise trust mise.toml"
 install-mise-tools = "mise install"
 
 [[pre-start]]
-create-venv = "[ -d .venv ] || mise exec -- python -m venv .venv"
+create-venv = "[ -x .venv/bin/python ] || (rm -rf .venv && mise exec -- python -m venv .venv)"
 
 [[pre-start]]
 install-python-deps = "mise run ansible-python-deps"
