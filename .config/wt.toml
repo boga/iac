@@ -4,7 +4,15 @@
 
 [[pre-start]]
 trust-mise = "mise trust mise.toml"
-bootstrap-mise = "mise install && ([ -d .venv ] || mise exec -- python -m venv .venv) && mise run ansible-python-deps"
+
+[[pre-start]]
+install-mise-tools = "mise install"
+
+[[pre-start]]
+create-venv = "[ -d .venv ] || mise exec -- python -m venv .venv"
+
+[[pre-start]]
+install-python-deps = "mise run ansible-python-deps"
 
 [step.copy-ignored]
 exclude = [".venv/"]
