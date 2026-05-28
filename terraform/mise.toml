@@ -1,0 +1,23 @@
+[tools]
+terraform = "latest"
+
+[tasks."tf:init"]
+description = "Initialize Terraform with the S3 backend"
+run = '''
+op run --env-file=.env.secret -- terraform init \
+  -backend-config="bucket=${TF_BACKEND_S3_BUCKET}" \
+  -backend-config="region=${AWS_REGION}" \
+  -backend-config="endpoints={s3=\"${TF_BACKEND_S3_ENDPOINT}\"}"
+'''
+
+[tasks."tf:plan"]
+description = "Plan Terraform changes"
+run = "op run --env-file=.env.secret -- terraform plan"
+
+[tasks."tf:apply"]
+description = "Apply Terraform changes"
+run = "op run --env-file=.env.secret -- terraform apply"
+
+[tasks."tf:fmt"]
+description = "Format Terraform files"
+run = "terraform fmt -recursive"

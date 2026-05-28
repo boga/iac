@@ -1,3 +1,20 @@
+# Infrastructure
+
+## Terraform
+
+Terraform uses an S3-compatible backend for remote state and 1Password for local secret injection.
+
+Setup:
+
+```sh
+cd terraform
+mise install
+mise run tf:init
+mise run tf:plan
+```
+
+Create the object storage bucket before first backend initialization. See [`terraform/README.md`](terraform/README.md).
+
 ## Ansible
 
 ### Bootstrapping a server

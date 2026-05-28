@@ -6,14 +6,31 @@ This directory creates a Proxmox VM directly with the `bpg/proxmox` provider by 
 
 1. Copy `terraform.tfvars.example` to `terraform.tfvars`.
 2. Fill in your Proxmox endpoint, image URL, storage, network, and SSH key.
-3. Export the Proxmox API token variables.
-4. Run:
+3. Run Terraform through mise:
 
 ```sh
-terraform init
-terraform plan
-terraform apply
+mise run tf:init
+mise run tf:plan
+mise run tf:apply
 ```
+
+## S3 State Backend
+
+The main Terraform stack uses an existing S3-compatible object storage bucket through Terraform's S3 backend with native S3 lockfiles. Terraform state is sensitive, so the bucket should be private and versioned.
+
+Store the existing bucket settings and credentials in `terraform/.env.secret` through 1Password references. Use the provider's region value and matching S3 endpoint.
+
+`mise run tf:init` loads `terraform/.env.secret`, passes bucket, region, and endpoint with `-backend-config`, then initializes or migrates the main stack:
+
+```sh
+mise run tf:init
+```
+
+If Terraform detects existing local state, approve the state migration to object storage.
+
+Do not commit these files:
+
+- `terraform/terraform.tfvars`
 
 ## Proxmox API Token
 
