@@ -3,19 +3,8 @@
 # build its own .venv instead of copying one from another worktree.
 
 [[pre-start]]
-venv = """
-printf 'Trust mise.toml and install Python dependencies? [y/N] '
-read -r confirm
-case "$confirm" in
-  [yY]|[yY][eE][sS])
-    mise trust mise.toml && mise install && mise run ansible-python-deps
-    ;;
-  *)
-    echo 'Skipped mise trust; aborting venv setup.'
-    exit 1
-    ;;
-esac
-"""
+trust-mise = "mise trust mise.toml"
+bootstrap-mise = "mise install && ([ -d .venv ] || mise exec -- python -m venv .venv) && mise run ansible-python-deps"
 
 [step.copy-ignored]
 exclude = [".venv/"]
