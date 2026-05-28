@@ -1,17 +1,7 @@
-proxmox_endpoint         = "https://pve.example.com:8006/"
-proxmox_api_token_id     = "terraform@pve!iac"
-proxmox_api_token_secret = "replace-me"
-proxmox_insecure         = true
-proxmox_ssh_username     = "root"
-proxmox_ssh_agent        = true
+proxmox_insecure  = true
+proxmox_ssh_agent = true
 
-proxmox_node = "pve"
+image_datastore_id = "local"
+disk_datastore_id  = "local-lvm"
 
-image_datastore_id      = "local"
-disk_datastore_id       = "local-lvm"
-cloud_init_datastore_id = "local-lvm"
-
-ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... replace-me"
-
-network_bridge  = "vmbr0"
-network_vlan_id = 20
+network_bridge = "vmbr0"

@@ -48,30 +48,6 @@ variable "disk_datastore_id" {
   type        = string
 }
 
-variable "cloud_init_datastore_id" {
-  description = "Datastore for the cloud-init drive."
-  type        = string
-}
-
-variable "vm_user" {
-  description = "Default cloud-init username."
-  type        = string
-  default     = "r00t"
-}
-
-variable "debian_vm_password" {
-  description = "Optional cloud-init password."
-  type        = string
-  default     = null
-  nullable    = true
-  sensitive   = true
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key content to inject into the VM."
-  type        = string
-}
-
 variable "network_bridge" {
   description = "Network bridge for VM NICs."
   type        = string
@@ -85,8 +61,3 @@ variable "network_vlan_id" {
   nullable    = true
 }
 
-variable "operating_system_type" {
-  description = "Proxmox operating system type."
-  type        = string
-  default     = "l26"
-}

@@ -13,12 +13,3 @@ provider "proxmox" {
   }
 }
 
-module "src" {
-  source = "./src"
-
-  proxmox_node       = var.proxmox_node
-  image_datastore_id = var.image_datastore_id
-  disk_datastore_id  = var.disk_datastore_id
-  network_bridge     = var.network_bridge
-  network_vlan_id    = var.network_vlan_id
-}
