@@ -1,0 +1,9 @@
+# Worktrunk project config.
+# Python virtual environments contain absolute paths, so each worktree must
+# build its own .venv instead of copying one from another worktree.
+
+[[pre-start]]
+venv = "mise install && mise run ansible-python-deps"
+
+[step.copy-ignored]
+exclude = [".venv/"]
