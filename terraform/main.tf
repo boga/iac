@@ -12,3 +12,4 @@ provider "proxmox" {
     username = var.proxmox_ssh_username
   }
 }
+

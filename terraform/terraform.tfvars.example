@@ -1,26 +1,7 @@
-proxmox_endpoint         = "https://pve.example.com:8006/"
-proxmox_api_token_id     = "terraform@pve!iac"
-proxmox_api_token_secret = "replace-me"
-proxmox_insecure         = true
-proxmox_ssh_username     = "root"
-proxmox_ssh_agent        = true
+proxmox_insecure  = true
+proxmox_ssh_agent = true
 
-proxmox_node   = "pve"
-vm_id          = 501
-vm_name        = "debian-01"
-vm_description = "Debian VM managed by Terraform"
-
-image_url          = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
-image_file_name    = "debian-12-generic-amd64.qcow2"
 image_datastore_id = "local"
+disk_datastore_id  = "local-lvm"
 
-disk_datastore_id       = "local-lvm"
-cloud_init_datastore_id = "local-lvm"
-
-ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... replace-me"
-
-ipv4_address = "192.168.20.50/24"
-ipv4_gateway = "192.168.20.1"
-
-network_bridge  = "vmbr0"
-network_vlan_id = 20
+network_bridge = "vmbr0"
