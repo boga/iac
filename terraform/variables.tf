@@ -72,6 +72,19 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "network_bridge" {
+  description = "Network bridge for VM NICs."
+  type        = string
+  default     = "vmbr0"
+}
+
+variable "network_vlan_id" {
+  description = "Optional VLAN ID for VM NICs."
+  type        = number
+  default     = null
+  nullable    = true
+}
+
 variable "operating_system_type" {
   description = "Proxmox operating system type."
   type        = string

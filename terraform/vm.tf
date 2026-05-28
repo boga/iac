@@ -28,3 +28,43 @@ module "proxmox_vm" {
 
   operating_system_type = var.operating_system_type
 }
+
+module "home_assistant" {
+  source = "./modules/proxmox-vm"
+
+  proxmox_node = var.proxmox_node
+
+  vm_id          = 502
+  vm_name        = "home-assistant"
+  vm_description = "Home Assistant OS managed by Terraform"
+  tags           = ["terraform", "home-assistant"]
+
+  image_url                = "https://github.com/home-assistant/operating-system/releases/download/17.3/haos_ova-17.3.qcow2.xz"
+  image_file_name          = "haos_ova-17.3.qcow2"
+  image_datastore_id       = var.image_datastore_id
+  image_checksum           = "d42fadf806c0690792a4460ff3a72c2846c4e16e2033aefad0835662e7a9696f"
+  image_checksum_algorithm = "sha256"
+  decompression_algorithm  = "xz"
+
+  cpu_cores   = 2
+  cpu_sockets = 1
+
+  memory_dedicated = 4096
+  memory_floating  = 4096
+
+  disk_datastore_id = var.disk_datastore_id
+  disk_size_gb      = 32
+  disk_interface    = "scsi0"
+  disk_file_format  = "raw"
+
+  cloud_init_enabled = false
+
+  network_bridge  = var.network_bridge
+  network_vlan_id = var.network_vlan_id
+
+  bios             = "ovmf"
+  machine          = "q35"
+  efi_disk_enabled = true
+
+  operating_system_type = "l26"
+}

@@ -40,6 +40,18 @@ variable "image_datastore_id" {
   type        = string
 }
 
+variable "decompression_algorithm" {
+  description = "Optional decompression algorithm for compressed image downloads. Possible values: gz, lzo, zst, bz2, xz."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.decompression_algorithm == null || contains(["gz", "lzo", "zst", "bz2", "xz"], var.decompression_algorithm)
+    error_message = "decompression_algorithm must be one of: gz, lzo, zst, bz2, xz."
+  }
+}
+
 variable "image_content_type" {
   description = "Proxmox content type for the downloaded image."
   type        = string
@@ -143,9 +155,17 @@ variable "disk_ssd" {
   default     = true
 }
 
+variable "cloud_init_enabled" {
+  description = "Create a cloud-init drive and initialization settings."
+  type        = bool
+  default     = true
+}
+
 variable "cloud_init_datastore_id" {
   description = "Datastore for the cloud-init drive."
   type        = string
+  default     = null
+  nullable    = true
 }
 
 variable "vm_user" {
@@ -165,6 +185,27 @@ variable "vm_password" {
 variable "ssh_public_key" {
   description = "SSH public key content to inject into the VM."
   type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "network_bridge" {
+  description = "Network bridge for the VM NIC."
+  type        = string
+  default     = "vmbr0"
+}
+
+variable "network_model" {
+  description = "Network device model."
+  type        = string
+  default     = "virtio"
+}
+
+variable "network_vlan_id" {
+  description = "Optional VLAN ID for the VM NIC."
+  type        = number
+  default     = null
+  nullable    = true
 }
 
 variable "ipv4_address" {
@@ -184,4 +225,48 @@ variable "operating_system_type" {
   description = "Proxmox operating system type."
   type        = string
   default     = "l26"
+}
+
+variable "bios" {
+  description = "VM BIOS type."
+  type        = string
+  default     = "seabios"
+}
+
+variable "machine" {
+  description = "VM machine type."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "efi_disk_enabled" {
+  description = "Create an EFI disk for UEFI boot."
+  type        = bool
+  default     = false
+}
+
+variable "efi_disk_datastore_id" {
+  description = "Datastore for the EFI disk. Defaults to disk_datastore_id when null."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "efi_disk_file_format" {
+  description = "EFI disk file format."
+  type        = string
+  default     = "raw"
+}
+
+variable "efi_disk_type" {
+  description = "EFI disk size/type."
+  type        = string
+  default     = "4m"
+}
+
+variable "efi_disk_pre_enrolled_keys" {
+  description = "Use pre-enrolled secure boot keys for the EFI disk."
+  type        = bool
+  default     = false
 }
