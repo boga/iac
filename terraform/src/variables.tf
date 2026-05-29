@@ -3,6 +3,11 @@ variable "proxmox_endpoint" {
   type        = string
 }
 
+variable "proxmox_node" {
+  description = "Proxmox node that will host the VM."
+  type        = string
+}
+
 variable "proxmox_api_token_id" {
   description = "Proxmox API token id in the format user@realm!token."
   type        = string
