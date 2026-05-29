@@ -5,3 +5,12 @@ image_datastore_id = "local"
 disk_datastore_id  = "local-lvm"
 
 network_bridge = "vmbr0"
+
+proxmox_node = "pve"
+
+# Demo Debian VM settings
+demo_debian_enabled        = true
+demo_debian_vm_id          = 100
+demo_debian_vm_name        = "demo-debian"
+demo_debian_vm_user        = "debian"
+demo_debian_ssh_public_key = "ssh-ed25519 AAAA... user@example"

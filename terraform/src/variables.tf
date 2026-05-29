@@ -61,3 +61,34 @@ variable "network_vlan_id" {
   nullable    = true
 }
 
+variable "demo_debian_enabled" {
+  description = "Create the demo Debian VM."
+  type        = bool
+  default     = true
+}
+
+variable "demo_debian_vm_id" {
+  description = "Static VM ID for the demo Debian VM."
+  type        = number
+  default     = 100
+}
+
+variable "demo_debian_vm_name" {
+  description = "Name for the demo Debian VM."
+  type        = string
+  default     = "demo-debian"
+}
+
+variable "demo_debian_vm_user" {
+  description = "Default cloud-init username for the demo Debian VM."
+  type        = string
+  default     = "debian"
+}
+
+variable "demo_debian_ssh_public_key" {
+  description = "SSH public key content to inject into the demo Debian VM."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
