@@ -15,8 +15,8 @@ module "demo_debian" {
   ssh_public_key     = null
   vm_user            = "debian"
 
-  cpu_cores        = 2
+  cpu_cores        = 1
   memory_dedicated = 2048
   memory_floating  = 2048
-  disk_size_gb     = 16
+  disk_size_gb     = 11
 }

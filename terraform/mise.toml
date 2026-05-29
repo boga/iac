@@ -18,6 +18,10 @@ run = "op run --env-file=.env.secret -- terraform -chdir=src plan"
 description = "Apply Terraform changes"
 run = "op run --env-file=.env.secret -- terraform -chdir=src apply"
 
+[tasks."tf:destroy"]
+description = "Destroy Terraform changes"
+run = "op run --env-file=.env.secret -- terraform -chdir=src destroy"
+
 [tasks."tf:fmt"]
 description = "Format Terraform files"
 run = "terraform -chdir=src fmt -recursive"
