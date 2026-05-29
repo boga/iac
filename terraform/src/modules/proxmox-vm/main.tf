@@ -43,6 +43,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
     ssd          = var.disk_ssd
   }
 
+  serial_device {
+    device = "socket"
+  }
+
   dynamic "efi_disk" {
     for_each = var.efi_disk_enabled ? [1] : []
 

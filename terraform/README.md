@@ -68,12 +68,6 @@ terraform -chdir=src plan
 terraform -chdir=src apply
 ```
 
-If you also want to set an initial guest password through cloud-init, export that too:
-
-```sh
-export TF_VAR_vm_password='replace-me'
-```
-
 The current working setup uses a token with privilege separation disabled (`privsep=0`). In that mode, the token inherits the permissions of the associated user, so ACLs are assigned to the user `terraform@pam`, not directly to the token.
 
 ## Storage and Image Settings
