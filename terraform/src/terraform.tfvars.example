@@ -1,2 +1,0 @@
-proxmox_insecure  = true
-proxmox_ssh_agent = true

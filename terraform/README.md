@@ -4,8 +4,8 @@ This directory creates a Proxmox VM directly with the `bpg/proxmox` provider by 
 
 ## Usage
 
-1. Copy `src/terraform.tfvars.example` to `src/terraform.tfvars`.
-2. Fill in your Proxmox endpoint, image URL, storage, network, and SSH key.
+1. Create `src/terraform.tfvars` for local overrides if needed.
+2. Fill in any local Proxmox values that should not live in shared defaults.
 3. Run Terraform through mise:
 
 ```sh
