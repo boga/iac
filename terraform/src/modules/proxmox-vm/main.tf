@@ -5,7 +5,7 @@ resource "proxmox_download_file" "cloud_image" {
   url                     = var.image_url
   file_name               = var.image_file_name
   checksum                = var.image_checksum
-  checksum_algorithm      = var.image_checksum_algorithm
+  checksum_algorithm      = var.image_checksum == null ? null : var.image_checksum_algorithm
   decompression_algorithm = var.decompression_algorithm
   overwrite               = var.image_overwrite
   overwrite_unmanaged     = var.image_overwrite_unmanaged
