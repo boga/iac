@@ -2,7 +2,7 @@
 
 ## Terraform
 
-Terraform uses an S3-compatible backend for remote state and 1Password for local secret injection.
+Terraform uses an S3-compatible backend for remote state and 1Password for local secret injection. Stack files live in `terraform/src`; `terraform/mise.toml` wraps commands with `terraform -chdir=src`.
 
 Setup:
 

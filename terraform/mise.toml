@@ -1,10 +1,22 @@
 [tools]
 terraform = "latest"
 
+[tasks."tf:apply"]
+description = "Apply Terraform changes"
+run = "op run --env-file=.env.secret -- terraform -chdir=src apply"
+
+[tasks."tf:destroy"]
+description = "Destroy Terraform changes"
+run = "op run --env-file=.env.secret -- terraform -chdir=src destroy"
+
+[tasks."tf:fmt"]
+description = "Format Terraform files"
+run = "terraform -chdir=src fmt -recursive"
+
 [tasks."tf:init"]
 description = "Initialize Terraform with the S3 backend"
 run = '''
-op run --env-file=.env.secret -- sh -c 'terraform init \
+op run --env-file=.env.secret -- sh -c 'terraform -chdir=src init \
   -backend-config="bucket=${TF_BACKEND_S3_BUCKET}" \
   -backend-config="region=${AWS_REGION}" \
   -backend-config="endpoints={s3=\"${TF_BACKEND_S3_ENDPOINT}\"}"'
@@ -12,12 +24,4 @@ op run --env-file=.env.secret -- sh -c 'terraform init \
 
 [tasks."tf:plan"]
 description = "Plan Terraform changes"
-run = "op run --env-file=.env.secret -- terraform plan"
-
-[tasks."tf:apply"]
-description = "Apply Terraform changes"
-run = "op run --env-file=.env.secret -- terraform apply"
-
-[tasks."tf:fmt"]
-description = "Format Terraform files"
-run = "terraform fmt -recursive"
+run = "op run --env-file=.env.secret -- terraform -chdir=src plan"

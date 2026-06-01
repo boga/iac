@@ -5,7 +5,7 @@ resource "proxmox_download_file" "cloud_image" {
   url                     = var.image_url
   file_name               = var.image_file_name
   checksum                = var.image_checksum
-  checksum_algorithm      = var.image_checksum_algorithm
+  checksum_algorithm      = var.image_checksum == null ? null : var.image_checksum_algorithm
   decompression_algorithm = var.decompression_algorithm
   overwrite               = var.image_overwrite
   overwrite_unmanaged     = var.image_overwrite_unmanaged
@@ -43,6 +43,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
     ssd          = var.disk_ssd
   }
 
+  serial_device {
+    device = "socket"
+  }
+
   dynamic "efi_disk" {
     for_each = var.efi_disk_enabled ? [1] : []
 
@@ -62,7 +66,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
       user_account {
         username = var.vm_user
-        keys     = [var.ssh_public_key]
+        keys     = var.ssh_public_key == null ? [] : [var.ssh_public_key]
         password = var.vm_password
       }
 

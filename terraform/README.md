@@ -1,11 +1,11 @@
 # Proxmox VM Terraform
 
-This directory creates a Proxmox VM directly with the `bpg/proxmox` provider by downloading a public cloud image and importing it as the VM disk.
+This directory contains Terraform stack wiring and a reusable Proxmox VM module for the `bpg/proxmox` provider.
 
 ## Usage
 
-1. Copy `terraform.tfvars.example` to `terraform.tfvars`.
-2. Fill in your Proxmox endpoint, image URL, storage, network, and SSH key.
+1. Create `src/terraform.tfvars` for local overrides if needed.
+2. Fill in any local Proxmox values that should not live in shared defaults.
 3. Run Terraform through mise:
 
 ```sh
@@ -18,9 +18,9 @@ mise run tf:apply
 
 The main Terraform stack uses an existing S3-compatible object storage bucket through Terraform's S3 backend with native S3 lockfiles. Terraform state is sensitive, so the bucket should be private and versioned.
 
-Store the existing bucket settings and credentials in `terraform/.env.secret` through 1Password references. Use the provider's region value and matching S3 endpoint.
+Store the existing bucket settings and credentials in `terraform/.env.secret` through 1Password references. Keep Terraform stack files under `terraform/src`. Use the provider's region value and matching S3 endpoint.
 
-`mise run tf:init` loads `terraform/.env.secret`, passes bucket, region, and endpoint with `-backend-config`, then initializes or migrates the main stack:
+`mise run tf:init` loads `terraform/.env.secret`, passes bucket, region, and endpoint with `-backend-config`, then initializes or migrates the main stack in `terraform/src`:
 
 ```sh
 mise run tf:init
@@ -30,7 +30,7 @@ If Terraform detects existing local state, approve the state migration to object
 
 Do not commit these files:
 
-- `terraform/terraform.tfvars`
+- `terraform/src/terraform.tfvars`
 
 ## Proxmox API Token
 
@@ -64,14 +64,8 @@ export TF_VAR_proxmox_api_token_secret='replace-me'
 You can then run Terraform normally:
 
 ```sh
-terraform plan
-terraform apply
-```
-
-If you also want to set an initial guest password through cloud-init, export that too:
-
-```sh
-export TF_VAR_vm_password='replace-me'
+terraform -chdir=src plan
+terraform -chdir=src apply
 ```
 
 The current working setup uses a token with privilege separation disabled (`privsep=0`). In that mode, the token inherits the permissions of the associated user, so ACLs are assigned to the user `terraform@pam`, not directly to the token.
