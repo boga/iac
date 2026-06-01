@@ -1,6 +1,6 @@
 # Proxmox VM Terraform
 
-This directory creates a Proxmox VM directly with the `bpg/proxmox` provider by downloading a public cloud image and importing it as the VM disk.
+This directory contains Terraform stack wiring and a reusable Proxmox VM module for the `bpg/proxmox` provider.
 
 ## Usage
 

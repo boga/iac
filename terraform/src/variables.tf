@@ -21,11 +21,6 @@ variable "proxmox_insecure" {
   default     = true
 }
 
-variable "proxmox_node" {
-  description = "Proxmox node that will host the VM."
-  type        = string
-}
-
 variable "proxmox_ssh_agent" {
   description = "Use ssh-agent for provider SSH operations."
   type        = bool
