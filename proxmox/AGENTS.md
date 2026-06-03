@@ -74,7 +74,7 @@ The runner blocks these by design:
 - shell-capable LXC commands: `pct exec`, `pct enter`, `pct push`, `pct pull`
 - destructive VM commands: `qm destroy`, `qm unlink`
 - mutating API commands: `pvesh create`, `pvesh set`, `pvesh delete`
-- absolute paths and path traversal in requested commands
+- non-allowlisted paths and path traversal in requested commands
 - pipes, redirects, semicolons, quotes, command substitution, and other shell metacharacters
 
 ## VM Specs
