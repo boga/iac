@@ -4,7 +4,7 @@
 
 This setup replaces Terraform-driven Proxmox changes with:
 
-- Markdown VM specs under `proxmox/`.
+- Markdown VM specs under `proxmox/vms/`, one file per VM.
 - A dedicated Proxmox VE user named `automation-agent@pve`.
 - A dedicated Linux SSH user named `automation-agent`.
 - A forced SSH command boundary at `/usr/local/bin/automation-pve-runner.sh`.
@@ -15,7 +15,7 @@ This setup replaces Terraform-driven Proxmox changes with:
 | Path | Purpose |
 |---|---|
 | `proxmox/automation-pve-runner.sh` | Forced-command SSH wrapper installed on each Proxmox node. |
-| `proxmox/readme.md` | Current setup notes. |
+| `proxmox/README.md` | Current setup notes. |
 
 ## Proxmox User Model
 
@@ -109,17 +109,19 @@ The wrapper:
 - Rejects empty commands.
 - Rejects shell metacharacters.
 - Rejects path traversal.
-- Rejects absolute paths in user input.
+- Allows only approved `pvesh get` paths.
 - Allows selected Proxmox commands only.
 - Blocks shells and common non-PVE utilities.
 - Logs accepted and rejected commands.
 - Runs approved PVE binaries through `sudo -n`.
+- Requires `qm create` and `qm clone` to include `--pool automation-managed`.
+- Requires mutating `qm` and `pct` commands for existing guests to target resources in `automation-managed`.
 
 Allowed command families:
 
 - `qm`
 - `pct`
-- `pvesh`
+- `pvesh get` for allowlisted read-only paths
 - `pvecm status`
 - `ha-manager status`
 - `ha-manager config`
@@ -134,6 +136,8 @@ Explicitly blocked examples:
 - `dd`
 - `qm destroy`
 - `pct exec`
+- `pvesh create`
+- `pvesh set`
 - `pvesh delete`
 
 ## Runner Log
@@ -186,7 +190,8 @@ TODO:
 SSH key
   -> forced command /usr/local/bin/automation-pve-runner.sh
   -> wrapper validates requested command
-  -> wrapper rejects shells, metacharacters, paths, and blocked subcommands
+  -> wrapper rejects shells, metacharacters, unsafe paths, and blocked subcommands
+  -> wrapper enforces automation-managed pool checks for mutating guest commands
   -> sudo permits only approved Proxmox VE binaries
   -> Proxmox command executes as root
 ```

@@ -56,8 +56,11 @@ Use only commands accepted by the runner:
 - `pct config <ctid>`
 - `pct pending <ctid>`
 - `pvesh get <path>`
-- `pvesh create <path> ...`
-- `pvesh set <path> ...`
+- `pvesh get /nodes`
+- `pvesh get /nodes/<node>/storage`
+- `pvesh get /pools`
+- `pvesh get /pools/automation-managed`
+- `pvesh get /cluster/resources`
 - `pvecm status`
 - `ha-manager status`
 - `ha-manager config`
@@ -70,7 +73,7 @@ The runner blocks these by design:
 - file tools: `cat`, `rm`, `mv`, `cp`, `dd`
 - shell-capable LXC commands: `pct exec`, `pct enter`, `pct push`, `pct pull`
 - destructive VM commands: `qm destroy`, `qm unlink`
-- destructive API command: `pvesh delete`
+- mutating API commands: `pvesh create`, `pvesh set`, `pvesh delete`
 - absolute paths and path traversal in requested commands
 - pipes, redirects, semicolons, quotes, command substitution, and other shell metacharacters
 
@@ -95,6 +98,8 @@ Rules:
 - Do not plan migrations unless the user says another node exists.
 - Treat `--target <node>` as optional for clone/create flows unless Proxmox requires it.
 - Query `pvesh get /nodes` when the node name is needed.
+- Include `--pool automation-managed` when creating or cloning VMs.
+- Expect mutating commands for existing guests to fail unless the VM is in `automation-managed`.
 
 ## VM Change Workflow
 
@@ -130,7 +135,7 @@ Before creating a VM:
 Typical clone flow:
 
 ```bash
-ssh looner-automation-agent 'qm clone <template-vmid> <new-vmid> --name <name> --full 1'
+ssh looner-automation-agent 'qm clone <template-vmid> <new-vmid> --name <name> --full 1 --pool automation-managed'
 ssh looner-automation-agent 'qm set <new-vmid> --cores <cores> --memory <memory-mb>'
 ssh looner-automation-agent 'qm set <new-vmid> --net0 virtio,bridge=<bridge>'
 ssh looner-automation-agent 'qm resize <new-vmid> scsi0 <size>'
