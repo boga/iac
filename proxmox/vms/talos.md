@@ -6,7 +6,7 @@
 - Name: `talos`
 - Node: `proxmox`
 - Pool: `automation-managed`
-- Status: `created`, stopped
+- Status: `running`
 - Purpose: Talos Linux Kubernetes node
 
 ## Source
@@ -27,7 +27,7 @@ ssh looner-automation-agent 'pvesh get /nodes/proxmox/storage'
 - BIOS: `ovmf`
 - Machine: Proxmox default
 - OS type: `l26`
-- Boot order: `scsi0;net0`
+- Boot order: `ide2`
 - EFI disk: not attached
 - Serial console: `socket`
 - VGA: `serial0`
@@ -58,8 +58,8 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 
 - Controller: `virtio-scsi-pci`
 - `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=none`, `discard=on`, `ssd=1`
-- Boot image: current `scsi0` is a blank `100G` VM disk
-- Talos raw image staged at `/mnt/sdb1/template/iso/talos-nocloud-amd64-v1.13.3-7d4c31cbd96db9f90c874990697c523482b2bae27fb4631d5583dcd9c281b1ff.img`
+- `ide2`: `looner-ssd2:iso/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.iso`, `media=cdrom`
+- Talos raw image staged at `/mnt/sdb1/import/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.raw` but not used
 
 **Do not** use `virtio-scsi-single`; Talos docs warn it can hang bootstrap or break disk discovery.
 
@@ -76,22 +76,21 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 
 ## Notes
 
-- VMID `104` exists as `talos` and is stopped.
+- VMID `104` exists as `talos` and is running.
 - Sidero recommends OVMF, `q35`, CPU `host`, VirtIO network, and VirtIO SCSI.
 - Talos does not support memory hotplug, so ballooning is disabled.
-- Use Talos Factory schematic `f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105` for first boot.
+- Use Talos Factory schematic `90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13` for first boot.
 - Factory customization includes these official extensions:
-  - `siderolabs/qemu-guest-agent`
   - `siderolabs/iscsi-tools`
-  - `siderolabs/util-linux-tools`
   - `siderolabs/nfs-utils`
+  - `siderolabs/qemu-guest-agent`
   - `siderolabs/tailscale`
 - First boot options:
-  - Disk image: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.raw.xz`
-  - ISO: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.iso`
-  - PXE: `https://pxe.factory.talos.dev/pxe/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64`
-- Prefer the Talos Factory NoCloud raw image over the ISO installer flow.
-- Proxmox treats the staged raw image as `media=cdrom` while it remains under `template/iso`; move or import it into VM image storage before booting from it.
+  - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.raw.xz`
+  - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.iso`
+  - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64`
+- Booting from the Talos Factory NoCloud ISO.
+- VM start warned that no EFI disk is configured, so Proxmox used a temporary efivars disk.
 - Automation runner currently blocks `qm importdisk`, file move/copy tools, `--machine`, `--cpu`, `--efidisk0`, `--balloon`, `--rng0`, and boot-order arguments containing semicolons.
 
 ## Proxmox Commands Preview
@@ -102,14 +101,20 @@ Create VM:
 ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --bios ovmf --sockets 1 --cores 3 --memory 8192 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=none,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --onboot 1'
 ```
 
-Attach staged raw image after moving or importing it into VM image storage:
+Attach installer ISO:
 
 ```bash
-ssh looner-automation-agent 'qm set 104 --scsi0 looner-ssd2:104/vm-104-disk-0.raw,cache=none,discard=on,ssd=1'
+ssh looner-automation-agent 'qm set 104 --ide2 looner-ssd2:iso/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.iso,media=cdrom'
 ```
 
-Set boot order after automation runner allows semicolon-bearing boot order values:
+Set boot order to ISO:
 
 ```bash
-ssh looner-automation-agent 'qm set 104 --boot order=scsi0;net0'
+ssh looner-automation-agent 'qm set 104 --boot order=ide2'
+```
+
+Start VM:
+
+```bash
+ssh looner-automation-agent 'qm start 104'
 ```
