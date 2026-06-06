@@ -4,7 +4,7 @@
 
 - VMID: `103`
 - Name: `home-assistant`
-- Status: `stopped`
+- Status: `running`
 - Description: `Managed by Terraform`
 - Tags: `terraform`
 
@@ -42,6 +42,7 @@
 - On boot: `1`
 - Protection: `0`
 - Serial console: `socket`
+- USB passthrough `usb0`: `host=10c4:ea60`
 - Tablet: `1`
 - Template: `0`
 
