@@ -57,7 +57,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 ## Disks
 
 - Controller: `virtio-scsi-pci`
-- `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=none`, `discard=on`, `ssd=1`
+- `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=writethrough`, `discard=on`, `ssd=1`
 - `ide2`: `looner-ssd2:iso/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.iso`, `media=cdrom`
 - Talos raw image staged at `/mnt/sdb1/import/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.raw` but not used
 
@@ -91,6 +91,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
   - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64`
 - Booting from the Talos Factory NoCloud ISO.
 - VM start warned that no EFI disk is configured, so Proxmox used a temporary efivars disk.
+- Disk cache change from `cache=none` to `cache=writethrough` is pending until the next reboot.
 - Automation runner currently blocks `qm importdisk`, file move/copy tools, `--machine`, `--cpu`, `--efidisk0`, `--balloon`, `--rng0`, and boot-order arguments containing semicolons.
 
 ## Proxmox Commands Preview
@@ -98,7 +99,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 Create VM:
 
 ```bash
-ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --bios ovmf --sockets 1 --cores 3 --memory 8192 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=none,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --onboot 1'
+ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --bios ovmf --sockets 1 --cores 3 --memory 8192 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=writethrough,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --onboot 1'
 ```
 
 Attach installer ISO:
