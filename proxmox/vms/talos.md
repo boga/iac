@@ -30,7 +30,7 @@ ssh looner-automation-agent 'pvesh get /nodes/proxmox/storage'
 - Boot order: `ide2`
 - EFI disk: `looner-ssd2`, `efitype=4m`, `pre-enrolled-keys=0`
 - Serial console: `socket`
-- VGA: `serial0`
+- Display: Proxmox default
 - On boot: `1`
 
 ## Secure Boot
@@ -92,6 +92,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 - Booting from the Talos Factory NoCloud ISO.
 - VM initially boot-looped with OVMF and no EFI disk.
 - Added EFI disk, `q35`, CPU `host`, balloon `0`, RNG, and restarted VM.
+- Display was changed from `serial0` to Proxmox default so the console UI is visible.
 - Automation runner blocks double-dash `--machine`, `--cpu`, `--efidisk0`, `--balloon`, and `--rng0`; single-dash forms work.
 - Automation runner still blocks `qm importdisk`, file move/copy tools, and boot-order arguments containing semicolons.
 
@@ -100,7 +101,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 Create VM:
 
 ```bash
-ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 -machine q35 --bios ovmf -efidisk0 looner-ssd2:1,efitype=4m,pre-enrolled-keys=0 -cpu host --sockets 1 --cores 3 --memory 8192 -balloon 0 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=writethrough,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 -rng0 source=/dev/urandom --onboot 1'
+ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 -machine q35 --bios ovmf -efidisk0 looner-ssd2:1,efitype=4m,pre-enrolled-keys=0 -cpu host --sockets 1 --cores 3 --memory 8192 -balloon 0 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=writethrough,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --agent enabled=1 -rng0 source=/dev/urandom --onboot 1'
 ```
 
 Attach installer ISO:
