@@ -28,7 +28,7 @@
 ## Disks
 
 - Controller: `virtio-scsi-pci`
-- `scsi0`: `looner-ssd2:103/vm-103-disk-1.raw,aio=io_uring,backup=1,cache=none,discard=ignore,iothread=0,replicate=1,size=32G,ssd=1`
+- `scsi0`: `looner-ssd2:103/vm-103-disk-1.raw,aio=io_uring,backup=1,cache=none,discard=ignore,iothread=0,replicate=1,size=32GB,ssd=1`
 
 ## Network
 
