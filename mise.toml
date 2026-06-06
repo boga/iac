@@ -5,6 +5,10 @@ python = "3"
 KUBECONFIG = "{{config_root}}/talos/kubeconfig"
 _.python.venv = { path = ".venv" }
 
+[tasks.talos-kubeconfig]
+description = "Write Talos kubeconfig from 1Password"
+run = "mkdir -p talos && op read 'op://Private/Proxmox Talos/kubeconfig' > talos/kubeconfig && chmod 600 talos/kubeconfig"
+
 [tasks.ansible-python-deps]
 description = "Install Python dependencies for Ansible modules"
 run = "python -m pip install -r ansible/requirements.txt"
