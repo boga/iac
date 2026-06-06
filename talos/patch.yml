@@ -1,6 +1,6 @@
 machine:
   install:
-    disk: /dev/vda
+    disk: /dev/sda
 
 cluster:
   allowSchedulingOnControlPlanes: true
