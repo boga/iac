@@ -6,7 +6,7 @@
 - Name: `talos`
 - Node: `proxmox`
 - Pool: `automation-managed`
-- Status: `planned`
+- Status: `created`, stopped
 - Purpose: Talos Linux Kubernetes node
 
 ## Source
@@ -25,10 +25,10 @@ ssh looner-automation-agent 'pvesh get /nodes/proxmox/storage'
 ## Firmware and Boot
 
 - BIOS: `ovmf`
-- Machine: `q35`
+- Machine: Proxmox default
 - OS type: `l26`
-- Boot order: `scsi0;ide2;net0`
-- EFI disk: `looner-ssd2`, `efitype=4m`, `pre-enrolled-keys=0`
+- Boot order: `scsi0;net0`
+- EFI disk: not attached
 - Serial console: `socket`
 - VGA: `serial0`
 - On boot: `1`
@@ -47,7 +47,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 
 ## Compute
 
-- CPU type: `host`
+- CPU type: Proxmox default
 - Sockets: `1`
 - Cores: `3`
 - Memory: `8192` MB (8 GB)
@@ -57,8 +57,8 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 ## Disks
 
 - Controller: `virtio-scsi-pci`
-- `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=none`, `discard=on`, `ssd=1`, `backup=1`
-- Installer ISO: `ide2`, `looner-ssd2:iso/talos-nocloud-amd64-v1.13.3.iso`, `media=cdrom`
+- `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=none`, `discard=on`, `ssd=1`
+- Installer ISO: not attached; `looner-ssd2:iso/talos-nocloud-amd64-v1.13.3.iso` does not exist on storage yet
 
 **Do not** use `virtio-scsi-single`; Talos docs warn it can hang bootstrap or break disk discovery.
 
@@ -70,12 +70,12 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 ## Devices and Guest Settings
 
 - QEMU guest agent: `enabled=1`
-- RNG: `source=/dev/urandom`
-- Tablet: `0`
+- RNG: not configured
+- Tablet: Proxmox default
 
 ## Notes
 
-- VMID `104` appears unused based on `qm list`.
+- VMID `104` exists as `talos` and is stopped.
 - Sidero recommends OVMF, `q35`, CPU `host`, VirtIO network, and VirtIO SCSI.
 - Talos does not support memory hotplug, so ballooning is disabled.
 - Use Talos Factory schematic `f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105` for first boot.
@@ -89,23 +89,24 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
   - Disk image: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.raw.xz`
   - ISO: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.iso`
   - PXE: `https://pxe.factory.talos.dev/pxe/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64`
-- Attach the Talos Factory NoCloud ISO, boot installer, then apply Talos machine config with `talosctl`.
+- Upload the Talos Factory NoCloud ISO to Proxmox storage, attach it, boot installer, then apply Talos machine config with `talosctl`.
+- Automation runner currently blocks `--machine`, `--cpu`, `--efidisk0`, `--balloon`, `--rng0`, and boot-order arguments containing semicolons.
 
 ## Proxmox Commands Preview
 
 Create VM:
 
 ```bash
-ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --machine q35 --bios ovmf --efidisk0 looner-ssd2:1,efitype=4m,pre-enrolled-keys=0 --cpu host --sockets 1 --cores 3 --memory 8192 --balloon 0 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=none,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --rng0 source=/dev/urandom --onboot 1'
+ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --bios ovmf --sockets 1 --cores 3 --memory 8192 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=none,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --onboot 1'
 ```
 
-Attach installer ISO:
+Attach installer ISO after uploading it to storage:
 
 ```bash
 ssh looner-automation-agent 'qm set 104 --ide2 looner-ssd2:iso/talos-nocloud-amd64-v1.13.3.iso,media=cdrom'
 ```
 
-Set boot order:
+Set boot order after automation runner allows semicolon-bearing boot order values:
 
 ```bash
 ssh looner-automation-agent 'qm set 104 --boot order=scsi0;ide2;net0'
