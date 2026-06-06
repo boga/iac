@@ -58,7 +58,8 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 
 - Controller: `virtio-scsi-pci`
 - `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=none`, `discard=on`, `ssd=1`
-- Installer ISO: not attached; `looner-ssd2:iso/talos-nocloud-amd64-v1.13.3.iso` does not exist on storage yet
+- Boot image: current `scsi0` is a blank `100G` VM disk
+- Talos raw image staged at `/mnt/sdb1/template/iso/talos-nocloud-amd64-v1.13.3-7d4c31cbd96db9f90c874990697c523482b2bae27fb4631d5583dcd9c281b1ff.img`
 
 **Do not** use `virtio-scsi-single`; Talos docs warn it can hang bootstrap or break disk discovery.
 
@@ -89,8 +90,9 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
   - Disk image: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.raw.xz`
   - ISO: `https://factory.talos.dev/image/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64.iso`
   - PXE: `https://pxe.factory.talos.dev/pxe/f0bb6548d7e619433500f8e76a972241c81aac8d74d08e7bfdf6c1351a461105/v1.13.3/nocloud-amd64`
-- Upload the Talos Factory NoCloud ISO to Proxmox storage, attach it, boot installer, then apply Talos machine config with `talosctl`.
-- Automation runner currently blocks `--machine`, `--cpu`, `--efidisk0`, `--balloon`, `--rng0`, and boot-order arguments containing semicolons.
+- Prefer the Talos Factory NoCloud raw image over the ISO installer flow.
+- Proxmox treats the staged raw image as `media=cdrom` while it remains under `template/iso`; move or import it into VM image storage before booting from it.
+- Automation runner currently blocks `qm importdisk`, file move/copy tools, `--machine`, `--cpu`, `--efidisk0`, `--balloon`, `--rng0`, and boot-order arguments containing semicolons.
 
 ## Proxmox Commands Preview
 
@@ -100,14 +102,14 @@ Create VM:
 ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 --bios ovmf --sockets 1 --cores 3 --memory 8192 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=none,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --vga serial0 --agent enabled=1 --onboot 1'
 ```
 
-Attach installer ISO after uploading it to storage:
+Attach staged raw image after moving or importing it into VM image storage:
 
 ```bash
-ssh looner-automation-agent 'qm set 104 --ide2 looner-ssd2:iso/talos-nocloud-amd64-v1.13.3.iso,media=cdrom'
+ssh looner-automation-agent 'qm set 104 --scsi0 looner-ssd2:104/vm-104-disk-0.raw,cache=none,discard=on,ssd=1'
 ```
 
 Set boot order after automation runner allows semicolon-bearing boot order values:
 
 ```bash
-ssh looner-automation-agent 'qm set 104 --boot order=scsi0;ide2;net0'
+ssh looner-automation-agent 'qm set 104 --boot order=scsi0;net0'
 ```
