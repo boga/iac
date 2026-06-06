@@ -2,6 +2,7 @@
 python = "3"
 
 [env]
+KUBECONFIG = "{{config_root}}/talos/kubeconfig"
 _.python.venv = { path = ".venv" }
 
 [tasks.ansible-python-deps]
