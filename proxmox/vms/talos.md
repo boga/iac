@@ -2,12 +2,12 @@
 
 ## Identity
 
-- VMID: `104`
+- VMID: `105`
 - Name: `talos`
 - Node: `proxmox`
 - Pool: `automation-managed`
 - Status: `running`
-- Purpose: Talos Linux Kubernetes node
+- Purpose: Talos Linux Kubernetes node (single-node control plane + worker)
 
 ## Source
 
@@ -17,9 +17,8 @@
 Current state checked with:
 
 ```bash
-ssh looner-automation-agent 'qm list'
-ssh looner-automation-agent 'pvesh get /nodes'
-ssh looner-automation-agent 'pvesh get /nodes/proxmox/storage'
+ssh looner-automation-agent 'qm config 105'
+ssh looner-automation-agent 'qm status 105'
 ```
 
 ## Firmware and Boot
@@ -27,10 +26,9 @@ ssh looner-automation-agent 'pvesh get /nodes/proxmox/storage'
 - BIOS: `ovmf`
 - Machine: `q35`
 - OS type: `l26`
-- Boot order: `ide2`
-- EFI disk: `looner-ssd2`, `efitype=4m`, `pre-enrolled-keys=0`
+- Boot order: `scsi0;scsi1`
+- EFI disk: `looner-ssd2:105/vm-105-disk-0.raw`, `efitype=4m`, `pre-enrolled-keys=0`
 - Serial console: `socket`
-- Display: Proxmox default
 - On boot: `1`
 
 ## Secure Boot
@@ -57,15 +55,36 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 ## Disks
 
 - Controller: `virtio-scsi-pci`
-- `scsi0`: `looner-ssd2`, `100G`, `raw`, `cache=writethrough`, `discard=on`, `ssd=1`
-- `ide2`: `looner-ssd2:iso/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.iso`, `media=cdrom`
-- Talos raw image staged at `/mnt/sdb1/import/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.raw` but not used
+- `scsi0`: `looner-ssd2`, `20G`, `raw`, `cache=writethrough`, `discard=on`, `ssd=1` — Talos OS install disk
+- `scsi1`: `looner-ssd2`, `80G`, `raw`, `cache=writethrough`, `discard=on`, `ssd=1` — Kubernetes data volume (`/var/local/storage`)
+- EFI disk: `looner-ssd2:105/vm-105-disk-0.raw`, `528K`
 
 **Do not** use `virtio-scsi-single`; Talos docs warn it can hang bootstrap or break disk discovery.
 
+### Disk layout in Talos
+
+| Proxmox | Talos device | Purpose                         | Size |
+|---------|--------------|---------------------------------|------|
+| scsi0   | `/dev/sda`   | Talos OS install                | 20G  |
+| scsi1   | `/dev/sdb`   | `/var/local/storage` (k8s data) | 80G  |
+
+Configured via `talos/patch.yml`:
+
+```yaml
+machine:
+  install:
+    disk: /dev/sda
+  disks:
+    - device: /dev/sdb
+      partitions:
+        - mountpoint: /var/local/storage
+cluster:
+  allowSchedulingOnControlPlanes: true
+```
+
 ## Network
 
-- `net0`: `virtio`, `bridge=vmbr0`, `firewall=0`
+- `net0`: `virtio=BC:24:11:4E:5B:82`, `bridge=vmbr0`, `firewall=0`
 - VLAN: none planned
 
 ## Devices and Guest Settings
@@ -76,7 +95,9 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 
 ## Notes
 
-- VMID `104` exists as `talos` and is running.
+- Originally created as VMID `104` with a single 100G disk. Migrated to VMID `105` with split disks (20G OS + 80G data).
+- Disks were recreated fresh (disk-5, disk-6) after filesystem mismatch issues on reused volumes.
+- ISO was ejected after bootstrap; boot order changed from `ide2;scsi0;scsi1` to `scsi0;scsi1`.
 - Sidero recommends OVMF, `q35`, CPU `host`, VirtIO network, and VirtIO SCSI.
 - Talos does not support memory hotplug, so ballooning is disabled.
 - Use Talos Factory schematic `90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13` for first boot.
@@ -89,35 +110,36 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
   - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.raw.xz`
   - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.iso`
   - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64`
-- Booting from the Talos Factory NoCloud ISO.
 - VM initially boot-looped with OVMF and no EFI disk.
 - Added EFI disk, `q35`, CPU `host`, balloon `0`, RNG, and restarted VM.
 - Display was changed from `serial0` to Proxmox default so the console UI is visible.
 - Automation runner blocks double-dash `--machine`, `--cpu`, `--efidisk0`, `--balloon`, and `--rng0`; single-dash forms work.
 - Automation runner still blocks `qm importdisk`, file move/copy tools, and boot-order arguments containing semicolons.
+- `qm destroy` is blocked by the runner; manual removal required.
 
 ## Proxmox Commands Preview
 
 Create VM:
 
 ```bash
-ssh looner-automation-agent 'qm create 104 --name talos --pool automation-managed --ostype l26 -machine q35 --bios ovmf -efidisk0 looner-ssd2:1,efitype=4m,pre-enrolled-keys=0 -cpu host --sockets 1 --cores 3 --memory 8192 -balloon 0 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:100,format=raw,cache=writethrough,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --agent enabled=1 -rng0 source=/dev/urandom --onboot 1'
-```
-
-Attach installer ISO:
-
-```bash
-ssh looner-automation-agent 'qm set 104 --ide2 looner-ssd2:iso/talos-v1.13.3-nocloud-amd64-90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13.iso,media=cdrom'
-```
-
-Set boot order to ISO:
-
-```bash
-ssh looner-automation-agent 'qm set 104 --boot order=ide2'
+ssh looner-automation-agent 'qm create 105 --name talos --pool automation-managed --ostype l26 -machine q35 --bios ovmf -efidisk0 looner-ssd2:1,efitype=4m,pre-enrolled-keys=0 -cpu host --sockets 1 --cores 3 --memory 8192 -balloon 0 --scsihw virtio-scsi-pci --scsi0 looner-ssd2:20,cache=writethrough,discard=on,ssd=1 --scsi1 looner-ssd2:80,cache=writethrough,discard=on,ssd=1 --net0 virtio,bridge=vmbr0,firewall=0 --serial0 socket --agent enabled=1 -rng0 source=/dev/urandom --onboot 1'
 ```
 
 Start VM:
 
 ```bash
-ssh looner-automation-agent 'qm start 104'
+ssh looner-automation-agent 'qm start 105'
+```
+
+Apply Talos config:
+
+```bash
+talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP -f controlplane-patched.yaml
+talosctl bootstrap --nodes $CONTROL_PLANE_IP
+```
+
+Patch machine config after bootstrap:
+
+```bash
+talosctl patch machineconfig --nodes $CONTROL_PLANE_IP --patch @patch.yml
 ```

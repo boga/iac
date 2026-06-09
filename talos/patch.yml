@@ -1,6 +1,10 @@
 machine:
   install:
     disk: /dev/sda
+  disks:
+    - device: /dev/sdb
+      partitions:
+        - mountpoint: /var/local/storage
 
 cluster:
   allowSchedulingOnControlPlanes: true
