@@ -188,6 +188,7 @@
       kind: StorageClass
       metadata:
         name: "{{ local_path_provisioner_storageclass_name }}"
+        annotations: "{% if local_path_provisioner_default_storageclass %}{{ {'storageclass.kubernetes.io/is-default-class': 'true'} }}{% else %}{{ {} }}{% endif %}"
       provisioner: rancher.io/local-path
       reclaimPolicy: "{{ local_path_provisioner_reclaim_policy }}"
       volumeBindingMode: "{{ local_path_provisioner_volume_binding_mode }}"
