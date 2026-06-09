@@ -1,4 +1,5 @@
 [tools]
+kubectl = "latest"
 python = "3"
 
 [env]
