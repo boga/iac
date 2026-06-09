@@ -1,0 +1,15 @@
+---
+namespace_name: "grimmory"
+
+grimmory_name: "grimmory"
+grimmory_image: "grimmory/grimmory:latest"
+grimmory_image_pull_policy: "Always"
+grimmory_replicas: 1
+grimmory_port: 6060
+
+grimmory_db_host: "grimmory-mariadb"
+grimmory_db_port: 3306
+grimmory_db_name: "grimmory"
+grimmory_db_user: "grimmory"
+
+mariadb_image: "lscr.io/linuxserver/mariadb:11.4.5"

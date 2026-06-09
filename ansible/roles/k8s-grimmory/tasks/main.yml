@@ -1,0 +1,44 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ namespace_name }}"
+
+- name: "Create Grimmory secrets"
+  kubernetes.core.k8s:
+    state: present
+    template: secret.yml.j2
+
+- name: "Deploy Grimmory MariaDB"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - mariadb-pvc.yml.j2
+    - mariadb-service.yml.j2
+    - mariadb-deployment.yml.j2
+
+- name: "Wait for MariaDB to be ready"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    api_version: apps/v1
+    kind: Deployment
+    name: grimmory-mariadb
+    wait: true
+    wait_timeout: 180
+
+- name: "Deploy Grimmory app"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - pvc.yml.j2
+    - service.yml.j2
+    - deployment.yml.j2

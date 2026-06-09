@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grimmory-mariadb
+  namespace: {{ namespace_name }}
+  labels:
+    app.kubernetes.io/name: grimmory-mariadb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    app.kubernetes.io/name: grimmory-mariadb

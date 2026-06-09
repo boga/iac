@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grimmory-data
+  namespace: {{ namespace_name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ grimmory_storage_class_name | default('local-path') }}
+  resources:
+    requests:
+      storage: {{ grimmory_data_storage_size | default('1Gi') }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grimmory-books
+  namespace: {{ namespace_name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ grimmory_storage_class_name | default('local-path') }}
+  resources:
+    requests:
+      storage: {{ grimmory_books_storage_size | default('10Gi') }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grimmory-bookdrop
+  namespace: {{ namespace_name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ grimmory_storage_class_name | default('local-path') }}
+  resources:
+    requests:
+      storage: {{ grimmory_bookdrop_storage_size | default('1Gi') }}
