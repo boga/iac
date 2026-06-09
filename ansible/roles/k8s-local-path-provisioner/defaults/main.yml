@@ -1,0 +1,8 @@
+---
+local_path_provisioner_version: "v0.0.36"
+local_path_provisioner_namespace: "local-path-storage"
+local_path_provisioner_storageclass_name: "local-path"
+local_path_provisioner_default_paths: []
+local_path_provisioner_reclaim_policy: Delete
+local_path_provisioner_volume_binding_mode: WaitForFirstConsumer
+local_path_provisioner_default_storageclass: true
