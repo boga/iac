@@ -1,13 +1,13 @@
 ### Variables:
 
-| Name                                        | Description                          | Default value                     |
-|---------------------------------------------|--------------------------------------|-----------------------------------|
-| local_path_provisioner_version              | Container image version              | v0.0.36                           |
-| local_path_provisioner_namespace             | Kubernetes namespace                 | local-path-storage                |
-| local_path_provisioner_storageclass_name     | StorageClass name                    | local-path                        |
-| local_path_provisioner_default_paths         | Host paths for dynamic provisioning   | ["/opt/local-path-provisioner"]   |
-| local_path_provisioner_reclaim_policy        | PV reclaim policy                    | Delete                            |
-| local_path_provisioner_volume_binding_mode    | VolumeBindingMode                    | WaitForFirstConsumer              |
+| Name                                       | Description                         | Default value                   |
+|--------------------------------------------|-------------------------------------|---------------------------------|
+| local_path_provisioner_version             | Container image version             | v0.0.36                         |
+| local_path_provisioner_namespace           | Kubernetes namespace                | local-path-storage              |
+| local_path_provisioner_storageclass_name   | StorageClass name                   | local-path                      |
+| local_path_provisioner_default_paths       | Host paths for dynamic provisioning | ["/opt/local-path-provisioner"] |
+| local_path_provisioner_reclaim_policy      | PV reclaim policy                   | Delete                          |
+| local_path_provisioner_volume_binding_mode | VolumeBindingMode                   | WaitForFirstConsumer            |
 
 This role installs [Rancher local-path-provisioner](https://github.com/rancher/local-path-provisioner) using inline resource definitions and creates a StorageClass.
 
