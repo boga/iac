@@ -61,14 +61,23 @@
     kb_mysql_users_processed: []
   when: kb_mysql_users | length > 0
 
+- name: Validate user passwords (empty string not allowed)
+  ansible.builtin.fail:
+    msg: "User '{{ item.name }}' has an empty password. Either provide a valid password or omit the password field to auto-generate one."
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - kb_mysql_users | length > 0
+    - item.password is defined
+    - item.password | length == 0
+
 - name: Process MySQL users (auto-generate missing passwords)
   set_fact:
     kb_mysql_users_processed: >-
       {{ kb_mysql_users_processed + [item | combine({'password':
-         item.password | default('') | length > 0 | ternary(
-           item.password,
-           lookup('password', '/dev/null length=24 chars=ascii_letters,digits')
-         )})] }}
+         item.password | default(lookup('password', '/dev/null length=24 chars=ascii_letters,digits'))
+         })] }}
   loop: "{{ kb_mysql_users }}"
   loop_control:
     label: "{{ item.name }}"
