@@ -1,0 +1,57 @@
+---
+- name: "Create k8s namespace: {{ kb_mysql_namespace }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kb_mysql_namespace }}"
+
+- name: Create KubeBlocks MySQL Cluster
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps.kubeblocks.io/v1
+      kind: Cluster
+      metadata:
+        name: "{{ kb_mysql_cluster_name }}"
+        namespace: "{{ kb_mysql_namespace }}"
+      spec:
+        terminationPolicy: Delete
+        componentSpecs:
+          - name: mysql
+            componentDef: "{{ kb_mysql_component_def }}"
+            serviceVersion: "{{ kb_mysql_version }}"
+            replicas: "{{ kb_mysql_replicas }}"
+            resources:
+              limits:
+                cpu: "{{ kb_mysql_cpu }}"
+                memory: "{{ kb_mysql_memory }}"
+              requests:
+                cpu: "{{ kb_mysql_cpu }}"
+                memory: "{{ kb_mysql_memory }}"
+            volumeClaimTemplates:
+              - name: data
+                spec:
+                  storageClassName: "{{ kb_mysql_storage_class }}"
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: "{{ kb_mysql_storage }}"
+
+- name: Wait for MySQL cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: Cluster
+    name: "{{ kb_mysql_cluster_name }}"
+    namespace: "{{ kb_mysql_namespace }}"
+  register: mysql_cluster
+  until:
+    - mysql_cluster.resources | length > 0
+    - mysql_cluster.resources[0].status is defined
+    - mysql_cluster.resources[0].status.phase is defined
+    - mysql_cluster.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 10
