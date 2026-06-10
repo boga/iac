@@ -56,6 +56,24 @@
   retries: 60
   delay: 10
 
+- name: Initialize processed users list
+  set_fact:
+    kb_mysql_users_processed: []
+  when: kb_mysql_users | length > 0
+
+- name: Process MySQL users (auto-generate missing passwords)
+  set_fact:
+    kb_mysql_users_processed: >-
+      {{ kb_mysql_users_processed + [item | combine({'password':
+         item.password | default('') | length > 0 | ternary(
+           item.password,
+           lookup('password', '/dev/null length=24 chars=ascii_letters,digits')
+         )})] }}
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: kb_mysql_users | length > 0
+
 - name: Get MySQL root password
   kubernetes.core.k8s_info:
     api_version: v1
@@ -82,7 +100,7 @@
     command: >
       mysql -u root -p{{ kb_mysql_root_password }} -e
       "CREATE DATABASE IF NOT EXISTS `{{ item.1.name }}`;"
-  loop: "{{ kb_mysql_users | subelements('databases', skip_missing=True) }}"
+  loop: "{{ kb_mysql_users_processed | subelements('databases', skip_missing=True) }}"
   loop_control:
     label: "{{ item.1.name }}"
   no_log: true
@@ -100,8 +118,18 @@
       GRANT {{ db.privileges | default('ALL PRIVILEGES') }} ON `{{ db.name }}`.* TO '{{ item.name }}'@'%';
       {% endfor %}
       FLUSH PRIVILEGES;"
-  loop: "{{ kb_mysql_users }}"
+  loop: "{{ kb_mysql_users_processed }}"
   loop_control:
     label: "{{ item.name }}"
   no_log: true
   when: kb_mysql_users | length > 0
+
+- name: Display auto-generated passwords
+  debug:
+    msg: "User '{{ item.0.name }}': password was auto-generated (use no_log to view)"
+  loop: "{{ kb_mysql_users | zip(kb_mysql_users_processed) | list }}"
+  loop_control:
+    label: "{{ item.0.name }}"
+  when:
+    - kb_mysql_users | length > 0
+    - item.0.password | default('') | length == 0

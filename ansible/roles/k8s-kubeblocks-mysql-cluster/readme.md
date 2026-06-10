@@ -9,7 +9,7 @@
 | kb_mysql_version       | MySQL version (e.g., 8.4.2)          | 8.4.2            |
 | kb_mysql_cpu           | CPU limit/request per replica        | 0.5              |
 | kb_mysql_memory        | Memory limit/request per replica     | 0.5Gi            |
-| kb_mysql_storage       | Storage size for data volume         | 10Gi             |
+| kb_mysql_storage       | Storage size for data volume         | 1Gi              |
 | kb_mysql_storage_class | StorageClass name                    | cluster default  |
 | kb_mysql_users         | List of custom MySQL users to create | `[]`             |
 
@@ -49,9 +49,12 @@ You can create custom MySQL users by passing the `kb_mysql_users` variable. Each
 
 **User structure:**
 - `name`: MySQL username
-- `password`: User password
+- `password`: User password (optional — auto-generated if omitted or empty)
 - `databases`: List of databases to create and grant access to
   - `name`: Database name
   - `privileges`: MySQL privileges (e.g., `ALL PRIVILEGES`, `SELECT`, `SELECT, INSERT`). Defaults to `ALL PRIVILEGES` if not specified.
 
 All users are created with `@'%'` host access (any host).
+
+**Auto-generated passwords:**
+If you omit the `password` field or provide an empty string, a secure 24-character random password will be generated automatically. The generated password will be displayed in the playbook output for you to record.
