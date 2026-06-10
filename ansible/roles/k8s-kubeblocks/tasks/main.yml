@@ -18,6 +18,13 @@
     state: absent
     update_repo_cache: true
 
+- name: Apply KubeBlocks CRDs
+  shell: |
+    set -e
+    helm pull kubeblocks/kubeblocks --version {{ kubeblocks_chart_version }} --untar --untardir /tmp
+    kubectl apply --server-side -f /tmp/kubeblocks/crds/
+  changed_when: false
+
 - name: Install KubeBlocks
   kubernetes.core.helm:
     chart_ref: kubeblocks/kubeblocks
