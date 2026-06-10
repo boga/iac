@@ -6,3 +6,5 @@ kubeblocks_storage_class: ""
 # Disabled by default: local-path-provisioner doesn't support CSI snapshots,
 # so the dataprotection controller crashes waiting for VolumeSnapshot CRDs.
 kubeblocks_data_protection_enabled: false
+kubeblocks_auto_installed_addons:
+  - mysql
