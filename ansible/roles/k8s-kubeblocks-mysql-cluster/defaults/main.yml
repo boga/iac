@@ -8,3 +8,16 @@ kb_mysql_cpu: "0.5"
 kb_mysql_memory: "0.5Gi"
 kb_mysql_storage: "1Gi"
 kb_mysql_storage_class: ""
+kb_mysql_users: []
+# Example:
+# kb_mysql_users:
+#   - name: app_user
+#     password: changeme
+#     databases:
+#       - name: app_db
+#         privileges: "ALL PRIVILEGES"
+#   - name: readonly
+#     password: readonly_pass
+#     databases:
+#       - name: app_db
+#         privileges: "SELECT"

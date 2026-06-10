@@ -55,3 +55,53 @@
     - mysql_cluster.resources[0].status.phase == "Running"
   retries: 60
   delay: 10
+
+- name: Get MySQL root password
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ kb_mysql_cluster_name }}-mysql-account-root"
+    namespace: "{{ kb_mysql_namespace }}"
+  register: mysql_root_secret
+  until: mysql_root_secret.resources | length > 0
+  retries: 10
+  delay: 5
+  when: kb_mysql_users | length > 0
+
+- name: Set root password fact
+  set_fact:
+    kb_mysql_root_password: "{{ mysql_root_secret.resources[0].data.password | b64decode }}"
+  when: kb_mysql_users | length > 0
+  no_log: true
+
+- name: Create MySQL databases
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kb_mysql_namespace }}"
+    pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+    container: mysql
+    command: >
+      mysql -u root -p{{ kb_mysql_root_password }} -e
+      "CREATE DATABASE IF NOT EXISTS `{{ item.1.name }}`;"
+  loop: "{{ kb_mysql_users | subelements('databases', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.1.name }}"
+  no_log: true
+  when: kb_mysql_users | length > 0
+
+- name: Create MySQL users and grant privileges
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kb_mysql_namespace }}"
+    pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+    container: mysql
+    command: >
+      mysql -u root -p{{ kb_mysql_root_password }} -e
+      "CREATE USER IF NOT EXISTS '{{ item.name }}'@'%' IDENTIFIED BY '{{ item.password }}';
+      {% for db in item.databases | default([]) %}
+      GRANT {{ db.privileges | default('ALL PRIVILEGES') }} ON `{{ db.name }}`.* TO '{{ item.name }}'@'%';
+      {% endfor %}
+      FLUSH PRIVILEGES;"
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  when: kb_mysql_users | length > 0
