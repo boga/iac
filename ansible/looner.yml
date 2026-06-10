@@ -9,8 +9,4 @@
         local_path_provisioner_default_paths:
           - /var/local/storage
 
-    - role: k8s-create-namespace
-      vars:
-        namespace_name: kubeblocks
-
     - role: k8s-kubeblocks

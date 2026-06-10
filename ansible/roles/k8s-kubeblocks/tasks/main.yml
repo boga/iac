@@ -1,4 +1,11 @@
 ---
+- name: "Create namespace: {{ kubeblocks_namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ kubeblocks_namespace }}"
+    state: present
+
 - name: Add KubeBlocks chart repo
   kubernetes.core.helm_repository:
     name: kubeblocks
