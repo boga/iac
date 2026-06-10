@@ -8,3 +8,5 @@
       vars:
         local_path_provisioner_default_paths:
           - /var/local/storage
+
+    - role: k8s-kubeblocks

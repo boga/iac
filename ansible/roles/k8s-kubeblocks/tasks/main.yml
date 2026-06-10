@@ -1,0 +1,38 @@
+---
+- name: "Create namespace: {{ kubeblocks_namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ kubeblocks_namespace }}"
+    state: present
+
+- name: Add KubeBlocks chart repo
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "https://apecloud.github.io/helm-charts"
+
+- name: Update Helm cache
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true
+
+- name: Install KubeBlocks
+  kubernetes.core.helm:
+    chart_ref: kubeblocks/kubeblocks
+    name: "{{ kubeblocks_release_name }}"
+    namespace: "{{ kubeblocks_namespace }}"
+    chart_version: "{{ kubeblocks_chart_version }}"
+    state: present
+    values: >-
+      {{ {
+        "dataProtection": {"enabled": kubeblocks_data_protection_enabled}
+      } | combine(
+        {"storageClass": kubeblocks_storage_class}
+          if kubeblocks_storage_class else {}
+      ) }}
+  register: kubeblocks_install_result
+  retries: 3
+  delay: 10
+  until: kubeblocks_install_result is succeeded
