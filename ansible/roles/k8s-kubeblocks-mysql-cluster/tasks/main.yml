@@ -124,12 +124,20 @@
   no_log: true
   when: kb_mysql_users | length > 0
 
-- name: Display auto-generated passwords
-  debug:
-    msg: "User '{{ item.0.name }}': password was auto-generated (use no_log to view)"
-  loop: "{{ kb_mysql_users | zip(kb_mysql_users_processed) | list }}"
+- name: Create Kubernetes Secret for each user
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ kb_mysql_cluster_name }}-{{ item.name }}-mysql-user"
+        namespace: "{{ kb_mysql_namespace }}"
+      type: Opaque
+      stringData:
+        password: "{{ item.password }}"
+  loop: "{{ kb_mysql_users_processed }}"
   loop_control:
-    label: "{{ item.0.name }}"
-  when:
-    - kb_mysql_users | length > 0
-    - item.0.password | default('') | length == 0
+    label: "{{ item.name }}"
+  when: kb_mysql_users | length > 0
+  no_log: true

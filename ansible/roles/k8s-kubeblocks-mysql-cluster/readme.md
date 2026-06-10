@@ -57,4 +57,4 @@ You can create custom MySQL users by passing the `kb_mysql_users` variable. Each
 All users are created with `@'%'` host access (any host).
 
 **Auto-generated passwords:**
-If you omit the `password` field or provide an empty string, a secure 24-character random password will be generated automatically. The generated password will be displayed in the playbook output for you to record.
+If you omit the `password` field or provide an empty string, a secure 24-character random password will be generated automatically. Each user's credentials are stored in a separate Kubernetes Secret named `<cluster-name>-<username>-mysql-user` in the cluster namespace.
