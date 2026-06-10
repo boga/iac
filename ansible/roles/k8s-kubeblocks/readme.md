@@ -1,12 +1,12 @@
 ### Variables:
 
-| Name                                | Description                                      | Default value |
-|-------------------------------------|--------------------------------------------------|---------------|
-| kubeblocks_namespace                | Kubernetes namespace for KubeBlocks              | kubeblocks    |
-| kubeblocks_release_name             | Helm release name                                | kubeblocks    |
-| kubeblocks_chart_version            | Chart version to install                         | 1.0.2         |
-| kubeblocks_storage_class            | Default StorageClass for KubeBlocks volumes      | _(empty — use cluster default)_ |
-| kubeblocks_data_protection_enabled | Enable the data-protection controllers for backup | true          |
+| Name                               | Description                                       | Default value   |
+|------------------------------------|---------------------------------------------------|-----------------|
+| kubeblocks_namespace               | Kubernetes namespace for KubeBlocks               | kubeblocks      |
+| kubeblocks_release_name            | Helm release name                                 | kubeblocks      |
+| kubeblocks_chart_version           | Chart version to install                          | 1.0.2           |
+| kubeblocks_storage_class           | Default StorageClass for KubeBlocks volumes       | cluster default |
+| kubeblocks_data_protection_enabled | Enable the data-protection controllers for backup | true            |
 
 This role installs [KubeBlocks](https://github.com/apecloud/kubeblocks) — a Kubernetes operator for managing databases (MySQL, PostgreSQL, MongoDB, Redis, and more) via Helm.
 
