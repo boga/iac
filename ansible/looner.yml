@@ -10,3 +10,5 @@
 #          - /var/local/storage
 
     - role: k8s-kubeblocks
+
+- ansible.builtin.import_playbook: "playbooks/grimmory.yml"

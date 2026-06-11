@@ -43,8 +43,8 @@ spec:
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: grimmory-db
-                  key: DATABASE_PASSWORD
+                  name: "{{ grimmory_mysql_cluster_name }}-{{ grimmory_db_user }}-mysql-user"
+                  key: password
             - name: BOOKLORE_PORT
               value: "{{ grimmory_port }}"
           ports:
