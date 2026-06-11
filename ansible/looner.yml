@@ -9,6 +9,6 @@
 #        local_path_provisioner_default_paths:
 #          - /var/local/storage
 
-    - role: k8s-kubeblocks
+#    - role: k8s-kubeblocks
 
 - ansible.builtin.import_playbook: "playbooks/grimmory.yml"
