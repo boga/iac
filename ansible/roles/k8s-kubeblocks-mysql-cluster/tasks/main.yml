@@ -106,9 +106,11 @@
     namespace: "{{ kb_mysql_namespace }}"
     pod: "{{ kb_mysql_cluster_name }}-mysql-0"
     container: mysql
+    env:
+      MYSQL_PWD: "{{ kb_mysql_root_password }}"
     command: >
-      mysql -u root -p{{ kb_mysql_root_password }} -e
-      "CREATE DATABASE IF NOT EXISTS `{{ item.1.name }}`;"
+      mysql -u root -e
+      "CREATE DATABASE IF NOT EXISTS `{{ item.1.name | replace('`', '\\`') }}`;"
   loop: "{{ kb_mysql_users_processed | subelements('databases', skip_missing=True) }}"
   loop_control:
     label: "{{ item.1.name }}"
@@ -116,21 +118,47 @@
   when: kb_mysql_users | length > 0
 
 - name: Create MySQL users and grant privileges
-  kubernetes.core.k8s_exec:
-    namespace: "{{ kb_mysql_namespace }}"
-    pod: "{{ kb_mysql_cluster_name }}-mysql-0"
-    container: mysql
-    command: >
-      mysql -u root -p{{ kb_mysql_root_password }} -e
-      "CREATE USER IF NOT EXISTS '{{ item.name }}'@'%' IDENTIFIED BY '{{ item.password }}';
-      {% for db in item.databases | default([]) %}
-      GRANT {{ db.privileges | default('ALL PRIVILEGES') }} ON `{{ db.name }}`.* TO '{{ item.name }}'@'%';
-      {% endfor %}
-      FLUSH PRIVILEGES;"
-  loop: "{{ kb_mysql_users_processed }}"
-  loop_control:
-    label: "{{ item.name }}"
-  no_log: true
+  block:
+    - name: Write SQL setup script to pod
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        command: |
+          sh -c 'cat > /tmp/setup_{{ item.name }}.sql << EOF
+          CREATE USER IF NOT EXISTS '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"'@'"'"'%'"'"' IDENTIFIED BY '"'"'{{ item.password | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"';
+          {% for db in item.databases | default([]) %}
+          GRANT {{ db.privileges | default("ALL PRIVILEGES") }} ON `{{ db.name | replace("`", "\\`") }}`.* TO '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"'@'"'"'%'"'"';
+          {% endfor %}
+          FLUSH PRIVILEGES;
+          EOF'
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Execute SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        env:
+          MYSQL_PWD: "{{ kb_mysql_root_password }}"
+        command: "mysql -u root < /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Clean up SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        command: "rm -f /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
   when: kb_mysql_users | length > 0
 
 - name: Create Kubernetes Secret for each user

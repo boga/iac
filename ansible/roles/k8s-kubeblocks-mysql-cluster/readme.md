@@ -49,7 +49,7 @@ You can create custom MySQL users by passing the `kb_mysql_users` variable. Each
 
 **User structure:**
 - `name`: MySQL username
-- `password`: User password (optional — auto-generated if omitted or empty)
+- `password`: User password (optional — auto-generated if omitted; empty string is invalid and will fail)
 - `databases`: List of databases to create and grant access to
   - `name`: Database name
   - `privileges`: MySQL privileges (e.g., `ALL PRIVILEGES`, `SELECT`, `SELECT, INSERT`). Defaults to `ALL PRIVILEGES` if not specified.
