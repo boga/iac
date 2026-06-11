@@ -1,0 +1,180 @@
+---
+- name: "Create k8s namespace: {{ kb_mysql_namespace }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kb_mysql_namespace }}"
+
+- name: Create KubeBlocks MySQL Cluster
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps.kubeblocks.io/v1
+      kind: Cluster
+      metadata:
+        name: "{{ kb_mysql_cluster_name }}"
+        namespace: "{{ kb_mysql_namespace }}"
+      spec:
+        terminationPolicy: Delete
+        componentSpecs:
+          - name: mysql
+            componentDef: "{{ kb_mysql_component_def }}"
+            serviceVersion: "{{ kb_mysql_version }}"
+            replicas: "{{ kb_mysql_replicas }}"
+            resources:
+              limits:
+                cpu: "{{ kb_mysql_cpu }}"
+                memory: "{{ kb_mysql_memory }}"
+              requests:
+                cpu: "{{ kb_mysql_cpu }}"
+                memory: "{{ kb_mysql_memory }}"
+            volumeClaimTemplates:
+              - name: data
+                spec:
+                  storageClassName: "{{ kb_mysql_storage_class }}"
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: "{{ kb_mysql_storage }}"
+
+- name: Wait for MySQL cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: Cluster
+    name: "{{ kb_mysql_cluster_name }}"
+    namespace: "{{ kb_mysql_namespace }}"
+  register: mysql_cluster
+  until:
+    - mysql_cluster.resources | length > 0
+    - mysql_cluster.resources[0].status is defined
+    - mysql_cluster.resources[0].status.phase is defined
+    - mysql_cluster.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 10
+
+- name: Initialize processed users list
+  set_fact:
+    kb_mysql_users_processed: []
+  when: kb_mysql_users | length > 0
+
+- name: Validate user passwords (empty string not allowed)
+  ansible.builtin.fail:
+    msg: "User '{{ item.name }}' has an empty password. Either provide a valid password or omit the password field to auto-generate one."
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - kb_mysql_users | length > 0
+    - item.password is defined
+    - item.password | length == 0
+
+- name: Process MySQL users (auto-generate missing passwords)
+  set_fact:
+    kb_mysql_users_processed: >-
+      {{ kb_mysql_users_processed + [item | combine({'password':
+         item.password | default(lookup('password', '/dev/null length=24 chars=ascii_letters,digits'))
+         })] }}
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: kb_mysql_users | length > 0
+
+- name: Get MySQL root password
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ kb_mysql_cluster_name }}-mysql-account-root"
+    namespace: "{{ kb_mysql_namespace }}"
+  register: mysql_root_secret
+  until: mysql_root_secret.resources | length > 0
+  retries: 10
+  delay: 5
+  when: kb_mysql_users | length > 0
+
+- name: Set root password fact
+  set_fact:
+    kb_mysql_root_password: "{{ mysql_root_secret.resources[0].data.password | b64decode }}"
+  when: kb_mysql_users | length > 0
+  no_log: true
+
+- name: Create MySQL databases
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kb_mysql_namespace }}"
+    pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+    container: mysql
+    env:
+      MYSQL_PWD: "{{ kb_mysql_root_password }}"
+    command: >
+      mysql -u root -e
+      "CREATE DATABASE IF NOT EXISTS `{{ item.1.name | replace('`', '\\`') }}`;"
+  loop: "{{ kb_mysql_users_processed | subelements('databases', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.1.name }}"
+  no_log: true
+  when: kb_mysql_users | length > 0
+
+- name: Create MySQL users and grant privileges
+  block:
+    - name: Write SQL setup script to pod
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        command: |
+          sh -c 'cat > /tmp/setup_{{ item.name }}.sql << EOF
+          CREATE USER IF NOT EXISTS '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"'@'"'"'%'"'"' IDENTIFIED BY '"'"'{{ item.password | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"';
+          {% for db in item.databases | default([]) %}
+          GRANT {{ db.privileges | default("ALL PRIVILEGES") }} ON `{{ db.name | replace("`", "\\`") }}`.* TO '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"''"'"'") }}'"'"'@'"'"'%'"'"';
+          {% endfor %}
+          FLUSH PRIVILEGES;
+          EOF'
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Execute SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        env:
+          MYSQL_PWD: "{{ kb_mysql_root_password }}"
+        command: "mysql -u root < /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Clean up SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        command: "rm -f /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+  when: kb_mysql_users | length > 0
+
+- name: Create Kubernetes Secret for each user
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ kb_mysql_cluster_name }}-{{ item.name }}-mysql-user"
+        namespace: "{{ kb_mysql_namespace }}"
+      type: Opaque
+      stringData:
+        password: "{{ item.password }}"
+  loop: "{{ kb_mysql_users_processed }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: kb_mysql_users | length > 0
+  no_log: true
