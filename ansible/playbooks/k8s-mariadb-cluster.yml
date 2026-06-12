@@ -1,7 +1,0 @@
----
-- name: Create MariaDB cluster
-  hosts: localhost
-  gather_facts: false
-
-  roles:
-    - role: k8s-mariadb-cluster

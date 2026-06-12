@@ -23,11 +23,26 @@
     - item.password is defined
     - item.password | length == 0
 
+- name: Build MariaDB user identity list
+  ansible.builtin.set_fact:
+    mariadb_cluster_user_identities: >-
+      {{ mariadb_cluster_users | map(attribute='name') | zip(
+        mariadb_cluster_users | map(attribute='host', default='%')
+      ) | map('join', '@') | list }}
+  when: mariadb_cluster_users | length > 0
+
+- name: Validate MariaDB users are unique by name and host
+  ansible.builtin.assert:
+    that:
+      - mariadb_cluster_user_identities | length == mariadb_cluster_user_identities | unique | list | length
+    fail_msg: "mariadb_cluster_users must not contain duplicate name/host pairs. Set a different host or remove the duplicate user."
+  when: mariadb_cluster_users | length > 0
+
 - name: Get existing MariaDB user Secrets
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Secret
-    name: "{{ item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user') }}"
+    name: "{{ item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-' + (item.host | default('%') | regex_replace('%', 'all') | regex_replace('[^A-Za-z0-9-]+', '-') | lower | regex_replace('(^-|-$)', '')) + '-mariadb-user') }}"
     namespace: "{{ mariadb_cluster_namespace }}"
   register: mariadb_cluster_existing_user_secrets
   loop: "{{ mariadb_cluster_users }}"
@@ -41,7 +56,7 @@
     mariadb_cluster_user_passwords_processed: >-
       {{ mariadb_cluster_user_passwords_processed + [{
         'name': item.name,
-        'secret_name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user'),
+        'secret_name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-' + (item.host | default('%') | regex_replace('%', 'all') | regex_replace('[^A-Za-z0-9-]+', '-') | lower | regex_replace('(^-|-$)', '')) + '-mariadb-user'),
         'password': item.password | default(
           (
             mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data[mariadb_cluster_user_secret_key] | b64decode
@@ -50,6 +65,9 @@
             mariadb_cluster_existing_user_secrets.results[user_index].resources | length > 0
             and mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data is defined
             and mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data[mariadb_cluster_user_secret_key] is defined
+            and (
+              mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data[mariadb_cluster_user_secret_key] | b64decode | length
+            ) > 0
           )
           else lookup('password', '/dev/null length=24 chars=ascii_letters,digits')
         )
@@ -91,7 +109,7 @@
           | combine({
             'host': item.host | default('%'),
             'passwordSecretKeyRef': {
-              'name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user'),
+              'name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-' + (item.host | default('%') | regex_replace('%', 'all') | regex_replace('[^A-Za-z0-9-]+', '-') | lower | regex_replace('(^-|-$)', '')) + '-mariadb-user'),
               'key': mariadb_cluster_user_secret_key
             }
           }, recursive=True)
@@ -102,6 +120,12 @@
     label: "{{ item.name }}"
   when: mariadb_cluster_users | length > 0
   no_log: true
+
+- name: Validate MariaDB root password Secret configuration
+  ansible.builtin.assert:
+    that:
+      - mariadb_cluster_root_password_secret_generate or mariadb_cluster_root_password_secret_name | length > 0
+    fail_msg: "mariadb_cluster_root_password_secret_name is required when mariadb_cluster_root_password_secret_generate is false."
 
 - name: Build MariaDB cluster Helm values
   ansible.builtin.set_fact:

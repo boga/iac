@@ -30,8 +30,9 @@ This role creates a MariaDB cluster with the upstream [`mariadb-cluster`](https:
 - Install `k8s-mariadb-operator` before this role.
 - The role uses OCI charts, so no Helm repository setup is required.
 - Override `mariadb_cluster_values` for chart options that do not have first-class role variables.
-- Set `mariadb_cluster_root_password_secret_generate` to `false` when using an externally managed root password Secret.
-- User passwords are stored in Kubernetes Secrets named `<cluster-name>-<username>-mariadb-user` unless `secret_name` is set.
+- Set `mariadb_cluster_root_password_secret_generate` to `false` when using an externally managed root password Secret. In this mode, `mariadb_cluster_root_password_secret_name` is required.
+- User passwords are stored in Kubernetes Secrets named `<cluster-name>-<username>-<normalized-host>-mariadb-user` unless `secret_name` is set.
+- Users must have unique `name` and `host` pairs.
 
 ## Managed Users
 
@@ -39,7 +40,7 @@ Set `mariadb_cluster_users` to create MariaDB `User` custom resources and matchi
 
 Password handling:
 
-- Omit `password` to reuse the existing Secret value, or generate a secure 24-character random password when the Secret does not exist.
+- Omit `password` to reuse the existing Secret value, or generate a secure 24-character random password when the Secret does not exist or contains an empty value.
 - Set `password` to a non-empty value to use that value.
 - Set `password` to an empty string to fail the playbook.
 
@@ -48,7 +49,7 @@ User structure:
 - `name`: MariaDB username.
 - `password`: optional password.
 - `host`: optional host. Defaults to `%`.
-- `secret_name`: optional Kubernetes Secret name. Defaults to `<cluster-name>-<username>-mariadb-user`.
+- `secret_name`: optional Kubernetes Secret name. Defaults to `<cluster-name>-<username>-<normalized-host>-mariadb-user`.
 
 Example:
 
