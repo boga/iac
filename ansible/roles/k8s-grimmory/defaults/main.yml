@@ -7,13 +7,7 @@ grimmory_image_pull_policy: "Always"
 grimmory_replicas: 1
 grimmory_port: 6060
 
-grimmory_db_host: "grimmory-mysql-mysql"
+grimmory_db_host: ""
 grimmory_db_port: 3306
 grimmory_db_name: "grimmory"
 grimmory_db_user: "grimmory"
-
-grimmory_mysql_cluster_name: "grimmory-mysql"
-grimmory_mysql_cpu: "0.5"
-grimmory_mysql_memory: "0.5Gi"
-grimmory_mysql_storage_size: "5Gi"
-# grimmory_mysql_storage_class: ""   # empty = cluster default (local-path)

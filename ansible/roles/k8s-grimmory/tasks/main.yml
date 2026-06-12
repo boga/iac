@@ -8,23 +8,6 @@
       metadata:
         name: "{{ namespace_name }}"
 
-- name: "Create KubeBlocks MySQL cluster for Grimmory"
-  include_role:
-    name: k8s-kubeblocks-mysql-cluster
-  vars:
-    kb_mysql_namespace: "{{ namespace_name }}"
-    kb_mysql_cluster_name: "{{ grimmory_mysql_cluster_name }}"
-    kb_mysql_replicas: 1
-    kb_mysql_cpu: "{{ grimmory_mysql_cpu }}"
-    kb_mysql_memory: "{{ grimmory_mysql_memory }}"
-    kb_mysql_storage: "{{ grimmory_mysql_storage_size }}"
-    kb_mysql_storage_class: "{{ grimmory_mysql_storage_class | default('') }}"
-    kb_mysql_users:
-      - name: "{{ grimmory_db_user }}"
-        databases:
-          - name: "{{ grimmory_db_name }}"
-            privileges: "SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, REFERENCES"
-
 - name: "Create Grimmory secrets"
   kubernetes.core.k8s:
     state: present
