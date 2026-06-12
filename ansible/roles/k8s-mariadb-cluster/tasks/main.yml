@@ -6,6 +6,103 @@
     name: "{{ mariadb_cluster_namespace }}"
     state: present
 
+- name: Initialize processed MariaDB users
+  ansible.builtin.set_fact:
+    mariadb_cluster_users_processed: []
+    mariadb_cluster_user_passwords_processed: []
+  when: mariadb_cluster_users | length > 0
+  no_log: true
+
+- name: Validate MariaDB user passwords
+  ansible.builtin.fail:
+    msg: "User '{{ item.name }}' has an empty password. Either provide a valid password or omit the password field to auto-generate one."
+  loop: "{{ mariadb_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - item.password is defined
+    - item.password | length == 0
+
+- name: Get existing MariaDB user Secrets
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user') }}"
+    namespace: "{{ mariadb_cluster_namespace }}"
+  register: mariadb_cluster_existing_user_secrets
+  loop: "{{ mariadb_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: mariadb_cluster_users | length > 0
+  no_log: true
+
+- name: Process MariaDB user passwords
+  ansible.builtin.set_fact:
+    mariadb_cluster_user_passwords_processed: >-
+      {{ mariadb_cluster_user_passwords_processed + [{
+        'name': item.name,
+        'secret_name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user'),
+        'password': item.password | default(
+          (
+            mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data[mariadb_cluster_user_secret_key] | b64decode
+          )
+          if (
+            mariadb_cluster_existing_user_secrets.results[user_index].resources | length > 0
+            and mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data is defined
+            and mariadb_cluster_existing_user_secrets.results[user_index].resources[0].data[mariadb_cluster_user_secret_key] is defined
+          )
+          else lookup('password', '/dev/null length=24 chars=ascii_letters,digits')
+        )
+      }] }}
+  loop: "{{ mariadb_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: user_index
+  when: mariadb_cluster_users | length > 0
+  no_log: true
+
+- name: Create Kubernetes Secret for each MariaDB user
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ item.secret_name }}"
+        namespace: "{{ mariadb_cluster_namespace }}"
+      type: Opaque
+      stringData:
+        "{{ mariadb_cluster_user_secret_key }}": "{{ item.password }}"
+  loop: "{{ mariadb_cluster_user_passwords_processed | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: mariadb_cluster_users | length > 0
+  no_log: true
+
+- name: Build MariaDB User custom resources
+  ansible.builtin.set_fact:
+    mariadb_cluster_users_processed: >-
+      {{ mariadb_cluster_users_processed + [
+        (
+          item
+          | dict2items
+          | rejectattr('key', 'in', ['password', 'secret_name'])
+          | items2dict
+          | combine({
+            'host': item.host | default('%'),
+            'passwordSecretKeyRef': {
+              'name': item.secret_name | default(mariadb_cluster_name + '-' + item.name + '-mariadb-user'),
+              'key': mariadb_cluster_user_secret_key
+            }
+          }, recursive=True)
+        )
+      ] }}
+  loop: "{{ mariadb_cluster_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: mariadb_cluster_users | length > 0
+  no_log: true
+
 - name: Build MariaDB cluster Helm values
   ansible.builtin.set_fact:
     mariadb_cluster_helm_values: >-
@@ -22,11 +119,12 @@
           'storage': {'size': mariadb_cluster_storage_size}
         },
         'databases': mariadb_cluster_databases,
-        'users': mariadb_cluster_users,
+        'users': mariadb_cluster_users_processed | default([]),
         'grants': mariadb_cluster_grants,
         'backups': mariadb_cluster_backups,
         'physicalBackups': mariadb_cluster_physical_backups
       } | combine(mariadb_cluster_values, recursive=True) }}
+  no_log: "{{ mariadb_cluster_users | length > 0 }}"
 
 - name: Install MariaDB cluster
   kubernetes.core.helm:

@@ -4,14 +4,14 @@ This role installs [`mariadb-operator`](https://github.com/mariadb-operator/mari
 
 ## Variables
 
-| Name                                 | Description                                      | Default value      |
-|--------------------------------------|--------------------------------------------------|--------------------|
-| `mariadb_operator_namespace`         | Kubernetes namespace for the operator release    | `mariadb-operator` |
-| `mariadb_operator_release_name`      | Helm release name for the operator chart         | `mariadb-operator` |
-| `mariadb_operator_crds_release_name` | Helm release name for the CRDs chart             | `mariadb-operator-crds` |
-| `mariadb_operator_chart_version`     | MariaDB operator chart version                   | `26.6.0`           |
-| `mariadb_operator_crds_chart_version`| MariaDB operator CRDs chart version              | `{{ mariadb_operator_chart_version }}` |
-| `mariadb_operator_values`            | Values passed to the operator Helm chart         | `{}`               |
+| Name                                  | Description                                   | Default value                          |
+|---------------------------------------|-----------------------------------------------|----------------------------------------|
+| `mariadb_operator_namespace`          | Kubernetes namespace for the operator release | `mariadb-operator`                     |
+| `mariadb_operator_release_name`       | Helm release name for the operator chart      | `mariadb-operator`                     |
+| `mariadb_operator_crds_release_name`  | Helm release name for the CRDs chart          | `mariadb-operator-crds`                |
+| `mariadb_operator_chart_version`      | MariaDB operator chart version                | `26.6.0`                               |
+| `mariadb_operator_crds_chart_version` | MariaDB operator CRDs chart version           | `{{ mariadb_operator_chart_version }}` |
+| `mariadb_operator_values`             | Values passed to the operator Helm chart      | `{}`                                   |
 
 ## Notes
 

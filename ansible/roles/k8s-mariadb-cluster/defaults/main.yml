@@ -11,6 +11,7 @@ mariadb_cluster_root_password_secret_key: root
 mariadb_cluster_root_password_secret_generate: true
 mariadb_cluster_databases: []
 mariadb_cluster_users: []
+mariadb_cluster_user_secret_key: password
 mariadb_cluster_grants: []
 mariadb_cluster_backups: []
 mariadb_cluster_physical_backups: []
