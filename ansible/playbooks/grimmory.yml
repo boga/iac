@@ -1,0 +1,9 @@
+---
+- name: Install Grimmory
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-grimmory
+      vars:
+        namespace_name: grimmory

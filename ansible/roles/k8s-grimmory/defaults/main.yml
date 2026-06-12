@@ -1,0 +1,20 @@
+---
+namespace_name: "grimmory"
+
+grimmory_name: "grimmory"
+grimmory_image: "grimmory/grimmory:latest"
+grimmory_image_pull_policy: "Always"
+grimmory_replicas: 1
+grimmory_port: 6060
+
+grimmory_db_host: "grimmory-mariadb"
+grimmory_db_port: 3306
+grimmory_db_name: "grimmory"
+grimmory_db_user: "grimmory"
+grimmory_db_password_secret_name: "grimmory-mariadb-grimmory-all-mariadb-user"
+
+grimmory_mariadb_release_name: "grimmory-mariadb"
+grimmory_mariadb_cluster_name: "grimmory-mariadb"
+grimmory_mariadb_replicas: 1
+grimmory_mariadb_galera_enabled: false
+grimmory_mariadb_storage_size: "5Gi"

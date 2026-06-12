@@ -1,10 +1,39 @@
+# Talos machine config patch — applied during `talosctl gen config` or `talosctl patch mc`.
+# See ansible/readme.md for cluster bootstrap instructions.
+
 machine:
+  # Install Talos to /dev/sda (primary disk).
   install:
     disk: /dev/sda
+
+  # Mount /dev/sdb under /var/local/storage for the local-path provisioner.
+  # The provisioner uses this path as its default storage directory
+  # (local_path_provisioner_default_paths: ["/var/local/storage"]).
   disks:
     - device: /dev/sdb
       partitions:
         - mountpoint: /var/local/storage
 
 cluster:
+  # Single-node cluster — allow workloads on the control-plane node.
   allowSchedulingOnControlPlanes: true
+
+  # Cluster-wide Pod Security Admission defaults.
+  # All namespaces without explicit PSA labels inherit these defaults,
+  # so every namespace in the cluster permits privileged pods.
+  # Namespaces that already carry PSA labels (e.g. grimmory, observability, signoz)
+  # keep their existing labels — the cluster defaults only fill in for unlabelled ones.
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          apiVersion: pod-security.admission.config.k8s.io/v1
+          kind: PodSecurityConfiguration
+          defaults:
+            enforce: "privileged"
+            audit: "privileged"
+            warn: "privileged"
+          exemptions:
+            usernames: []
+            runtimeClasses: []
+            namespaces: []

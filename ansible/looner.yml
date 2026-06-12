@@ -4,9 +4,11 @@
   gather_facts: false
 
   roles:
-#    - role: k8s-local-path-provisioner
-#      vars:
-#        local_path_provisioner_default_paths:
-#          - /var/local/storage
+    - role: k8s-local-path-provisioner
+      vars:
+        local_path_provisioner_default_paths:
+          - /var/local/storage
 
     - role: k8s-kubeblocks
+
+- ansible.builtin.import_playbook: "playbooks/grimmory.yml"

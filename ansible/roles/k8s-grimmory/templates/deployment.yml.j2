@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ grimmory_name }}
+  namespace: "{{ namespace_name }}"
+  labels:
+    app.kubernetes.io/name: {{ grimmory_name }}
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ grimmory_replicas }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ grimmory_name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ grimmory_name }}
+    spec:
+      containers:
+        - name: {{ grimmory_name }}
+          image: "{{ grimmory_image }}"
+          imagePullPolicy: {{ grimmory_image_pull_policy }}
+          env:
+            - name: USER_ID
+              value: "1000"
+            - name: GROUP_ID
+              value: "1000"
+            - name: TZ
+              value: "{{ grimmory_timezone | default('Etc/UTC') }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db
+                  key: DATABASE_URL
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ grimmory_db_password_secret_name }}
+                  key: password
+            - name: BOOKLORE_PORT
+              value: "{{ grimmory_port }}"
+          ports:
+            - name: http
+              containerPort: {{ grimmory_port }}
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/data
+              name: grimmory-data
+            - mountPath: /books
+              name: grimmory-books
+            - mountPath: /bookdrop
+              name: grimmory-bookdrop
+      volumes:
+        - name: grimmory-data
+          persistentVolumeClaim:
+            claimName: grimmory-data
+        - name: grimmory-books
+          persistentVolumeClaim:
+            claimName: grimmory-books
+        - name: grimmory-bookdrop
+          persistentVolumeClaim:
+            claimName: grimmory-bookdrop
