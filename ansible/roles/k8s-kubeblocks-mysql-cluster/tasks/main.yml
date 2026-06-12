@@ -73,11 +73,41 @@
     - item.password | length == 0
   no_log: true
 
-- name: Process MySQL users (auto-generate missing passwords)
+- name: Get existing MySQL user secrets
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ kb_mysql_cluster_name }}-{{ item.name }}-mysql-user"
+    namespace: "{{ kb_mysql_namespace }}"
+  loop: "{{ kb_mysql_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: kb_mysql_existing_user_secrets
+  when: kb_mysql_users | length > 0
+  no_log: true
+
+- name: Build existing MySQL user password map
+  set_fact:
+    kb_mysql_existing_user_passwords: >-
+      {{ kb_mysql_existing_user_passwords | default({}) | combine({
+        item.item.name: item.resources[0].data.password | b64decode
+      }) }}
+  loop: "{{ kb_mysql_existing_user_secrets.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - kb_mysql_users | length > 0
+    - item.resources | length > 0
+    - item.resources[0].data.password is defined
+  no_log: true
+
+- name: Process MySQL users (reuse existing or auto-generate missing passwords)
   set_fact:
     kb_mysql_users_processed: >-
       {{ kb_mysql_users_processed + [item | combine({'password':
-         item.password | default(lookup('password', '/dev/null length=24 chars=ascii_letters,digits'))
+         item.password | default(
+           (kb_mysql_existing_user_passwords | default({})).get(item.name, lookup('password', '/dev/null length=24 chars=ascii_letters,digits'))
+         )
          })] }}
   loop: "{{ kb_mysql_users }}"
   loop_control:
