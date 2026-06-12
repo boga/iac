@@ -71,6 +71,7 @@
     - kb_mysql_users | length > 0
     - item.password is defined
     - item.password | length == 0
+  no_log: true
 
 - name: Process MySQL users (auto-generate missing passwords)
   set_fact:
@@ -82,6 +83,7 @@
   loop_control:
     label: "{{ item.name }}"
   when: kb_mysql_users | length > 0
+  no_log: true
 
 - name: Get MySQL root password
   kubernetes.core.k8s_info:
@@ -94,6 +96,7 @@
   retries: 10
   delay: 5
   when: kb_mysql_users | length > 0
+  no_log: true
 
 - name: Set root password fact
   set_fact:
@@ -143,17 +146,17 @@
 
 - name: Create MySQL users and grant privileges
   block:
-    # Build SQL content in Ansible, b64-encode it, then write to the pod.
-    # This avoids all shell quoting issues with passwords and special chars.
-    - name: Build and write SQL setup script to pod
-      kubernetes.core.k8s_exec:
-        namespace: "{{ kb_mysql_namespace }}"
-        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
-        container: mysql
-        command: >-
-          sh -c 'echo {{
-          sql_content | b64encode
-          }} | base64 -d > /tmp/setup_{{ item.name }}.sql'
+    # Build SQL scripts and secret data as facts with no_log to prevent password exposure in verbose mode.
+    # The sensitive content is only expanded here; subsequent tasks reference pre-built facts.
+    - name: Build SQL scripts and secret data (protected)
+      set_fact:
+        kb_mysql_sql_scripts: >-
+          {{ kb_mysql_sql_scripts | default({}) | combine({
+            item.name: {
+              'sql_b64': sql_content | b64encode,
+              'secret_data': {'password': item.password}
+            }
+          }) }}
       vars:
         sql_content: |
           CREATE USER IF NOT EXISTS '{{ item.name }}'@'%' IDENTIFIED BY '{{ item.password }}';
@@ -161,6 +164,17 @@
           GRANT {{ db.privileges | default("ALL PRIVILEGES") }} ON `{{ db.name }}`.* TO '{{ item.name }}'@'%';
           {% endfor -%}
           FLUSH PRIVILEGES;
+      loop: "{{ kb_mysql_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Write SQL setup script to pod
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mysql_namespace }}"
+        pod: "{{ kb_mysql_cluster_name }}-mysql-0"
+        container: mysql
+        command: "sh -c 'echo {{ kb_mysql_sql_scripts[item.name].sql_b64 }} | base64 -d > /tmp/setup_{{ item.name }}.sql'"
       loop: "{{ kb_mysql_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
@@ -186,6 +200,7 @@
       loop: "{{ kb_mysql_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
+      no_log: true
 
     - name: Clean up .my.cnf
       kubernetes.core.k8s_exec:
@@ -205,8 +220,7 @@
         name: "{{ kb_mysql_cluster_name }}-{{ item.name }}-mysql-user"
         namespace: "{{ kb_mysql_namespace }}"
       type: Opaque
-      stringData:
-        password: "{{ item.password }}"
+      stringData: "{{ kb_mysql_sql_scripts[item.name].secret_data }}"
   loop: "{{ kb_mysql_users_processed }}"
   loop_control:
     label: "{{ item.name }}"
