@@ -89,8 +89,7 @@
         name: "{{ item.secret_name }}"
         namespace: "{{ mariadb_cluster_namespace }}"
       type: Opaque
-      stringData:
-        "{{ mariadb_cluster_user_secret_key }}": "{{ item.password }}"
+      stringData: "{{ {mariadb_cluster_user_secret_key: item.password} }}"
   loop: "{{ mariadb_cluster_user_passwords_processed | default([]) }}"
   loop_control:
     label: "{{ item.name }}"

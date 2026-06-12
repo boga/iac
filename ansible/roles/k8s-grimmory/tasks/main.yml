@@ -8,6 +8,40 @@
       metadata:
         name: "{{ namespace_name }}"
 
+- name: "Create MariaDB cluster for Grimmory"
+  ansible.builtin.include_role:
+    name: k8s-mariadb-cluster
+  vars:
+    mariadb_cluster_namespace: "{{ namespace_name }}"
+    mariadb_cluster_release_name: "{{ grimmory_mariadb_release_name }}"
+    mariadb_cluster_name: "{{ grimmory_mariadb_cluster_name }}"
+    mariadb_cluster_replicas: "{{ grimmory_mariadb_replicas }}"
+    mariadb_cluster_galera_enabled: "{{ grimmory_mariadb_galera_enabled }}"
+    mariadb_cluster_storage_size: "{{ grimmory_mariadb_storage_size }}"
+    mariadb_cluster_databases:
+      - name: "{{ grimmory_db_name }}"
+        characterSet: utf8mb4
+        collate: utf8mb4_unicode_ci
+    mariadb_cluster_users:
+      - name: "{{ grimmory_db_user }}"
+        secret_name: "{{ grimmory_db_password_secret_name }}"
+    mariadb_cluster_grants:
+      - name: "{{ grimmory_db_user }}-{{ grimmory_db_name }}"
+        privileges:
+          - SELECT
+          - INSERT
+          - UPDATE
+          - DELETE
+          - CREATE
+          - ALTER
+          - DROP
+          - INDEX
+          - REFERENCES
+        database: "{{ grimmory_db_name }}"
+        table: "*"
+        username: "{{ grimmory_db_user }}"
+        host: "%"
+
 - name: "Create Grimmory secrets"
   kubernetes.core.k8s:
     state: present
