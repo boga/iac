@@ -1,4 +1,35 @@
 ---
+- name: Add KubeBlocks chart repo
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "https://apecloud.github.io/helm-charts"
+
+- name: Install KubeBlocks MySQL addon
+  kubernetes.core.helm:
+    chart_ref: "{{ kb_mysql_addon_chart_ref }}"
+    name: "{{ kb_mysql_addon_release_name }}"
+    namespace: "{{ kb_mysql_addon_namespace }}"
+    chart_version: "{{ kb_mysql_addon_chart_version }}"
+    state: present
+  register: mysql_addon_install_result
+  retries: 3
+  delay: 10
+  until: mysql_addon_install_result is succeeded
+
+- name: Wait for MySQL ComponentDefinition to be available
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ComponentDefinition
+    name: "{{ kb_mysql_component_def }}"
+  register: mysql_component_definition
+  until:
+    - mysql_component_definition.resources | length > 0
+    - mysql_component_definition.resources[0].status is defined
+    - mysql_component_definition.resources[0].status.phase is defined
+    - mysql_component_definition.resources[0].status.phase == "Available"
+  retries: 30
+  delay: 10
+
 - name: "Create k8s namespace: {{ kb_mysql_namespace }}"
   kubernetes.core.k8s:
     state: present

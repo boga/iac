@@ -1,7 +1,11 @@
 ---
 kb_mysql_namespace: "kubeblocks-debug"
 kb_mysql_cluster_name: "mysql-cluster"
-kb_mysql_component_def: "mysql-8.4"
+kb_mysql_addon_release_name: "kb-addon-mysql"
+kb_mysql_addon_namespace: "kubeblocks"
+kb_mysql_addon_chart_ref: "kubeblocks/mysql"
+kb_mysql_addon_chart_version: "1.0.2"
+kb_mysql_component_def: "mysql-8.4-1.0.2"
 kb_mysql_replicas: 1
 kb_mysql_version: "8.4.2"
 kb_mysql_cpu: "0.5"

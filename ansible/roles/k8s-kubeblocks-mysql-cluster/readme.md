@@ -1,22 +1,28 @@
 ### Variables:
 
-| Name                   | Description                          | Default value    |
-|------------------------|--------------------------------------|------------------|
-| kb_mysql_namespace     | Kubernetes namespace                 | kubeblocks-debug |
-| kb_mysql_cluster_name  | Name of the MySQL cluster            | mysql-cluster    |
-| kb_mysql_component_def | KubeBlocks component definition name | mysql-8.4        |
-| kb_mysql_replicas      | Number of MySQL replicas             | 1                |
-| kb_mysql_version       | MySQL version (e.g., 8.4.2)          | 8.4.2            |
-| kb_mysql_cpu           | CPU limit/request per replica        | 0.5              |
-| kb_mysql_memory        | Memory limit/request per replica     | 0.5Gi            |
-| kb_mysql_storage       | Storage size for data volume         | 1Gi              |
-| kb_mysql_storage_class | StorageClass name                    | cluster default  |
-| kb_mysql_users         | List of custom MySQL users to create | `[]`             |
+| Name                               | Description                          | Default value    |
+|------------------------------------|--------------------------------------|------------------|
+| kb_mysql_namespace                 | Kubernetes namespace                 | kubeblocks-debug |
+| kb_mysql_cluster_name              | Name of the MySQL cluster            | mysql-cluster    |
+| kb_mysql_addon_release_name        | Helm release name for the addon      | kb-addon-mysql   |
+| kb_mysql_addon_namespace           | Namespace for the addon release      | kubeblocks       |
+| kb_mysql_addon_chart_ref           | Helm chart reference for the addon   | kubeblocks/mysql |
+| kb_mysql_addon_chart_version       | Helm chart version for the addon     | 1.0.2            |
+| kb_mysql_component_def             | KubeBlocks component definition name | mysql-8.4-1.0.2  |
+| kb_mysql_replicas                  | Number of MySQL replicas             | 1                |
+| kb_mysql_version                   | MySQL version (e.g., 8.4.2)          | 8.4.2            |
+| kb_mysql_cpu                       | CPU limit/request per replica        | 0.5              |
+| kb_mysql_memory                    | Memory limit/request per replica     | 0.5Gi            |
+| kb_mysql_storage                   | Storage size for data volume         | 1Gi              |
+| kb_mysql_storage_class             | StorageClass name                    | cluster default  |
+| kb_mysql_users                     | List of custom MySQL users to create | `[]`             |
 
 This role creates a MySQL cluster using KubeBlocks.
 
 Notes:
 - Requires the `k8s-kubeblocks` role to be installed first
+- The role installs the `kubeblocks/mysql` addon chart before creating the cluster
+- The role waits for the MySQL `ComponentDefinition` before creating the cluster
 - KubeBlocks automatically creates a root password secret named `<cluster-name>-mysql-account-root`
 - The MySQL service is exposed as `<cluster-name>-mysql` on port 3306
 - To connect: `kubectl exec -it <pod-with-mysql-client> -- mysql -h <cluster-name>-mysql -u root -p`

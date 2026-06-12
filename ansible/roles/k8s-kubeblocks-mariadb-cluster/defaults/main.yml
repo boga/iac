@@ -1,0 +1,29 @@
+---
+kb_mariadb_namespace: ""
+kb_mariadb_cluster_name: "mariadb-cluster"
+kb_mariadb_addon_release_name: "kb-addon-mariadb"
+kb_mariadb_addon_namespace: "kubeblocks"
+kb_mariadb_addon_chart_ref: "kubeblocks/mariadb"
+kb_mariadb_addon_chart_version: "1.0.1"
+kb_mariadb_addon_chart_parent_dir: "/tmp/kubeblocks-mariadb-addon-chart"
+kb_mariadb_addon_chart_path: "{{ kb_mariadb_addon_chart_parent_dir }}/mariadb"
+kb_mariadb_component_def: "mariadb-1.0.1"
+kb_mariadb_replicas: 1
+kb_mariadb_version: "10.6.15"
+kb_mariadb_cpu: "0.5"
+kb_mariadb_memory: "0.5Gi"
+kb_mariadb_storage: "1Gi"
+kb_mariadb_storage_class: ""
+kb_mariadb_users: []
+# Example:
+# kb_mariadb_users:
+#   - name: app_user
+#     password: changeme
+#     databases:
+#       - name: app_db
+#         privileges: "ALL PRIVILEGES"
+#   - name: readonly
+#     password: readonly_pass
+#     databases:
+#       - name: app_db
+#         privileges: "SELECT"

@@ -1,0 +1,278 @@
+---
+- name: Validate MariaDB namespace
+  ansible.builtin.fail:
+    msg: "kb_mariadb_namespace must not be empty. Set it to the Kubernetes namespace for the MariaDB cluster."
+  when: kb_mariadb_namespace | length == 0
+
+- name: Validate MariaDB replica count
+  ansible.builtin.fail:
+    msg: "MariaDB replicate mode is not supported by the KubeBlocks addon. Set kb_mariadb_replicas to 1."
+  when: kb_mariadb_replicas | int != 1
+
+- name: Add KubeBlocks chart repo
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "https://apecloud.github.io/helm-charts"
+
+- name: Create MariaDB addon chart work directory
+  ansible.builtin.file:
+    path: "{{ kb_mariadb_addon_chart_parent_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Pull MariaDB addon chart
+  ansible.builtin.command:
+    argv:
+      - helm
+      - pull
+      - "{{ kb_mariadb_addon_chart_ref }}"
+      - --version
+      - "{{ kb_mariadb_addon_chart_version }}"
+      - --untar
+      - --untardir
+      - "{{ kb_mariadb_addon_chart_parent_dir }}"
+    creates: "{{ kb_mariadb_addon_chart_path }}/Chart.yaml"
+
+- name: Patch MariaDB addon chart release notes
+  ansible.builtin.replace:
+    path: "{{ kb_mariadb_addon_chart_path }}/templates/cmpv.yaml"
+    regexp: '^(\s*changes:)\s*$'
+    replace: '\1 ""'
+
+- name: Check existing MariaDB ComponentDefinition
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ComponentDefinition
+    name: "{{ kb_mariadb_component_def }}"
+  register: existing_mariadb_component_definition
+
+- name: Check existing MariaDB ComponentVersion
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ComponentVersion
+    name: mariadb
+  register: existing_mariadb_component_version
+
+- name: Install KubeBlocks MariaDB addon
+  kubernetes.core.helm:
+    chart_ref: "{{ kb_mariadb_addon_chart_path }}"
+    name: "{{ kb_mariadb_addon_release_name }}"
+    namespace: "{{ kb_mariadb_addon_namespace }}"
+    state: present
+  register: mariadb_addon_install_result
+  retries: 3
+  delay: 10
+  until: mariadb_addon_install_result is succeeded
+  when: >-
+    existing_mariadb_component_definition.resources | length == 0 or
+    existing_mariadb_component_definition.resources[0].status.phase | default("") != "Available" or
+    existing_mariadb_component_version.resources | length == 0 or
+    existing_mariadb_component_version.resources[0].status.phase | default("") != "Available"
+
+- name: Wait for MariaDB ComponentDefinition to be available
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ComponentDefinition
+    name: "{{ kb_mariadb_component_def }}"
+  register: mariadb_component_definition
+  until:
+    - mariadb_component_definition.resources | length > 0
+    - mariadb_component_definition.resources[0].status is defined
+    - mariadb_component_definition.resources[0].status.phase is defined
+    - mariadb_component_definition.resources[0].status.phase == "Available"
+  retries: 30
+  delay: 10
+
+- name: Wait for MariaDB ComponentVersion to be available
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ComponentVersion
+    name: mariadb
+  register: mariadb_component_version
+  until:
+    - mariadb_component_version.resources | length > 0
+    - mariadb_component_version.resources[0].status is defined
+    - mariadb_component_version.resources[0].status.phase is defined
+    - mariadb_component_version.resources[0].status.phase == "Available"
+  retries: 30
+  delay: 10
+
+- name: "Create k8s namespace: {{ kb_mariadb_namespace }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kb_mariadb_namespace }}"
+
+- name: Create KubeBlocks MariaDB Cluster
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps.kubeblocks.io/v1
+      kind: Cluster
+      metadata:
+        name: "{{ kb_mariadb_cluster_name }}"
+        namespace: "{{ kb_mariadb_namespace }}"
+      spec:
+        terminationPolicy: Delete
+        componentSpecs:
+          - name: mariadb
+            componentDef: "{{ kb_mariadb_component_def }}"
+            serviceVersion: "{{ kb_mariadb_version }}"
+            replicas: "{{ kb_mariadb_replicas }}"
+            resources:
+              limits:
+                cpu: "{{ kb_mariadb_cpu }}"
+                memory: "{{ kb_mariadb_memory }}"
+              requests:
+                cpu: "{{ kb_mariadb_cpu }}"
+                memory: "{{ kb_mariadb_memory }}"
+            volumeClaimTemplates:
+              - name: data
+                spec:
+                  storageClassName: "{{ kb_mariadb_storage_class }}"
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: "{{ kb_mariadb_storage }}"
+
+- name: Wait for MariaDB cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: Cluster
+    name: "{{ kb_mariadb_cluster_name }}"
+    namespace: "{{ kb_mariadb_namespace }}"
+  register: mariadb_cluster
+  until:
+    - mariadb_cluster.resources | length > 0
+    - mariadb_cluster.resources[0].status is defined
+    - mariadb_cluster.resources[0].status.phase is defined
+    - mariadb_cluster.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 10
+
+- name: Initialize processed MariaDB users list
+  ansible.builtin.set_fact:
+    kb_mariadb_users_processed: []
+  when: kb_mariadb_users | length > 0
+
+- name: Validate MariaDB user passwords
+  ansible.builtin.fail:
+    msg: "User '{{ item.name }}' has an empty password. Either provide a valid password or omit the password field to auto-generate one."
+  loop: "{{ kb_mariadb_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - kb_mariadb_users | length > 0
+    - item.password is defined
+    - item.password | length == 0
+
+- name: Process MariaDB users
+  ansible.builtin.set_fact:
+    kb_mariadb_users_processed: >-
+      {{ kb_mariadb_users_processed + [item | combine({'password':
+         item.password | default(lookup('password', '/dev/null length=24 chars=ascii_letters,digits'))
+         })] }}
+  loop: "{{ kb_mariadb_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: kb_mariadb_users | length > 0
+
+- name: Get MariaDB root password
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ kb_mariadb_cluster_name }}-mariadb-account-root"
+    namespace: "{{ kb_mariadb_namespace }}"
+  register: mariadb_root_secret
+  until: mariadb_root_secret.resources | length > 0
+  retries: 10
+  delay: 5
+  when: kb_mariadb_users | length > 0
+
+- name: Set MariaDB root password fact
+  ansible.builtin.set_fact:
+    kb_mariadb_root_password: "{{ mariadb_root_secret.resources[0].data.password | b64decode }}"
+  when: kb_mariadb_users | length > 0
+  no_log: true
+
+- name: Create MariaDB databases
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kb_mariadb_namespace }}"
+    pod: "{{ kb_mariadb_cluster_name }}-mariadb-0"
+    container: mariadb
+    env:
+      MYSQL_PWD: "{{ kb_mariadb_root_password }}"
+    command: >
+      mariadb -u root -e
+      "CREATE DATABASE IF NOT EXISTS `{{ item.1.name | replace('`', '\\`') }}`;"
+  loop: "{{ kb_mariadb_users_processed | subelements('databases', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.1.name }}"
+  no_log: true
+  when: kb_mariadb_users | length > 0
+
+- name: Create MariaDB users and grant privileges
+  block:
+    - name: Write SQL setup script to pod
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mariadb_namespace }}"
+        pod: "{{ kb_mariadb_cluster_name }}-mariadb-0"
+        container: mariadb
+        command: |
+          sh -c 'cat > /tmp/setup_{{ item.name }}.sql << EOF
+          CREATE USER IF NOT EXISTS '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"'"'"'"'"'") }}'"'"'@'"'"'%'"'"' IDENTIFIED BY '"'"'{{ item.password | replace("'"'"'", "'"'"'\\'"'"'"'"'"'"'") }}'"'"';
+          {% for db in item.databases | default([]) %}
+          GRANT {{ db.privileges | default("ALL PRIVILEGES") }} ON `{{ db.name | replace("`", "\\`") }}`.* TO '"'"'{{ item.name | replace("'"'"'", "'"'"'\\'"'"'"'"'"'"'") }}'"'"'@'"'"'%'"'"';
+          {% endfor %}
+          FLUSH PRIVILEGES;
+          EOF'
+      loop: "{{ kb_mariadb_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Execute SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mariadb_namespace }}"
+        pod: "{{ kb_mariadb_cluster_name }}-mariadb-0"
+        container: mariadb
+        env:
+          MYSQL_PWD: "{{ kb_mariadb_root_password }}"
+        command: "mariadb -u root < /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mariadb_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+
+    - name: Clean up SQL setup script
+      kubernetes.core.k8s_exec:
+        namespace: "{{ kb_mariadb_namespace }}"
+        pod: "{{ kb_mariadb_cluster_name }}-mariadb-0"
+        container: mariadb
+        command: "rm -f /tmp/setup_{{ item.name }}.sql"
+      loop: "{{ kb_mariadb_users_processed }}"
+      loop_control:
+        label: "{{ item.name }}"
+  when: kb_mariadb_users | length > 0
+
+- name: Create Kubernetes Secret for each MariaDB user
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ kb_mariadb_cluster_name }}-{{ item.name }}-mariadb-user"
+        namespace: "{{ kb_mariadb_namespace }}"
+      type: Opaque
+      stringData:
+        password: "{{ item.password }}"
+  loop: "{{ kb_mariadb_users_processed }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: kb_mariadb_users | length > 0
+  no_log: true

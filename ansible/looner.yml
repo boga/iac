@@ -10,3 +10,7 @@
 #          - /var/local/storage
 
     - role: k8s-kubeblocks
+
+    - role: k8s-kubeblocks-mariadb-cluster
+      vars:
+        kb_mariadb_namespace: "kb-mariadb-debug"
