@@ -1,0 +1,7 @@
+---
+- name: Install MariaDB operator
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-mariadb-operator
