@@ -1,0 +1,64 @@
+---
+- name: "Create namespace: {{ mariadb_cluster_namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ mariadb_cluster_namespace }}"
+    state: present
+
+- name: Build MariaDB cluster Helm values
+  ansible.builtin.set_fact:
+    mariadb_cluster_helm_values: >-
+      {{ {
+        'fullnameOverride': mariadb_cluster_name,
+        'mariadb': {
+          'replicas': mariadb_cluster_replicas,
+          'galera': {'enabled': mariadb_cluster_galera_enabled},
+          'rootPasswordSecretKeyRef': {
+            'name': mariadb_cluster_root_password_secret_name,
+            'key': mariadb_cluster_root_password_secret_key,
+            'generate': mariadb_cluster_root_password_secret_generate
+          },
+          'storage': {'size': mariadb_cluster_storage_size}
+        },
+        'databases': mariadb_cluster_databases,
+        'users': mariadb_cluster_users,
+        'grants': mariadb_cluster_grants,
+        'backups': mariadb_cluster_backups,
+        'physicalBackups': mariadb_cluster_physical_backups
+      } | combine(mariadb_cluster_values, recursive=True) }}
+
+- name: Install MariaDB cluster
+  kubernetes.core.helm:
+    chart_ref: oci://ghcr.io/mariadb-operator/charts/mariadb-cluster
+    name: "{{ mariadb_cluster_release_name }}"
+    namespace: "{{ mariadb_cluster_namespace }}"
+    chart_version: "{{ mariadb_cluster_chart_version }}"
+    state: present
+    values: "{{ mariadb_cluster_helm_values }}"
+    wait: true
+  register: mariadb_cluster_install_result
+  retries: 3
+  delay: 10
+  until: mariadb_cluster_install_result is succeeded
+
+- name: Wait for MariaDB cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: k8s.mariadb.com/v1alpha1
+    kind: MariaDB
+    name: "{{ mariadb_cluster_name }}"
+    namespace: "{{ mariadb_cluster_namespace }}"
+  register: mariadb_cluster_info
+  until:
+    - mariadb_cluster_info.resources | length > 0
+    - mariadb_cluster_info.resources[0].status is defined
+    - mariadb_cluster_info.resources[0].status.conditions is defined
+    - >-
+      mariadb_cluster_info.resources[0].status.conditions
+      | selectattr('type', 'equalto', 'Ready')
+      | selectattr('status', 'equalto', 'True')
+      | list
+      | length > 0
+  retries: 60
+  delay: 10
+  when: mariadb_cluster_wait
