@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ grimmory_name }}
-  namespace: {{ namespace_name }}
+  namespace: "{{ namespace_name }}"
   labels:
     app.kubernetes.io/name: {{ grimmory_name }}
 spec:
