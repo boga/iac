@@ -1,0 +1,7 @@
+---
+mariadb_operator_namespace: mariadb-operator
+mariadb_operator_release_name: mariadb-operator
+mariadb_operator_crds_release_name: mariadb-operator-crds
+mariadb_operator_chart_version: "26.6.0"
+mariadb_operator_crds_chart_version: "{{ mariadb_operator_chart_version }}"
+mariadb_operator_values: {}

@@ -1,0 +1,34 @@
+---
+- name: "Create namespace: {{ mariadb_operator_namespace }}"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ mariadb_operator_namespace }}"
+    state: present
+
+- name: Install MariaDB operator CRDs
+  kubernetes.core.helm:
+    chart_ref: oci://ghcr.io/mariadb-operator/charts/mariadb-operator-crds
+    name: "{{ mariadb_operator_crds_release_name }}"
+    namespace: "{{ mariadb_operator_namespace }}"
+    chart_version: "{{ mariadb_operator_crds_chart_version }}"
+    state: present
+    wait: true
+  register: mariadb_operator_crds_install_result
+  retries: 3
+  delay: 10
+  until: mariadb_operator_crds_install_result is succeeded
+
+- name: Install MariaDB operator
+  kubernetes.core.helm:
+    chart_ref: oci://ghcr.io/mariadb-operator/charts/mariadb-operator
+    name: "{{ mariadb_operator_release_name }}"
+    namespace: "{{ mariadb_operator_namespace }}"
+    chart_version: "{{ mariadb_operator_chart_version }}"
+    state: present
+    values: "{{ mariadb_operator_values }}"
+    wait: true
+  register: mariadb_operator_install_result
+  retries: 3
+  delay: 10
+  until: mariadb_operator_install_result is succeeded
