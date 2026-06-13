@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ grimmory_name }}-tailscale
+  namespace: "{{ namespace_name }}"
+  labels:
+    app.kubernetes.io/name: {{ grimmory_name }}
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - "{{ grimmory_tailscale_hostname }}"
+  rules:
+    - host: "{{ grimmory_tailscale_hostname }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ grimmory_name }}
+                port:
+                  name: http
