@@ -128,9 +128,42 @@
     - name: Write PostgreSQL password file to pod
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-0"
+        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
         container: "{{ kb_postgres_container_name }}"
         command: "sh -c 'echo {{ kb_postgres_pgpass_b64 }} | base64 -d > /tmp/.pgpass && chmod 600 /tmp/.pgpass'"
+      no_log: true
+
+    - name: Validate PostgreSQL database privileges
+      ansible.builtin.assert:
+        that:
+          - >-
+            (
+              (db.privileges | default('ALL PRIVILEGES') | upper | regex_replace('\\s+', ' ') | split(',') | map('trim') | list)
+              | difference(kb_postgres_allowed_database_privileges)
+              | length
+            ) == 0
+        fail_msg: "Invalid PostgreSQL privileges for user '{{ user.name }}' on database '{{ db.name }}'."
+      vars:
+        user: "{{ item.0 }}"
+        db: "{{ item.1 }}"
+        kb_postgres_allowed_database_privileges:
+          - ALL
+          - ALL PRIVILEGES
+          - CONNECT
+          - CREATE
+          - DELETE
+          - INSERT
+          - REFERENCES
+          - SELECT
+          - TEMP
+          - TEMPORARY
+          - TRIGGER
+          - TRUNCATE
+          - UPDATE
+          - USAGE
+      loop: "{{ kb_postgres_users_processed | subelements('databases', skip_missing=True) }}"
+      loop_control:
+        label: "{{ user.name }}:{{ db.name }}"
       no_log: true
 
     - name: Build PostgreSQL SQL scripts
@@ -154,7 +187,7 @@
           END
           $$;
           {% for db in item.databases | default([]) -%}
-          GRANT {{ db.privileges | default('ALL PRIVILEGES') }} ON DATABASE "{{ db.name | replace('"', '""') }}" TO "{{ item.name | replace('"', '""') }}";
+          GRANT {{ db.privileges | default('ALL PRIVILEGES') | upper | regex_replace('\\s+', ' ') }} ON DATABASE "{{ db.name | replace('"', '""') }}" TO "{{ item.name | replace('"', '""') }}";
           {% endfor -%}
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
@@ -164,40 +197,43 @@
     - name: Write PostgreSQL SQL setup script to pod
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-0"
+        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
         container: "{{ kb_postgres_container_name }}"
-        command: "sh -c 'echo {{ kb_postgres_sql_scripts[item.name] }} | base64 -d > /tmp/setup_{{ item.name }}.sql'"
+        command: "sh -c 'echo {{ kb_postgres_sql_scripts[item.name] }} | base64 -d > /tmp/setup_{{ user_index }}.sql'"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: user_index
       no_log: true
 
     - name: Execute PostgreSQL SQL setup script
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-0"
+        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
         container: "{{ kb_postgres_container_name }}"
-        command: "sh -c 'PGPASSFILE=/tmp/.pgpass psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/setup_{{ item.name }}.sql'"
+        command: "sh -c 'PGPASSFILE=/tmp/.pgpass psql -h {{ kb_postgres_cluster_name }}-postgresql-postgresql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/setup_{{ user_index }}.sql'"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: user_index
       no_log: true
   always:
     - name: Clean up PostgreSQL SQL setup script
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-0"
+        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
         container: "{{ kb_postgres_container_name }}"
-        command: "rm -f /tmp/setup_{{ item.name }}.sql"
+        command: "rm -f /tmp/setup_{{ user_index }}.sql"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: user_index
       no_log: true
 
     - name: Clean up PostgreSQL password file
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-0"
+        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
         container: "{{ kb_postgres_container_name }}"
         command: rm -f /tmp/.pgpass
       no_log: true
