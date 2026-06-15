@@ -1,0 +1,186 @@
+---
+- name: Install Mealie
+  hosts: localhost
+  gather_facts: false
+  vars:
+    mealie_name: mealie
+    mealie_namespace: mealie
+    mealie_image: ghcr.io/mealie-recipes/mealie:v3.19.2
+    mealie_replicas: 1
+    mealie_port: 9000
+
+    mealie_storage_class: local-path
+    mealie_data_storage_size: 5Gi
+    mealie_postgres_storage_size: 1Gi
+
+    mealie_postgres_cluster_name: mealie-database
+    mealie_db_port: 5432
+    mealie_db_name: mealie
+    mealie_db_username: mealie
+    mealie_db_secret_name: "{{ mealie_postgres_cluster_name }}-{{ mealie_db_username }}-postgres-user"
+    mealie_db_hostname: "{{ mealie_postgres_cluster_name }}-postgresql-postgresql"
+
+    mealie_timezone: Etc/UTC
+    mealie_base_url: "https://{{ mealie_tailscale_hostname }}"
+    mealie_tailscale_hostname: "cooking.{{ tailscale_tailnet_name }}"
+    mealie_allow_signup: "false"
+    mealie_default_email: admin@example.com
+    mealie_default_group: Home
+    mealie_default_household: Family
+
+  roles:
+    - role: k8s-kubeblocks-postgres-cluster
+      vars:
+        kb_postgres_namespace: "{{ mealie_namespace }}"
+        kb_postgres_cluster_name: "{{ mealie_postgres_cluster_name }}"
+        kb_postgres_replicas: 1
+        kb_postgres_storage: "{{ mealie_postgres_storage_size }}"
+        kb_postgres_storage_class: "{{ mealie_storage_class }}"
+        kb_postgres_users:
+          - name: "{{ mealie_db_username }}"
+            secret_name: "{{ mealie_db_secret_name }}"
+            databases:
+              - name: "{{ mealie_db_name }}"
+
+  tasks:
+    - name: Create Mealie data PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: "{{ mealie_name }}-data"
+            namespace: "{{ mealie_namespace }}"
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ mealie_data_storage_size }}"
+            storageClassName: "{{ mealie_storage_class }}"
+
+    - name: Deploy Mealie app
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ mealie_name }}"
+            namespace: "{{ mealie_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ mealie_name }}"
+          spec:
+            replicas: "{{ mealie_replicas }}"
+            revisionHistoryLimit: 3
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: "{{ mealie_name }}"
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: "{{ mealie_name }}"
+              spec:
+                containers:
+                  - name: "{{ mealie_name }}"
+                    image: "{{ mealie_image }}"
+                    imagePullPolicy: IfNotPresent
+                    env:
+                      - name: PUID
+                        value: "1000"
+                      - name: PGID
+                        value: "1000"
+                      - name: TZ
+                        value: "{{ mealie_timezone }}"
+                      - name: BASE_URL
+                        value: "{{ mealie_base_url }}"
+                      - name: ALLOW_SIGNUP
+                        value: "{{ mealie_allow_signup }}"
+                      - name: DEFAULT_EMAIL
+                        value: "{{ mealie_default_email }}"
+                      - name: DEFAULT_GROUP
+                        value: "{{ mealie_default_group }}"
+                      - name: DEFAULT_HOUSEHOLD
+                        value: "{{ mealie_default_household }}"
+                      - name: DB_ENGINE
+                        value: postgres
+                      - name: POSTGRES_SERVER
+                        value: "{{ mealie_db_hostname }}"
+                      - name: POSTGRES_PORT
+                        value: "{{ mealie_db_port | string }}"
+                      - name: POSTGRES_DB
+                        value: "{{ mealie_db_name }}"
+                      - name: POSTGRES_USER
+                        value: "{{ mealie_db_username }}"
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{ mealie_db_secret_name }}"
+                            key: password
+                    ports:
+                      - name: http
+                        containerPort: "{{ mealie_port }}"
+                        protocol: TCP
+                    volumeMounts:
+                      - name: mealie-data
+                        mountPath: /app/data
+                volumes:
+                  - name: mealie-data
+                    persistentVolumeClaim:
+                      claimName: "{{ mealie_name }}-data"
+
+    - name: Create Mealie service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ mealie_name }}"
+            namespace: "{{ mealie_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ mealie_name }}"
+          spec:
+            type: ClusterIP
+            selector:
+              app.kubernetes.io/name: "{{ mealie_name }}"
+            ports:
+              - name: http
+                port: "{{ mealie_port }}"
+                targetPort: http
+
+    - name: Create Tailscale Ingress for Mealie
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: "{{ mealie_name }}-tailscale"
+            namespace: "{{ mealie_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ mealie_name }}"
+            annotations:
+              gethomepage.dev/description: Recipe management
+              gethomepage.dev/enabled: "true"
+              gethomepage.dev/group: Apps
+              gethomepage.dev/icon: mealie.png
+              gethomepage.dev/name: Mealie
+              gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ mealie_name }}"
+          spec:
+            ingressClassName: tailscale
+            tls:
+              - hosts:
+                  - "{{ mealie_tailscale_hostname }}"
+            rules:
+              - host: "{{ mealie_tailscale_hostname }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: "{{ mealie_name }}"
+                          port:
+                            name: http
