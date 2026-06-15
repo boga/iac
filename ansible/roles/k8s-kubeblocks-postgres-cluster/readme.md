@@ -4,26 +4,26 @@ This role assumes KubeBlocks is already installed, installs the KubeBlocks Postg
 
 ## Variables
 
-| Name                                             | Description                            | Default value        |
-|--------------------------------------------------|----------------------------------------|----------------------|
-| `kb_postgres_namespace`                          | Kubernetes namespace                   | `kubeblocks-postgres` |
-| `kb_postgres_cluster_name`                       | Name of the PostgreSQL cluster         | `postgres-cluster`   |
-| `kb_postgres_version`                            | PostgreSQL service version             | `17.5.0`             |
-| `kb_postgres_mode`                               | PostgreSQL mode for `PG_MODE`          | `standalone`         |
-| `kb_postgres_replicas`                           | Number of PostgreSQL replicas          | `1`                  |
-| `kb_postgres_cpu`                                | CPU limit/request per replica          | `0.5`                |
-| `kb_postgres_memory`                             | Memory limit/request per replica       | `0.5Gi`              |
-| `kb_postgres_storage`                            | Storage size for data volume           | `2Gi`                |
-| `kb_postgres_storage_class`                      | StorageClass name                      | cluster default      |
-| `kb_postgres_termination_policy`                 | KubeBlocks termination policy          | `Delete`             |
-| `kb_postgres_addon_release_name`                 | Helm release name for PostgreSQL addon | `kb-addon-postgresql` |
-| `kubeblocks_namespace`                           | Helm namespace for PostgreSQL addon    | group var            |
-| `kb_postgres_addon_chart_version`                | PostgreSQL addon chart version         | `1.0.2`              |
+| Name                                             | Description                            | Default value                           |
+|--------------------------------------------------|----------------------------------------|-----------------------------------------|
+| `kb_postgres_namespace`                          | Kubernetes namespace                   | `kubeblocks-postgres`                   |
+| `kb_postgres_cluster_name`                       | Name of the PostgreSQL cluster         | `postgres-cluster`                      |
+| `kb_postgres_version`                            | PostgreSQL service version             | `17.5.0`                                |
+| `kb_postgres_mode`                               | PostgreSQL mode for `PG_MODE`          | `standalone`                            |
+| `kb_postgres_replicas`                           | Number of PostgreSQL replicas          | `1`                                     |
+| `kb_postgres_cpu`                                | CPU limit/request per replica          | `0.5`                                   |
+| `kb_postgres_memory`                             | Memory limit/request per replica       | `0.5Gi`                                 |
+| `kb_postgres_storage`                            | Storage size for data volume           | `2Gi`                                   |
+| `kb_postgres_storage_class`                      | StorageClass name                      | cluster default                         |
+| `kb_postgres_termination_policy`                 | KubeBlocks termination policy          | `Delete`                                |
+| `kb_postgres_addon_release_name`                 | Helm release name for PostgreSQL addon | `kb-addon-postgresql`                   |
+| `kubeblocks_namespace`                           | Helm namespace for PostgreSQL addon    | group var                               |
+| `kb_postgres_addon_chart_version`                | PostgreSQL addon chart version         | `1.0.2`                                 |
 | `kb_postgres_superuser_secret_name`              | Existing postgres superuser Secret     | `<cluster>-postgresql-account-postgres` |
-| `kb_postgres_superuser_secret_key`               | Superuser password Secret key          | `password`           |
-| `kb_postgres_container_name`                     | PostgreSQL pod container name          | `postgresql`         |
-| `kb_postgres_user_secret_key`                    | Secret key used for user passwords     | `password`           |
-| `kb_postgres_users`                              | Managed PostgreSQL users to create     | `[]`                 |
+| `kb_postgres_superuser_secret_key`               | Superuser password Secret key          | `password`                              |
+| `kb_postgres_container_name`                     | PostgreSQL pod container name          | `postgresql`                            |
+| `kb_postgres_user_secret_key`                    | Secret key used for user passwords     | `password`                              |
+| `kb_postgres_users`                              | Managed PostgreSQL users to create     | `[]`                                    |
 
 ## Notes
 
