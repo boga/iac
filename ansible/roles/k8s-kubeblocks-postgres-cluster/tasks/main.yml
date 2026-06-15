@@ -1,0 +1,56 @@
+---
+- name: Ensure KubeBlocks is installed
+  ansible.builtin.include_role:
+    name: k8s-kubeblocks
+
+- name: Install KubeBlocks PostgreSQL addon
+  kubernetes.core.helm:
+    chart_ref: kubeblocks/postgresql
+    name: "{{ kb_postgres_addon_release_name }}"
+    namespace: "{{ kb_postgres_addon_namespace }}"
+    chart_version: "{{ kb_postgres_addon_chart_version }}"
+    state: present
+    update_repo_cache: true
+  register: kb_postgres_addon_install_result
+  retries: 3
+  delay: 10
+  until: kb_postgres_addon_install_result is succeeded
+
+- name: Wait for PostgreSQL cluster definition
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ClusterDefinition
+    name: postgresql
+  register: kb_postgres_cluster_definition
+  until: kb_postgres_cluster_definition.resources | length > 0
+  retries: 60
+  delay: 10
+
+- name: "Create k8s namespace: {{ kb_postgres_namespace }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kb_postgres_namespace }}"
+
+- name: Create KubeBlocks PostgreSQL Cluster
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cluster.yml.j2') | from_yaml }}"
+
+- name: Wait for PostgreSQL cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: Cluster
+    name: "{{ kb_postgres_cluster_name }}"
+    namespace: "{{ kb_postgres_namespace }}"
+  register: kb_postgres_cluster
+  until:
+    - kb_postgres_cluster.resources | length > 0
+    - kb_postgres_cluster.resources[0].status is defined
+    - kb_postgres_cluster.resources[0].status.phase is defined
+    - kb_postgres_cluster.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 10
