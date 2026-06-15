@@ -1,5 +1,4 @@
 ---
-kubeblocks_namespace: kubeblocks
 kubeblocks_release_name: kubeblocks
 kubeblocks_chart_version: "1.0.2"
 kubeblocks_storage_class: ""

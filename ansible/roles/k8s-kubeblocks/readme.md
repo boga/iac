@@ -2,7 +2,7 @@
 
 | Name                               | Description                                       | Default value   |
 |------------------------------------|---------------------------------------------------|-----------------|
-| kubeblocks_namespace               | Kubernetes namespace for KubeBlocks               | kubeblocks      |
+| kubeblocks_namespace               | Kubernetes namespace for KubeBlocks               | group var       |
 | kubeblocks_release_name            | Helm release name                                 | kubeblocks      |
 | kubeblocks_chart_version           | Chart version to install                          | 1.0.2           |
 | kubeblocks_storage_class           | Default StorageClass for KubeBlocks volumes       | cluster default |

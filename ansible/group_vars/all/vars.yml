@@ -1,4 +1,5 @@
 ---
+kubeblocks_namespace: kubeblocks
 k8s_tailscale_operator_client_id: "{{ vault_k8s_tailscale_client_id }}"
 k8s_tailscale_operator_client_secret: "{{ vault_k8s_tailscale_client_secret }}"
 tailscale_tailnet_name: "saiga-boga.ts.net"
