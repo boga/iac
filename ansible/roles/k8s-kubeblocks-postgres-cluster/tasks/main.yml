@@ -1,0 +1,10 @@
+---
+- name: Configure PostgreSQL addon
+  ansible.builtin.include_tasks: addon.yml
+
+- name: Configure PostgreSQL cluster
+  ansible.builtin.include_tasks: cluster.yml
+
+- name: Configure PostgreSQL users
+  ansible.builtin.include_tasks: users.yml
+  when: kb_postgres_users | length > 0

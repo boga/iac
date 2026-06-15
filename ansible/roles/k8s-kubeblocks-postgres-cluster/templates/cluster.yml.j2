@@ -1,0 +1,34 @@
+apiVersion: apps.kubeblocks.io/v1
+kind: Cluster
+metadata:
+  name: {{ kb_postgres_cluster_name }}
+  namespace: {{ kb_postgres_namespace }}
+spec:
+  terminationPolicy: {{ kb_postgres_termination_policy }}
+  clusterDef: postgresql
+  topology: replication
+  componentSpecs:
+    - name: postgresql
+      serviceVersion: "{{ kb_postgres_version }}"
+      replicas: {{ kb_postgres_replicas }}
+      resources:
+        limits:
+          cpu: "{{ kb_postgres_cpu }}"
+          memory: "{{ kb_postgres_memory }}"
+        requests:
+          cpu: "{{ kb_postgres_cpu }}"
+          memory: "{{ kb_postgres_memory }}"
+      volumeClaimTemplates:
+        - name: data
+          spec:
+{% if kb_postgres_storage_class | length > 0 %}
+            storageClassName: "{{ kb_postgres_storage_class }}"
+{% endif %}
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ kb_postgres_storage }}"
+      env:
+        - name: PG_MODE
+          value: "{{ kb_postgres_mode }}"

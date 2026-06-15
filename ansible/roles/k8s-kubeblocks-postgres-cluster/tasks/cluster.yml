@@ -1,0 +1,29 @@
+---
+- name: "Create k8s namespace: {{ kb_postgres_namespace }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kb_postgres_namespace }}"
+
+- name: Create KubeBlocks PostgreSQL Cluster
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'cluster.yml.j2') | from_yaml }}"
+
+- name: Wait for PostgreSQL cluster to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: Cluster
+    name: "{{ kb_postgres_cluster_name }}"
+    namespace: "{{ kb_postgres_namespace }}"
+  register: kb_postgres_cluster
+  until:
+    - kb_postgres_cluster.resources | length > 0
+    - kb_postgres_cluster.resources[0].status is defined
+    - kb_postgres_cluster.resources[0].status.phase is defined
+    - kb_postgres_cluster.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 10

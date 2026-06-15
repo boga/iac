@@ -1,0 +1,18 @@
+---
+kb_postgres_namespace: "kubeblocks-postgres"
+kb_postgres_cluster_name: "postgres-cluster"
+kb_postgres_version: "17.5.0"
+kb_postgres_mode: "standalone"
+kb_postgres_replicas: 1
+kb_postgres_cpu: "0.5"
+kb_postgres_memory: "0.5Gi"
+kb_postgres_storage: "2Gi"
+kb_postgres_storage_class: ""
+kb_postgres_termination_policy: Delete
+kb_postgres_addon_release_name: kb-addon-postgresql
+kb_postgres_addon_chart_version: "1.0.2"
+kb_postgres_superuser_secret_name: "{{ kb_postgres_cluster_name }}-postgresql-account-postgres"
+kb_postgres_superuser_secret_key: password
+kb_postgres_container_name: postgresql
+kb_postgres_user_secret_key: password
+kb_postgres_users: []

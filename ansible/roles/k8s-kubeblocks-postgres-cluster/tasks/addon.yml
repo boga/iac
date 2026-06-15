@@ -1,0 +1,28 @@
+---
+- name: Add KubeBlocks chart repo
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "https://apecloud.github.io/helm-charts"
+
+- name: Install KubeBlocks PostgreSQL addon
+  kubernetes.core.helm:
+    chart_ref: kubeblocks/postgresql
+    name: "{{ kb_postgres_addon_release_name }}"
+    namespace: "{{ kubeblocks_namespace }}"
+    chart_version: "{{ kb_postgres_addon_chart_version }}"
+    state: present
+    update_repo_cache: true
+  register: kb_postgres_addon_install_result
+  retries: 3
+  delay: 10
+  until: kb_postgres_addon_install_result is succeeded
+
+- name: Wait for PostgreSQL cluster definition
+  kubernetes.core.k8s_info:
+    api_version: apps.kubeblocks.io/v1
+    kind: ClusterDefinition
+    name: postgresql
+  register: kb_postgres_cluster_definition
+  until: kb_postgres_cluster_definition.resources | length > 0
+  retries: 60
+  delay: 10
