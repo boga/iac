@@ -11,3 +11,8 @@ kb_postgres_storage_class: ""
 kb_postgres_termination_policy: Delete
 kb_postgres_addon_release_name: kb-addon-postgresql
 kb_postgres_addon_chart_version: "1.0.2"
+kb_postgres_superuser_secret_name: "{{ kb_postgres_cluster_name }}-postgresql-account-postgres"
+kb_postgres_superuser_secret_key: password
+kb_postgres_container_name: postgresql
+kb_postgres_user_secret_key: password
+kb_postgres_users: []
