@@ -9,6 +9,5 @@ kb_postgres_memory: "0.5Gi"
 kb_postgres_storage: "2Gi"
 kb_postgres_storage_class: ""
 kb_postgres_termination_policy: Delete
-kb_postgres_addon_release_name: postgresql
-kb_postgres_addon_namespace: kubeblocks
-kb_postgres_addon_chart_version: "1.2.0-alpha.0"
+kb_postgres_addon_release_name: kb-addon-postgresql
+kb_postgres_addon_chart_version: "1.0.2"

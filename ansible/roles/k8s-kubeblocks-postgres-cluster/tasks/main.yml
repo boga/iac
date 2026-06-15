@@ -1,13 +1,14 @@
 ---
-- name: Ensure KubeBlocks is installed
-  ansible.builtin.include_role:
-    name: k8s-kubeblocks
+- name: Add KubeBlocks chart repo
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "https://apecloud.github.io/helm-charts"
 
 - name: Install KubeBlocks PostgreSQL addon
   kubernetes.core.helm:
     chart_ref: kubeblocks/postgresql
     name: "{{ kb_postgres_addon_release_name }}"
-    namespace: "{{ kb_postgres_addon_namespace }}"
+    namespace: "{{ kubeblocks_namespace }}"
     chart_version: "{{ kb_postgres_addon_chart_version }}"
     state: present
     update_repo_cache: true

@@ -1,6 +1,6 @@
 # KubeBlocks PostgreSQL Cluster Role
 
-This role installs KubeBlocks, installs the KubeBlocks PostgreSQL addon via Helm, creates a namespace, creates a PostgreSQL cluster, and waits until the cluster reports `Running`.
+This role assumes KubeBlocks is already installed, installs the KubeBlocks PostgreSQL addon via Helm, creates a namespace, creates a PostgreSQL cluster, and waits until the cluster reports `Running`.
 
 ## Variables
 
@@ -16,14 +16,14 @@ This role installs KubeBlocks, installs the KubeBlocks PostgreSQL addon via Helm
 | `kb_postgres_storage`                            | Storage size for data volume           | `2Gi`                |
 | `kb_postgres_storage_class`                      | StorageClass name                      | cluster default      |
 | `kb_postgres_termination_policy`                 | KubeBlocks termination policy          | `Delete`             |
-| `kb_postgres_addon_release_name`                 | Helm release name for PostgreSQL addon | `postgresql`         |
-| `kb_postgres_addon_namespace`                    | Helm namespace for PostgreSQL addon    | `kubeblocks`         |
-| `kb_postgres_addon_chart_version`                | PostgreSQL addon chart version         | `1.2.0-alpha.0`      |
+| `kb_postgres_addon_release_name`                 | Helm release name for PostgreSQL addon | `kb-addon-postgresql` |
+| `kubeblocks_namespace`                           | Helm namespace for PostgreSQL addon    | group var            |
+| `kb_postgres_addon_chart_version`                | PostgreSQL addon chart version         | `1.0.2`              |
 
 ## Notes
 
 - Requires `KUBECONFIG` to be set in the environment.
-- Includes the `k8s-kubeblocks` role before installing the PostgreSQL addon Helm chart.
-- Installs the `kubeblocks/postgresql` chart into `kb_postgres_addon_namespace`.
+- Assumes KubeBlocks CRDs and controllers already exist in the cluster.
+- Installs the `kubeblocks/postgresql` chart into `kubeblocks_namespace` using the `kb-addon-postgresql` release name used by KubeBlocks addon ownership metadata.
 - Uses the KubeBlocks `postgresql` cluster definition with a single-node `standalone` PostgreSQL cluster by default.
 - Sets `storageClassName` only when `kb_postgres_storage_class` is non-empty, so Kubernetes can use the default StorageClass.
