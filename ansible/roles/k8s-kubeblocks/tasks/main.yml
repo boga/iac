@@ -37,8 +37,7 @@
     state: present
     values: >-
       {{ {
-        "dataProtection": {"enabled": kubeblocks_data_protection_enabled},
-        "autoInstalledAddons": kubeblocks_auto_installed_addons
+        "dataProtection": {"enabled": kubeblocks_data_protection_enabled}
       } | combine(
         {"storageClass": kubeblocks_storage_class}
           if kubeblocks_storage_class else {}
