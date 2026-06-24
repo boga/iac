@@ -1,89 +1,128 @@
 ---
-- ansible.builtin.import_playbook: "playbooks/k8s-nfs-csi/main.yml"
-
-- name: Install metrics-server
-  hosts: localhost
+# Create the automation account used by Ansible on managed hosts.
+- name: Bootstrap Ansible automation user
+  hosts: all
   gather_facts: false
-  collections:
-    - kubernetes.core
-  vars:
-    kubeconfig_path: "./kubeconfig"
-    metrics_server_version: "v0.8.0"
-    metrics_server_manifest_url: "https://github.com/kubernetes-sigs/metrics-server/releases/download/{{ metrics_server_version }}/components.yaml"
-    metrics_server_kubelet_flags:
-      - --kubelet-insecure-tls
-      - --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
-
+  become: true
   tasks:
-    - name: Apply metrics-server manifest
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
+    # Ensure the dedicated Ansible user exists without configuring a login password.
+    - name: Create ans user
+      ansible.builtin.user:
+        name: ans
+        comment: Ansible automation user
+        create_home: true
+        shell: /bin/bash
         state: present
-        src: "{{ metrics_server_manifest_url }}"
 
-    - name: Patch metrics-server args for Talos
-      kubernetes.core.k8s_json_patch:
-        kubeconfig: "{{ kubeconfig_path }}"
-        api_version: apps/v1
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-        patch:
-          - op: add
-            path: "/spec/template/spec/containers/0/args/-"
-            value: "{{ item }}"
-      loop: "{{ metrics_server_kubelet_flags }}"
+    # Allow the Ansible user to run privileged commands without a sudo password prompt.
+    - name: Allow ans user passwordless sudo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/ans
+        content: "ans ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
 
-    - name: Wait for metrics-server deployment
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
-        api_version: apps/v1
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-        wait: true
-        wait_timeout: 180
+# # Install NFS CSI support before workloads request persistent volumes.
+# - ansible.builtin.import_playbook: "playbooks/k8s-nfs-csi/main.yml"
 
-- name: Install Tailscale operator
-  hosts: localhost
-  gather_facts: false
-  collections:
-    - kubernetes.core
-  vars:
-    kubeconfig_path: "./kubeconfig"
-    tailscale_operator_namespace: "tailscale"
-    tailscale_operator_repo: "https://pkgs.tailscale.com/helmcharts"
-    tailscale_operator_chart: "tailscale-operator"
-    tailscale_operator_chart_version: "1.92.4"
-  tasks:
-    - name: Add Tailscale Helm repository
-      kubernetes.core.helm_repository:
-        name: tailscale
-        repo_url: "{{ tailscale_operator_repo }}"
+# # Install metrics-server so Kubernetes resource metrics are available.
+# - name: Install metrics-server
+#   hosts: localhost
+#   gather_facts: false
+#   collections:
+#     - kubernetes.core
+#   vars:
+#     kubeconfig_path: "./kubeconfig"
+#     metrics_server_version: "v0.8.0"
+#     metrics_server_manifest_url: "https://github.com/kubernetes-sigs/metrics-server/releases/download/{{ metrics_server_version }}/components.yaml"
+#     metrics_server_kubelet_flags:
+#       - --kubelet-insecure-tls
+#       - --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
 
-    - name: Install Tailscale operator via Helm
-      kubernetes.core.helm:
-        kubeconfig: "{{ kubeconfig_path }}"
-        name: tailscale-operator
-        chart_ref: "tailscale/{{ tailscale_operator_chart }}"
-        chart_version: "{{ tailscale_operator_chart_version }}"
-        release_namespace: "{{ tailscale_operator_namespace }}"
-        create_namespace: true
-        values:
-          oauth:
-            clientId: "{{ tailscale_operator_client_id }}"
-            clientSecret: "{{ tailscale_operator_client_secret }}"
+#   tasks:
+#     # Apply the upstream metrics-server manifest from the selected release.
+#     - name: Apply metrics-server manifest
+#       kubernetes.core.k8s:
+#         kubeconfig: "{{ kubeconfig_path }}"
+#         state: present
+#         src: "{{ metrics_server_manifest_url }}"
 
-    - name: Wait for Tailscale operator deployment
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
-        api_version: apps/v1
-        kind: Deployment
-        name: operator
-        namespace: "{{ tailscale_operator_namespace }}"
-        wait: true
-        wait_timeout: 180
+#     # Add Talos-compatible kubelet flags to the metrics-server container args.
+#     - name: Patch metrics-server args for Talos
+#       kubernetes.core.k8s_json_patch:
+#         kubeconfig: "{{ kubeconfig_path }}"
+#         api_version: apps/v1
+#         kind: Deployment
+#         name: metrics-server
+#         namespace: kube-system
+#         patch:
+#           - op: add
+#             path: "/spec/template/spec/containers/0/args/-"
+#             value: "{{ item }}"
+#       loop: "{{ metrics_server_kubelet_flags }}"
 
-- ansible.builtin.import_playbook: "playbooks/observability.yml"
-- ansible.builtin.import_playbook: "playbooks/immich/main.yml"
-- ansible.builtin.import_playbook: "playbooks/homepage.yml"
+#     # Wait until the metrics-server Deployment reports readiness.
+#     - name: Wait for metrics-server deployment
+#       kubernetes.core.k8s:
+#         kubeconfig: "{{ kubeconfig_path }}"
+#         api_version: apps/v1
+#         kind: Deployment
+#         name: metrics-server
+#         namespace: kube-system
+#         wait: true
+#         wait_timeout: 180
+
+# # Install the Tailscale operator for cluster network access.
+# - name: Install Tailscale operator
+#   hosts: localhost
+#   gather_facts: false
+#   collections:
+#     - kubernetes.core
+#   vars:
+#     kubeconfig_path: "./kubeconfig"
+#     tailscale_operator_namespace: "tailscale"
+#     tailscale_operator_repo: "https://pkgs.tailscale.com/helmcharts"
+#     tailscale_operator_chart: "tailscale-operator"
+#     tailscale_operator_chart_version: "1.92.4"
+#   tasks:
+#     # Register the Tailscale Helm chart repository locally.
+#     - name: Add Tailscale Helm repository
+#       kubernetes.core.helm_repository:
+#         name: tailscale
+#         repo_url: "{{ tailscale_operator_repo }}"
+
+#     # Install or upgrade the Tailscale operator release with OAuth credentials.
+#     - name: Install Tailscale operator via Helm
+#       kubernetes.core.helm:
+#         kubeconfig: "{{ kubeconfig_path }}"
+#         name: tailscale-operator
+#         chart_ref: "tailscale/{{ tailscale_operator_chart }}"
+#         chart_version: "{{ tailscale_operator_chart_version }}"
+#         release_namespace: "{{ tailscale_operator_namespace }}"
+#         create_namespace: true
+#         values:
+#           oauth:
+#             clientId: "{{ tailscale_operator_client_id }}"
+#             clientSecret: "{{ tailscale_operator_client_secret }}"
+
+#     # Wait until the Tailscale operator Deployment reports readiness.
+#     - name: Wait for Tailscale operator deployment
+#       kubernetes.core.k8s:
+#         kubeconfig: "{{ kubeconfig_path }}"
+#         api_version: apps/v1
+#         kind: Deployment
+#         name: operator
+#         namespace: "{{ tailscale_operator_namespace }}"
+#         wait: true
+#         wait_timeout: 180
+
+# # Install the observability stack after cluster primitives are ready.
+# - ansible.builtin.import_playbook: "playbooks/observability.yml"
+
+# # Install Immich and its supporting Kubernetes resources.
+# - ansible.builtin.import_playbook: "playbooks/immich/main.yml"
+
+# # Install Homepage dashboard resources last so it can link to deployed services.
+# - ansible.builtin.import_playbook: "playbooks/homepage.yml"
