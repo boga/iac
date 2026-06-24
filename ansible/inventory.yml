@@ -3,12 +3,6 @@ all:
     looner:
       ansible_host: localhost
       ansible_connection: local
-    nas:
-      ansible_host: nas
-      ansible_user: ans
-    nas-docker-vm:
-      ansible_host: nas-docker-vm
-      ansible_user: ans
-    great-vm:
-      ansible_host: great-vm
+    nastromo:
+      ansible_host: nastromo
       ansible_user: ans
