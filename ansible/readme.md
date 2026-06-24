@@ -26,6 +26,22 @@ Use this check before running a playbook:
 mise run syntax-looner
 ```
 
+## Nastromo Bootstrap
+
+Run the bootstrap tag once from `ansible/` to create the `ans` automation user and grant passwordless sudo. `ansible.cfg` provides `inventory.yml` and the default `ans` remote user for normal runs.
+
+The bootstrap tasks are tagged with both `bootstrap` and `never`, so normal playbook runs skip them. They run only when `--tags=bootstrap` is passed.
+
+```bash
+ansible-playbook nastromo.yml --tags=bootstrap --user <INITIAL_ADMIN_USER> --ask-become-pass
+```
+
+After bootstrap, run normal playbooks as the `ans` user configured by `ansible.cfg`:
+
+```bash
+ansible-playbook nastromo.yml
+```
+
 If Ansible reports missing Python libraries such as `proxmoxer`, rerun:
 
 ```bash

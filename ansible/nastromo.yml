@@ -1,7 +1,7 @@
 ---
-# Create the automation account used by Ansible on managed hosts.
+# Create the automation account used by Ansible on nastromo.
 - name: Bootstrap Ansible automation user
-  hosts: all
+  hosts: nastromo
   gather_facts: false
   become: true
   tasks:
@@ -13,6 +13,9 @@
         create_home: true
         shell: /bin/bash
         state: present
+      tags:
+        - bootstrap
+        - never
 
     # Allow the Ansible user to run privileged commands without a sudo password prompt.
     - name: Allow ans user passwordless sudo
@@ -23,10 +26,13 @@
         group: root
         mode: "0440"
         validate: /usr/sbin/visudo -cf %s
+      tags:
+        - bootstrap
+        - never
 
 # Install Samba and NFS services on the NAS host.
 - name: Set up NAS file sharing
-  hosts: nas
+  hosts: nastromo
   gather_facts: true
   become: true
   vars:
