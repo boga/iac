@@ -24,6 +24,121 @@
         mode: "0440"
         validate: /usr/sbin/visudo -cf %s
 
+# Install Samba and NFS services on the NAS host.
+- name: Set up NAS file sharing
+  hosts: nas
+  gather_facts: true
+  become: true
+  vars:
+    nas_share_path: /mnt
+    samba_share_name: nas
+    nfs_exports:
+      - path: "{{ nas_share_path }}"
+        clients: "*"
+        options: "rw,sync,no_subtree_check,no_root_squash"
+  tasks:
+    # Install Samba and the Linux NFS server packages directly, without a role.
+    - name: Install file sharing packages
+      ansible.builtin.package:
+        name:
+          - samba
+          - nfs-kernel-server
+        state: present
+
+    # Ensure the shared directory exists before publishing it over SMB and NFS.
+    - name: Create shared directory
+      ansible.builtin.file:
+        path: "{{ nas_share_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0777"
+
+    # Configure Samba from scratch for a guest-writable NAS share.
+    - name: Configure Samba share
+      ansible.builtin.copy:
+        dest: /etc/samba/smb.conf
+        content: |
+          [global]
+             server role = standalone server
+             map to guest = Bad User
+             usershare allow guests = yes
+             load printers = no
+             printing = bsd
+             printcap name = /dev/null
+             disable spoolss = yes
+
+          [{{ samba_share_name }}]
+             path = {{ nas_share_path }}
+             browseable = yes
+             read only = no
+             guest ok = yes
+             guest only = yes
+             force user = nobody
+             force group = nogroup
+             create mask = 0666
+             directory mask = 0777
+        owner: root
+        group: root
+        mode: "0644"
+        validate: testparm -s %s
+      notify: Restart Samba services
+
+    # Enable and start Samba services for SMB/CIFS clients.
+    - name: Enable Samba services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - smbd
+        - nmbd
+
+    # Ensure each exported directory exists before publishing it over NFS.
+    - name: Create NFS export directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0777"
+      loop: "{{ nfs_exports }}"
+
+    # Write managed NFS exports for the NAS shares.
+    - name: Configure NFS exports
+      ansible.builtin.copy:
+        dest: /etc/exports.d/nas.exports
+        content: |
+          {% for export in nfs_exports %}
+          {{ export.path }} {{ export.clients }}({{ export.options }})
+          {% endfor %}
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload NFS exports
+
+    # Enable and start the NFS server service.
+    - name: Enable NFS server service
+      ansible.builtin.service:
+        name: nfs-kernel-server
+        state: started
+        enabled: true
+
+  handlers:
+    # Restart Samba services after smb.conf changes.
+    - name: Restart Samba services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - smbd
+        - nmbd
+
+    # Refresh kernel export table after export configuration changes.
+    - name: Reload NFS exports
+      ansible.builtin.command: exportfs -ra
+      changed_when: true
+
 # # Install NFS CSI support before workloads request persistent volumes.
 # - ansible.builtin.import_playbook: "playbooks/k8s-nfs-csi/main.yml"
 
