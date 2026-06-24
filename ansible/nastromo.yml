@@ -8,6 +8,10 @@
     storage_mount_path: /mnt/storage
     storage_partition_uuid: ee96fe22-9491-4d9d-8e5c-fc83028195a0
     storage_partition_fstype: ext4
+    sshd_allow_users:
+      - ans
+      - miju
+    sshd_service_name: ssh
     samba_shares:
       - name: BogaFiles
         path: "{{ storage_mount_path }}/BogaFiles"
@@ -59,6 +63,41 @@
           - samba
           - nfs-kernel-server
         state: present
+
+    # Configure SSHD with a hardened managed drop-in.
+    - name: Configure SSHD
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/01-main.conf
+        content: |
+          Port 22
+          AddressFamily any
+          ListenAddress 0.0.0.0
+          ListenAddress ::
+
+          PermitRootLogin no
+          PubkeyAuthentication yes
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          ChallengeResponseAuthentication no
+          UsePAM yes
+
+          X11Forwarding no
+          AllowTcpForwarding no
+          AllowAgentForwarding no
+
+          PrintMotd no
+          AcceptEnv LANG LC_*
+
+          AllowUsers {{ sshd_allow_users | join(' ') }}
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload SSH service
+
+    # Validate the complete SSH configuration before handlers reload SSH.
+    - name: Validate SSH configuration
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
 
     # Ensure every share directory exists on the mounted storage partition.
     - name: Create share directories
@@ -134,6 +173,12 @@
         enabled: true
 
   handlers:
+    # Reload SSH after sshd_config changes.
+    - name: Reload SSH service
+      ansible.builtin.service:
+        name: "{{ sshd_service_name }}"
+        state: reloaded
+
     # Restart Samba services after smb.conf changes.
     - name: Restart Samba services
       ansible.builtin.service:
