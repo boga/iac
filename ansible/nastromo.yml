@@ -47,24 +47,7 @@
         - bootstrap
         - never
 
-    # Mount the storage partition before creating shares on it.
-    - name: Mount storage partition
-      ansible.posix.mount:
-        path: "{{ storage_mount_path }}"
-        src: "UUID={{ storage_partition_uuid }}"
-        fstype: "{{ storage_partition_fstype }}"
-        opts: defaults
-        state: mounted
-
-    # Install Samba and the Linux NFS server packages directly, without a role.
-    - name: Install file sharing packages
-      ansible.builtin.package:
-        name:
-          - samba
-          - nfs-kernel-server
-        state: present
-
-    # Configure SSHD with a hardened managed drop-in.
+    # Configure SSHD early so host access policy is explicit before file sharing setup.
     - name: Configure SSHD
       ansible.builtin.copy:
         dest: /etc/ssh/sshd_config.d/01-main.conf
@@ -99,6 +82,15 @@
       ansible.builtin.command: /usr/sbin/sshd -t
       changed_when: false
 
+    # Mount the storage partition before creating shares on it.
+    - name: Mount storage partition
+      ansible.posix.mount:
+        path: "{{ storage_mount_path }}"
+        src: "UUID={{ storage_partition_uuid }}"
+        fstype: "{{ storage_partition_fstype }}"
+        opts: defaults
+        state: mounted
+
     # Ensure every share directory exists on the mounted storage partition.
     - name: Create share directories
       ansible.builtin.file:
@@ -108,6 +100,14 @@
         group: root
         mode: "0777"
       loop: "{{ samba_shares + nfs_exports }}"
+
+    # Install Samba and the Linux NFS server packages before configuring services.
+    - name: Install file sharing packages
+      ansible.builtin.package:
+        name:
+          - samba
+          - nfs-kernel-server
+        state: present
 
     # Configure Samba from scratch for guest-writable SMB shares.
     - name: Configure Samba share
@@ -142,16 +142,6 @@
         validate: testparm -s %s
       notify: Restart Samba services
 
-    # Enable and start Samba services for SMB/CIFS clients.
-    - name: Enable Samba services
-      ansible.builtin.service:
-        name: "{{ item }}"
-        state: started
-        enabled: true
-      loop:
-        - smbd
-        - nmbd
-
     # Write managed NFS exports for the NAS shares.
     - name: Configure NFS exports
       ansible.builtin.copy:
@@ -164,6 +154,16 @@
         group: root
         mode: "0644"
       notify: Reload NFS exports
+
+    # Enable and start Samba services for SMB/CIFS clients.
+    - name: Enable Samba services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - smbd
+        - nmbd
 
     # Enable and start the NFS server service.
     - name: Enable NFS server service
