@@ -1,9 +1,19 @@
 ---
-# Create the automation account used by Ansible on nastromo.
-- name: Bootstrap Ansible automation user
+# Configure nastromo host bootstrap and file sharing.
+- name: Configure nastromo
   hosts: nastromo
   gather_facts: false
   become: true
+  vars:
+    storage_mount_path: /mnt/storage
+    storage_partition_uuid: ee96fe22-9491-4d9d-8e5c-fc83028195a0
+    storage_partition_fstype: ext4
+    nas_share_path: /mnt
+    samba_share_name: nas
+    nfs_exports:
+      - path: "{{ nas_share_path }}"
+        clients: "*"
+        options: "rw,sync,no_subtree_check,no_root_squash"
   tasks:
     # Ensure the dedicated Ansible user exists without configuring a login password.
     - name: Create ans user
@@ -30,19 +40,15 @@
         - bootstrap
         - never
 
-# Install Samba and NFS services on the NAS host.
-- name: Set up NAS file sharing
-  hosts: nastromo
-  gather_facts: true
-  become: true
-  vars:
-    nas_share_path: /mnt
-    samba_share_name: nas
-    nfs_exports:
-      - path: "{{ nas_share_path }}"
-        clients: "*"
-        options: "rw,sync,no_subtree_check,no_root_squash"
-  tasks:
+    # Mount the storage partition before creating shares on it.
+    - name: Mount storage partition
+      ansible.posix.mount:
+        path: "{{ storage_mount_path }}"
+        src: "UUID={{ storage_partition_uuid }}"
+        fstype: "{{ storage_partition_fstype }}"
+        opts: defaults
+        state: mounted
+
     # Install Samba and the Linux NFS server packages directly, without a role.
     - name: Install file sharing packages
       ansible.builtin.package:
