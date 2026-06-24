@@ -8,10 +8,13 @@
     storage_mount_path: /mnt/storage
     storage_partition_uuid: ee96fe22-9491-4d9d-8e5c-fc83028195a0
     storage_partition_fstype: ext4
-    nas_share_path: /mnt
-    samba_share_name: nas
+    samba_shares:
+      - name: BogaFiles
+        path: "{{ storage_mount_path }}/BogaFiles"
+      - name: BogaAudio
+        path: "{{ storage_mount_path }}/BogaAudio"
     nfs_exports:
-      - path: "{{ nas_share_path }}"
+      - path: "{{ storage_mount_path }}/ProxmoxBackups"
         clients: "*"
         options: "rw,sync,no_subtree_check,no_root_squash"
   tasks:
@@ -57,16 +60,17 @@
           - nfs-kernel-server
         state: present
 
-    # Ensure the shared directory exists before publishing it over SMB and NFS.
-    - name: Create shared directory
+    # Ensure every share directory exists on the mounted storage partition.
+    - name: Create share directories
       ansible.builtin.file:
-        path: "{{ nas_share_path }}"
+        path: "{{ item.path }}"
         state: directory
         owner: root
         group: root
         mode: "0777"
+      loop: "{{ samba_shares + nfs_exports }}"
 
-    # Configure Samba from scratch for a guest-writable NAS share.
+    # Configure Samba from scratch for guest-writable SMB shares.
     - name: Configure Samba share
       ansible.builtin.copy:
         dest: /etc/samba/smb.conf
@@ -80,8 +84,9 @@
              printcap name = /dev/null
              disable spoolss = yes
 
-          [{{ samba_share_name }}]
-             path = {{ nas_share_path }}
+          {% for share in samba_shares %}
+          [{{ share.name }}]
+             path = {{ share.path }}
              browseable = yes
              read only = no
              guest ok = yes
@@ -90,6 +95,8 @@
              force group = nogroup
              create mask = 0666
              directory mask = 0777
+
+          {% endfor %}
         owner: root
         group: root
         mode: "0644"
@@ -105,16 +112,6 @@
       loop:
         - smbd
         - nmbd
-
-    # Ensure each exported directory exists before publishing it over NFS.
-    - name: Create NFS export directories
-      ansible.builtin.file:
-        path: "{{ item.path }}"
-        state: directory
-        owner: root
-        group: root
-        mode: "0777"
-      loop: "{{ nfs_exports }}"
 
     # Write managed NFS exports for the NAS shares.
     - name: Configure NFS exports
