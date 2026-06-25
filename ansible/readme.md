@@ -38,7 +38,7 @@ ansible-playbook nastromo.yml --tags=bootstrap      \
   --extra-vars ansible_user="${INITIAL_ADMIN_USER}" \
   --ask-become-pass
 ```
-
+Make sure the SSH key is added to the `ans` user
 After bootstrap, run normal playbooks as the `ans` user configured by `ansible.cfg`:
 
 ```bash
