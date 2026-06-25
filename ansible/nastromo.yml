@@ -12,6 +12,9 @@
       - ans
       - miju
     sshd_service_name: ssh
+    tailscale_debian_release: trixie
+    tailscale_apt_key_url: "https://pkgs.tailscale.com/stable/debian/{{ tailscale_debian_release }}.noarmor.gpg"
+    tailscale_apt_repository_url: "https://pkgs.tailscale.com/stable/debian/{{ tailscale_debian_release }}.tailscale-keyring.list"
     samba_shares:
       - name: BogaFiles
         path: "{{ storage_mount_path }}/BogaFiles"
@@ -87,6 +90,47 @@
       tags:
         - bootstrap
         - never
+
+    # Install Tailscale from the official Debian 13 APT repository.
+    - name: Install Tailscale repository prerequisites
+      ansible.builtin.apt:
+        name: ca-certificates
+        state: present
+        update_cache: true
+
+    - name: Install Tailscale APT key
+      ansible.builtin.get_url:
+        url: "{{ tailscale_apt_key_url }}"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: "0644"
+      register: tailscale_apt_key
+
+    - name: Add Tailscale APT repository
+      ansible.builtin.get_url:
+        url: "{{ tailscale_apt_repository_url }}"
+        dest: /etc/apt/sources.list.d/tailscale.list
+        owner: root
+        group: root
+        mode: "0644"
+      register: tailscale_apt_repository
+
+    - name: Update APT cache for Tailscale repository
+      ansible.builtin.apt:
+        update_cache: true
+      when: tailscale_apt_key.changed or tailscale_apt_repository.changed
+
+    - name: Install Tailscale package
+      ansible.builtin.apt:
+        name: tailscale
+        state: present
+
+    - name: Enable Tailscale service
+      ansible.builtin.service:
+        name: tailscaled
+        state: started
+        enabled: true
 
     # Mount the storage partition before creating shares on it.
     - name: Mount storage partition
