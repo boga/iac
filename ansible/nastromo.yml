@@ -148,6 +148,15 @@
         validate: testparm -s %s
       notify: Restart Samba services
 
+    # Ensure the NFS export include directory exists before writing drop-ins.
+    - name: Create NFS exports directory
+      ansible.builtin.file:
+        path: /etc/exports.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
     # Write managed NFS exports for the NAS shares.
     - name: Configure NFS exports
       ansible.builtin.copy:
