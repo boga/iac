@@ -19,7 +19,7 @@
         path: "{{ storage_mount_path }}/BogaAudio"
     nfs_exports:
       - path: "{{ storage_mount_path }}/ProxmoxBackups"
-        clients: "*"
+        clients: "{{ proxmox_node_ip }}"
         options: "rw,sync,no_subtree_check,no_root_squash"
   tasks:
     # Ensure the dedicated Ansible user exists without configuring a login password.
