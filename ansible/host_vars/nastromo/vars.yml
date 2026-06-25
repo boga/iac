@@ -1,0 +1,1 @@
+proxmox_node_ip: "{{ vault_proxmox_node_ip }}"
