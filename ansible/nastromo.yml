@@ -76,11 +76,17 @@
         group: root
         mode: "0644"
       notify: Reload SSH service
+      tags:
+        - bootstrap
+        - never
 
     # Validate the complete SSH configuration before handlers reload SSH.
     - name: Validate SSH configuration
       ansible.builtin.command: /usr/sbin/sshd -t
       changed_when: false
+      tags:
+        - bootstrap
+        - never
 
     # Mount the storage partition before creating shares on it.
     - name: Mount storage partition
