@@ -123,14 +123,34 @@
   when: kb_postgres_users | length > 0
   no_log: true
 
+- name: Get PostgreSQL primary pod
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ kb_postgres_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/instance={{ kb_postgres_cluster_name }}"
+      - "apps.kubeblocks.io/component-name=postgresql"
+      - "kubeblocks.io/role=primary"
+  register: kb_postgres_primary_pod_info
+  until: kb_postgres_primary_pod_info.resources | length > 0
+  retries: 10
+  delay: 5
+  when: kb_postgres_users | length > 0
+
+- name: Set PostgreSQL primary pod fact
+  ansible.builtin.set_fact:
+    kb_postgres_primary_pod: "{{ kb_postgres_primary_pod_info.resources[0].metadata.name }}"
+  when: kb_postgres_users | length > 0
+
 - name: Configure PostgreSQL databases and users
   block:
     - name: Write PostgreSQL password file to pod
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
+        pod: "{{ kb_postgres_primary_pod }}"
         container: "{{ kb_postgres_container_name }}"
-        command: "sh -c 'echo {{ kb_postgres_pgpass_b64 }} | base64 -d > /tmp/.pgpass && chmod 600 /tmp/.pgpass'"
+        command: "sh -c 'echo {{ kb_postgres_pgpass_b64 }} | base64 -d > /tmp/.pgpass && chmod 600 /tmp/.pgpass && echo wrote-pgpass'"
       no_log: true
 
     - name: Validate PostgreSQL database privileges
@@ -187,7 +207,12 @@
           END
           $$;
           {% for db in item.databases | default([]) -%}
+          ALTER DATABASE "{{ db.name | replace('"', '""') }}" OWNER TO "{{ item.name | replace('"', '""') }}";
           GRANT {{ db.privileges | default('ALL PRIVILEGES') | upper | regex_replace('\\s+', ' ') }} ON DATABASE "{{ db.name | replace('"', '""') }}" TO "{{ item.name | replace('"', '""') }}";
+          \connect "{{ db.name | replace('"', '""') }}"
+          GRANT ALL ON SCHEMA public TO "{{ item.name | replace('"', '""') }}";
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "{{ item.name | replace('"', '""') }}";
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "{{ item.name | replace('"', '""') }}";
           {% endfor -%}
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
@@ -197,9 +222,9 @@
     - name: Write PostgreSQL SQL setup script to pod
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
+        pod: "{{ kb_postgres_primary_pod }}"
         container: "{{ kb_postgres_container_name }}"
-        command: "sh -c 'echo {{ kb_postgres_sql_scripts[item.name] }} | base64 -d > /tmp/setup_{{ user_index }}.sql'"
+        command: "sh -c 'echo {{ kb_postgres_sql_scripts[item.name] }} | base64 -d > /tmp/setup_{{ user_index }}.sql && echo wrote-setup-sql'"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
@@ -209,9 +234,9 @@
     - name: Execute PostgreSQL SQL setup script
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
+        pod: "{{ kb_postgres_primary_pod }}"
         container: "{{ kb_postgres_container_name }}"
-        command: "sh -c 'PGPASSFILE=/tmp/.pgpass psql -h {{ kb_postgres_cluster_name }}-postgresql-postgresql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/setup_{{ user_index }}.sql'"
+        command: "sh -c 'PGPASSFILE=/tmp/.pgpass psql -h {{ kb_postgres_cluster_name }}-postgresql-postgresql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/setup_{{ user_index }}.sql && echo executed-setup-sql'"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
@@ -221,9 +246,9 @@
     - name: Clean up PostgreSQL SQL setup script
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
+        pod: "{{ kb_postgres_primary_pod }}"
         container: "{{ kb_postgres_container_name }}"
-        command: "rm -f /tmp/setup_{{ user_index }}.sql"
+        command: "sh -c 'rm -f /tmp/setup_{{ user_index }}.sql && echo cleaned-setup-sql'"
       loop: "{{ kb_postgres_users_processed }}"
       loop_control:
         label: "{{ item.name }}"
@@ -233,8 +258,8 @@
     - name: Clean up PostgreSQL password file
       kubernetes.core.k8s_exec:
         namespace: "{{ kb_postgres_namespace }}"
-        pod: "{{ kb_postgres_cluster_name }}-postgresql-postgresql"
+        pod: "{{ kb_postgres_primary_pod }}"
         container: "{{ kb_postgres_container_name }}"
-        command: rm -f /tmp/.pgpass
+        command: "sh -c 'rm -f /tmp/.pgpass && echo cleaned-pgpass'"
       no_log: true
   when: kb_postgres_users | length > 0
