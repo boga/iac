@@ -252,6 +252,34 @@
       ansible.builtin.command: exportfs -ra
       changed_when: true
 
+# Configure Proxmox backup settings for NFS-backed vzdump storage.
+- name: Configure Proxmox backup settings
+  hosts: proxmox
+  gather_facts: false
+  become: true
+  vars:
+    proxmox_vzdump_tmpdir: /mnt/sdb1/tmp
+  tasks:
+    # Ensure vzdump uses local temporary storage before writing final archives to NFS.
+    - name: Create Proxmox vzdump temporary directory
+      ansible.builtin.file:
+        path: "{{ proxmox_vzdump_tmpdir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # Configure vzdump to stage backups on local storage instead of the NFS target.
+    - name: Configure Proxmox vzdump temporary directory
+      ansible.builtin.lineinfile:
+        path: /etc/vzdump.conf
+        regexp: '^tmpdir:'
+        line: "tmpdir: {{ proxmox_vzdump_tmpdir }}"
+        create: true
+        owner: root
+        group: root
+        mode: "0644"
+
 # # Install NFS CSI support before workloads request persistent volumes.
 # - ansible.builtin.import_playbook: "playbooks/k8s-nfs-csi/main.yml"
 
