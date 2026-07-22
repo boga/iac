@@ -196,6 +196,18 @@ SSH key
   -> Proxmox command executes as root
 ```
 
+## Backup Notes
+
+For NFS-backed backups of unprivileged LXC containers, configure `vzdump` to use a local temporary directory instead of staging temporary backup data on the NFS mount.
+
+Set `/etc/vzdump.conf` on the Proxmox node:
+
+```text
+tmpdir: /mnt/sdb1/tmp
+```
+
+Ensure `/mnt/sdb1/tmp` exists and has enough free local space for the temporary backup archive.
+
 ## Next Steps
 
 - [ ] Add `proxmox/vms/example.md`.
