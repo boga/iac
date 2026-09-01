@@ -1,0 +1,14 @@
+---
+namespace_name: tsidp
+
+k8s_tsidp_name: tsidp
+k8s_tsidp_image: ghcr.io/tailscale/tsidp:latest
+k8s_tsidp_image_pull_policy: Always
+k8s_tsidp_replicas: 1
+k8s_tsidp_port: 443
+k8s_tsidp_hostname: idp
+k8s_tsidp_enable_sts: true
+k8s_tsidp_storage_class_name: local-path
+k8s_tsidp_storage_size: 1Gi
+k8s_tsidp_authkey_secret_name: tsidp-authkey
+k8s_tsidp_authkey: "{{ vault_k8s_tsidp_authkey | default('') }}"

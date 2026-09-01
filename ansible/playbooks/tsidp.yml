@@ -4,6 +4,6 @@
   gather_facts: false
 
   roles:
-    - role: tsidp
+    - role: k8s-tsidp
       vars:
         namespace_name: tsidp
