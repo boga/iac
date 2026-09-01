@@ -33,6 +33,7 @@
           - UPDATE
           - DELETE
           - CREATE
+          - CREATE TEMPORARY TABLES
           - ALTER
           - DROP
           - INDEX
