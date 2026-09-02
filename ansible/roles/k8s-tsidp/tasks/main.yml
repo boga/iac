@@ -8,12 +8,6 @@
       metadata:
         name: "{{ namespace_name }}"
 
-- name: "Create TSIDP auth key secret"
-  kubernetes.core.k8s:
-    state: present
-    template: secret.yml.j2
-  when: k8s_tsidp_authkey | length > 0
-
 - name: "Deploy TSIDP to k8s"
   kubernetes.core.k8s:
     state: present

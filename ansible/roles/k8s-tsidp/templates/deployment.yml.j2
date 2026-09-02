@@ -32,13 +32,6 @@ spec:
               value: "{{ k8s_tsidp_hostname }}"
             - name: TSIDP_ENABLE_STS
               value: "{{ '1' if k8s_tsidp_enable_sts else '0' }}"
-{% if k8s_tsidp_authkey | length > 0 %}
-            - name: TS_AUTHKEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ k8s_tsidp_authkey_secret_name }}
-                  key: TS_AUTHKEY
-{% endif %}
           ports:
             - name: https
               containerPort: {{ k8s_tsidp_port }}
