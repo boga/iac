@@ -19,6 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: {{ k8s_tsidp_name }}
     spec:
+      enableServiceLinks: false
       containers:
         - name: {{ k8s_tsidp_name }}
           image: "{{ k8s_tsidp_image }}"
@@ -30,6 +31,10 @@ spec:
               value: /data
             - name: TS_HOSTNAME
               value: "{{ k8s_tsidp_hostname }}"
+            - name: TS_ADVERTISE_TAGS
+              value: "{{ k8s_tsidp_advertise_tags }}"
+            - name: TSIDP_PORT
+              value: "{{ k8s_tsidp_port }}"
             - name: TSIDP_ENABLE_STS
               value: "{{ '1' if k8s_tsidp_enable_sts else '0' }}"
           ports:
