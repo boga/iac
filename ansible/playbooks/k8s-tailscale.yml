@@ -16,6 +16,8 @@
     tailscale_dns_nameserver_image_tag: "v1.98.4"
     tailscale_coredns_namespace: "kube-system"
     tailscale_coredns_configmap_name: "coredns"
+    idp_fqdn: "idp.{{ tailscale_tailnet_name }}"
+    tailscale_idp_egress_service_name: "idp-tailnet"
     tailscale_coredns_managed_block: |-
       # BEGIN TAILSCALE EGRESS
       ts.net:53 {
@@ -76,6 +78,27 @@
         selectattr('status', 'equalto', 'True') | list | length > 0)
       retries: 60
       delay: 5
+
+    - name: Create cluster-wide IDP egress Service
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ tailscale_operator_namespace }}"
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ tailscale_idp_egress_service_name }}"
+            namespace: "{{ tailscale_operator_namespace }}"
+            annotations:
+              tailscale.com/tailnet-fqdn: "{{ idp_fqdn }}"
+              tailscale.com/proxy-group: "{{ tailscale_egress_proxy_group_name }}"
+          spec:
+            type: ExternalName
+            externalName: placeholder
+            ports:
+              - name: https
+                port: 443
+                protocol: TCP
 
     - name: Create Tailscale DNSConfig
       kubernetes.core.k8s:
