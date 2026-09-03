@@ -6,7 +6,6 @@ grimmory_image: "grimmory/grimmory:latest"
 grimmory_image_pull_policy: "Always"
 grimmory_replicas: 1
 grimmory_port: 6060
-grimmory_tailscale_hostname: "library.{{ tailscale_tailnet_name }}"
 
 grimmory_db_host: "grimmory-mariadb"
 grimmory_db_port: 3306

@@ -57,4 +57,3 @@
     - pvc.yml.j2
     - service.yml.j2
     - deployment.yml.j2
-    - ingress.yml.j2
