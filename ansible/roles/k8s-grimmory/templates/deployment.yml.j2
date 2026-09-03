@@ -10,7 +10,7 @@ spec:
   revisionHistoryLimit: 3
   replicas: {{ grimmory_replicas }}
   strategy:
-    type: RollingUpdate
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ grimmory_name }}
@@ -51,6 +51,13 @@ spec:
             - name: http
               containerPort: {{ grimmory_port }}
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
           volumeMounts:
             - mountPath: /app/data
               name: grimmory-data
@@ -58,6 +65,46 @@ spec:
               name: grimmory-books
             - mountPath: /bookdrop
               name: grimmory-bookdrop
+        - name: {{ grimmory_tailscale_name }}
+          image: "{{ grimmory_tailscale_image }}"
+          imagePullPolicy: {{ grimmory_tailscale_image_pull_policy }}
+          env:
+            - name: TS_AUTHKEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ grimmory_tailscale_secret_name }}
+                  key: TS_AUTHKEY
+            - name: TS_HOSTNAME
+              value: "{{ grimmory_tailscale_hostname }}"
+            - name: TS_STATE_DIR
+              value: "{{ grimmory_tailscale_state_dir }}"
+            - name: TS_KUBE_SECRET
+              value: ""
+            - name: TS_USERSPACE
+              value: "true"
+            - name: TS_AUTH_ONCE
+              value: "true"
+            - name: TS_SERVE_CONFIG
+              value: "/config/serve.json"
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+            - name: TS_LOCAL_ADDR_PORT
+              value: "0.0.0.0:{{ grimmory_tailscale_health_check_port }}"
+            - name: TS_EXTRA_ARGS
+              value: "--advertise-tags={{ grimmory_tailscale_advertise_tag }}"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ grimmory_tailscale_health_check_port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: grimmory-tailscale-state
+              mountPath: "{{ grimmory_tailscale_state_dir }}"
+            - name: grimmory-tailscale-serve-config
+              mountPath: /config
+              readOnly: true
       volumes:
         - name: grimmory-data
           persistentVolumeClaim:
@@ -68,3 +115,9 @@ spec:
         - name: grimmory-bookdrop
           persistentVolumeClaim:
             claimName: grimmory-bookdrop
+        - name: grimmory-tailscale-state
+          persistentVolumeClaim:
+            claimName: {{ grimmory_tailscale_state_pvc_name }}
+        - name: grimmory-tailscale-serve-config
+          configMap:
+            name: {{ grimmory_tailscale_serve_config_name }}
