@@ -24,6 +24,10 @@
     mealie_base_url: "https://{{ mealie_tailscale_hostname }}"
     mealie_tailscale_hostname: "cooking.{{ tailscale_tailnet_name }}"
     mealie_allow_signup: "false"
+    mealie_oidc_configuration_url: "https://{{ idp_fqdn }}/.well-known/openid-configuration"
+    mealie_oidc_auth_enabled: "true"
+    mealie_oidc_signup_enabled: "true"
+    mealie_oidc_scopes_override: "openid profile email"
     mealie_default_email: admin@example.com
     mealie_default_group: Home
     mealie_default_household: Family
@@ -97,6 +101,18 @@
                         value: "{{ mealie_base_url }}"
                       - name: ALLOW_SIGNUP
                         value: "{{ mealie_allow_signup }}"
+                      - name: OIDC_AUTH_ENABLED
+                        value: "{{ mealie_oidc_auth_enabled }}"
+                      - name: OIDC_SIGNUP_ENABLED
+                        value: "{{ mealie_oidc_signup_enabled }}"
+                      - name: OIDC_SCOPES_OVERRIDE
+                        value: "{{ mealie_oidc_scopes_override }}"
+                      - name: OIDC_CONFIGURATION_URL
+                        value: "{{ mealie_oidc_configuration_url }}"
+                      - name: OIDC_CLIENT_ID
+                        value: "{{ mealie_oidc_client_id }}"
+                      - name: OIDC_CLIENT_SECRET
+                        value: "{{ mealie_oidc_client_secret }}"
                       - name: DEFAULT_EMAIL
                         value: "{{ mealie_default_email }}"
                       - name: DEFAULT_GROUP
