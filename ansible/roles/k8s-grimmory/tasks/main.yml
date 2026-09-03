@@ -14,10 +14,10 @@
       - grimmory_replicas | int == 1
       - grimmory_tailscale_authkey is defined
       - grimmory_tailscale_authkey | trim | length > 0
-      - grimmory_tailscale_advertise_tag == "tag:server"
+      - grimmory_tailscale_advertise_tag == "tag:k8s"
     fail_msg: >-
       Grimmory requires one replica, a non-empty Tailscale auth key, and the
-      approved tag:server advertise tag before the sidecar cutover.
+      operator-approved tag:k8s advertise tag before the sidecar cutover.
   no_log: true
 
 - name: "Create MariaDB cluster for Grimmory"

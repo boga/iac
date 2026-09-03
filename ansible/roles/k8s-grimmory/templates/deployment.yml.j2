@@ -11,6 +11,7 @@ spec:
   replicas: {{ grimmory_replicas }}
   strategy:
     type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ grimmory_name }}
