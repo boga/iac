@@ -74,7 +74,7 @@
       until: >-
         tailscale_proxy_group_info.resources | length > 0 and
         (tailscale_proxy_group_info.resources[0].status.conditions | default([]) |
-        selectattr('type', 'equalto', 'Ready') |
+        selectattr('type', 'equalto', 'ProxyGroupReady') |
         selectattr('status', 'equalto', 'True') | list | length > 0)
       retries: 60
       delay: 5
