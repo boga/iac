@@ -1,0 +1,9 @@
+---
+- name: Install TSIDP
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-tsidp
+      vars:
+        namespace_name: tsidp

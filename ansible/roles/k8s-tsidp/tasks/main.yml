@@ -1,0 +1,19 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ namespace_name }}"
+
+- name: "Deploy TSIDP to k8s"
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - pvc.yml.j2
+    - service.yml.j2
+    - deployment.yml.j2

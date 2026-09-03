@@ -1,2 +1,0 @@
-docker_compose_project_name: "tsidp"
-tsidp_dir: "{{ root_dir }}/tsidp"
