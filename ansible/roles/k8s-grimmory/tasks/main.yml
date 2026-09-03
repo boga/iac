@@ -55,28 +55,6 @@
         username: "{{ grimmory_db_user }}"
         host: "%"
 
-- name: Record Grimmory restart baseline
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Pod
-    namespace: "{{ namespace_name }}"
-    label_selectors:
-      - "app.kubernetes.io/name={{ grimmory_name }}"
-  register: grimmory_pod_info
-
-- name: Report Grimmory restart baseline
-  ansible.builtin.debug:
-    msg: >-
-      Grimmory restart counts before Tailscale sidecar rollout: {{
-      grimmory_pod_info.resources
-      | map(attribute='status.containerStatuses')
-      | select('defined')
-      | flatten
-      | selectattr('name', 'equalto', grimmory_name)
-      | map(attribute='restartCount')
-      | list
-      }}
-
 - name: "Create Grimmory database secret"
   kubernetes.core.k8s:
     state: present
