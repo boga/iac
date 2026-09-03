@@ -10,7 +10,7 @@
     tailscale_operator_chart: "tailscale-operator"
     tailscale_operator_chart_version: "1.98.4"
     tailscale_egress_proxy_group_name: "tailscale-egress"
-    tailscale_egress_proxy_group_replicas: 2
+    tailscale_egress_proxy_group_replicas: 1
     tailscale_dns_config_name: "ts-dns"
     tailscale_dns_nameserver_image_repo: "tailscale/k8s-nameserver"
     tailscale_dns_nameserver_image_tag: "v1.98.4"
