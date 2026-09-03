@@ -8,14 +8,6 @@
       metadata:
         name: "{{ namespace_name }}"
 
-- name: Check for legacy Grimmory Tailscale Ingress
-  kubernetes.core.k8s_info:
-    api_version: networking.k8s.io/v1
-    kind: Ingress
-    name: grimmory-tailscale
-    namespace: "{{ namespace_name }}"
-  register: grimmory_legacy_tailscale_ingress
-
 - name: Validate Grimmory Tailscale sidecar prerequisites
   ansible.builtin.assert:
     that:
@@ -27,15 +19,6 @@
       Grimmory requires one replica, a non-empty Tailscale auth key, and the
       approved tag:server advertise tag before the sidecar cutover.
   no_log: true
-
-- name: Require legacy Tailscale identity release acknowledgement
-  ansible.builtin.assert:
-    that:
-      - grimmory_tailscale_identity_release_acknowledged | bool
-    fail_msg: >-
-      Confirm the legacy library Tailscale device has been removed, then rerun
-      with -e grimmory_tailscale_identity_release_acknowledged=true.
-  when: grimmory_legacy_tailscale_ingress.resources | length > 0
 
 - name: "Create MariaDB cluster for Grimmory"
   ansible.builtin.include_role:
@@ -115,30 +98,6 @@
     state: present
     namespace: "{{ namespace_name }}"
     template: pvc.yml.j2
-
-- name: Remove legacy Grimmory Tailscale Ingress
-  kubernetes.core.k8s:
-    state: absent
-    api_version: networking.k8s.io/v1
-    kind: Ingress
-    name: grimmory-tailscale
-    namespace: "{{ namespace_name }}"
-    wait: true
-    wait_timeout: 300
-
-- name: Wait for legacy Grimmory Tailscale proxy to terminate
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Pod
-    namespace: "{{ grimmory_tailscale_operator_namespace }}"
-    label_selectors:
-      - "tailscale.com/parent-resource=grimmory-tailscale"
-      - "tailscale.com/parent-resource-ns={{ namespace_name }}"
-      - "tailscale.com/parent-resource-type=ingress"
-  register: grimmory_legacy_tailscale_proxy
-  until: grimmory_legacy_tailscale_proxy.resources | length == 0
-  retries: 30
-  delay: 10
 
 - name: "Create Grimmory service"
   kubernetes.core.k8s:

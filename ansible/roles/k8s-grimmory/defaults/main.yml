@@ -20,9 +20,7 @@ grimmory_tailscale_state_storage_class_name: >-
   {{ grimmory_storage_class_name | default('local-path') }}
 grimmory_tailscale_serve_config_name: "grimmory-tailscale-serve"
 grimmory_tailscale_health_check_port: 9002
-grimmory_tailscale_operator_namespace: "tailscale"
 grimmory_tailscale_advertise_tag: "tag:server"
-grimmory_tailscale_identity_release_acknowledged: false
 
 grimmory_db_host: "grimmory-mariadb"
 grimmory_db_port: 3306
