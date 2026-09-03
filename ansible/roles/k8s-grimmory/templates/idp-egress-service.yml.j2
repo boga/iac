@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ grimmory_idp_egress_service_name }}"
+  namespace: "{{ namespace_name }}"
+  annotations:
+    tailscale.com/tailnet-fqdn: "{{ grimmory_idp_tailnet_fqdn }}"
+    tailscale.com/proxy-group: "{{ grimmory_idp_egress_proxy_group }}"
+spec:
+  type: ExternalName
+  externalName: placeholder
+  ports:
+    - name: https
+      port: {{ grimmory_idp_egress_port }}
+      protocol: TCP

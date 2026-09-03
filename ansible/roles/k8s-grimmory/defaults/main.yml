@@ -8,6 +8,11 @@ grimmory_replicas: 1
 grimmory_port: 6060
 grimmory_tailscale_hostname: "library.{{ tailscale_tailnet_name }}"
 
+grimmory_idp_tailnet_fqdn: "idp.{{ tailscale_tailnet_name }}"
+grimmory_idp_egress_service_name: "idp-tailnet"
+grimmory_idp_egress_proxy_group: "tailscale-egress"
+grimmory_idp_egress_port: 443
+
 grimmory_db_host: "grimmory-mariadb"
 grimmory_db_port: 3306
 grimmory_db_name: "grimmory"
