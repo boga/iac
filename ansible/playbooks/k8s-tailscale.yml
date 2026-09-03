@@ -16,6 +16,8 @@
     tailscale_dns_nameserver_image_tag: "v1.98.4"
     tailscale_coredns_namespace: "kube-system"
     tailscale_coredns_configmap_name: "coredns"
+    tailscale_corefile_newline: "\n"
+    tailscale_corefile_literal_newline: "\\n"
     idp_fqdn: "idp.{{ tailscale_tailnet_name }}"
     tailscale_idp_egress_service_name: "idp-tailnet"
     tailscale_coredns_managed_block: |-
@@ -158,12 +160,24 @@
         msg: "CoreDNS Corefile already contains an unmanaged ts.net block"
       when: tailscale_corefile_has_unmanaged_ts_net | bool
 
+    - name: Normalize escaped newlines around managed Tailscale block
+      ansible.builtin.set_fact:
+        tailscale_existing_corefile: >-
+          {{ tailscale_existing_corefile |
+             replace(tailscale_corefile_literal_newline ~ tailscale_corefile_literal_newline ~ '# BEGIN TAILSCALE EGRESS',
+                     tailscale_corefile_newline ~ tailscale_corefile_newline ~ '# BEGIN TAILSCALE EGRESS') |
+             replace('# END TAILSCALE EGRESS' ~ tailscale_corefile_literal_newline,
+                     '# END TAILSCALE EGRESS' ~ tailscale_corefile_newline) }}
+      when: tailscale_corefile_has_managed_block | bool
+
     - name: Build Corefile with managed Tailscale block
       ansible.builtin.set_fact:
         tailscale_updated_corefile: >-
-          {{ tailscale_existing_corefile | regex_replace('(?ms)^# BEGIN TAILSCALE EGRESS\n.*?^# END TAILSCALE EGRESS$', tailscale_coredns_managed_block)
+          {{ tailscale_existing_corefile | regex_replace('(?ms)^# BEGIN TAILSCALE EGRESS$.*?^# END TAILSCALE EGRESS$', tailscale_coredns_managed_block)
              if tailscale_corefile_has_managed_block | bool else
-             tailscale_existing_corefile ~ ('' if tailscale_existing_corefile.endswith('\n') else '\n') ~ '\n' ~ tailscale_coredns_managed_block ~ '\n' }}
+             tailscale_existing_corefile ~
+             ('' if tailscale_existing_corefile.endswith(tailscale_corefile_newline) else tailscale_corefile_newline) ~
+             tailscale_corefile_newline ~ tailscale_coredns_managed_block ~ tailscale_corefile_newline }}
 
     - name: Update CoreDNS ConfigMap
       kubernetes.core.k8s:
