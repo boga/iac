@@ -9,6 +9,25 @@
     tailscale_operator_repo: "https://pkgs.tailscale.com/helmcharts"
     tailscale_operator_chart: "tailscale-operator"
     tailscale_operator_chart_version: "1.98.4"
+    tailscale_egress_proxy_group_name: "tailscale-egress"
+    tailscale_egress_proxy_group_replicas: 1
+    tailscale_dns_config_name: "ts-dns"
+    tailscale_dns_nameserver_image_repo: "tailscale/k8s-nameserver"
+    tailscale_dns_nameserver_image_tag: "v1.98.4"
+    tailscale_coredns_namespace: "kube-system"
+    tailscale_coredns_configmap_name: "coredns"
+    tailscale_corefile_newline: "\n"
+    tailscale_corefile_literal_newline: "\\n"
+    idp_fqdn: "idp.{{ tailscale_tailnet_name }}"
+    tailscale_idp_egress_service_name: "idp-tailnet"
+    tailscale_coredns_managed_block: |-
+      # BEGIN TAILSCALE EGRESS
+      ts.net:53 {
+          errors
+          cache 30
+          forward . {{ tailscale_dns_nameserver_ip }}
+      }
+      # END TAILSCALE EGRESS
   tasks:
     - name: Add Tailscale Helm repository
       kubernetes.core.helm_repository:
@@ -35,3 +54,166 @@
         namespace: "{{ tailscale_operator_namespace }}"
         wait: true
         wait_timeout: 180
+
+    - name: Create Tailscale egress ProxyGroup
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: tailscale.com/v1alpha1
+          kind: ProxyGroup
+          metadata:
+            name: "{{ tailscale_egress_proxy_group_name }}"
+          spec:
+            type: egress
+            replicas: "{{ tailscale_egress_proxy_group_replicas }}"
+
+    - name: Wait for Tailscale egress ProxyGroup readiness
+      kubernetes.core.k8s_info:
+        api_version: tailscale.com/v1alpha1
+        kind: ProxyGroup
+        name: "{{ tailscale_egress_proxy_group_name }}"
+      register: tailscale_proxy_group_info
+      until: >-
+        tailscale_proxy_group_info.resources | length > 0 and
+        (tailscale_proxy_group_info.resources[0].status.conditions | default([]) |
+        selectattr('type', 'equalto', 'ProxyGroupReady') |
+        selectattr('status', 'equalto', 'True') | list | length > 0)
+      retries: 60
+      delay: 5
+
+    - name: Create cluster-wide IDP egress Service
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ tailscale_operator_namespace }}"
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ tailscale_idp_egress_service_name }}"
+            namespace: "{{ tailscale_operator_namespace }}"
+            annotations:
+              tailscale.com/tailnet-fqdn: "{{ idp_fqdn }}"
+              tailscale.com/proxy-group: "{{ tailscale_egress_proxy_group_name }}"
+          spec:
+            type: ExternalName
+            externalName: placeholder
+            ports:
+              - name: https
+                port: 443
+                protocol: TCP
+
+    - name: Create Tailscale DNSConfig
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: tailscale.com/v1alpha1
+          kind: DNSConfig
+          metadata:
+            name: "{{ tailscale_dns_config_name }}"
+          spec:
+            nameserver:
+              image:
+                repo: "{{ tailscale_dns_nameserver_image_repo }}"
+                tag: "{{ tailscale_dns_nameserver_image_tag }}"
+
+    - name: Read Tailscale DNSConfig nameserver IP
+      kubernetes.core.k8s_info:
+        api_version: tailscale.com/v1alpha1
+        kind: DNSConfig
+        name: "{{ tailscale_dns_config_name }}"
+      register: tailscale_dns_config_info
+      until: >-
+        tailscale_dns_config_info.resources | length > 0 and
+        tailscale_dns_config_info.resources[0].status.nameserver.ip | default('') | length > 0
+      retries: 60
+      delay: 5
+
+    - name: Set Tailscale DNS nameserver IP
+      ansible.builtin.set_fact:
+        tailscale_dns_nameserver_ip: "{{ tailscale_dns_config_info.resources[0].status.nameserver.ip }}"
+
+    - name: Read existing CoreDNS ConfigMap
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        name: "{{ tailscale_coredns_configmap_name }}"
+        namespace: "{{ tailscale_coredns_namespace }}"
+      register: tailscale_coredns_info
+
+    - name: Fail when CoreDNS ConfigMap has no Corefile
+      ansible.builtin.fail:
+        msg: "CoreDNS ConfigMap {{ tailscale_coredns_configmap_name }} has no Corefile"
+      when: >-
+        tailscale_coredns_info.resources | length == 0 or
+        tailscale_coredns_info.resources[0].data.Corefile is not defined
+
+    - name: Read and validate existing Corefile
+      ansible.builtin.set_fact:
+        tailscale_existing_corefile: "{{ tailscale_coredns_info.resources[0].data.Corefile }}"
+        tailscale_corefile_has_managed_block: "{{ tailscale_coredns_info.resources[0].data.Corefile is search('# BEGIN TAILSCALE EGRESS') }}"
+        tailscale_corefile_has_unmanaged_ts_net: >-
+          {{ tailscale_coredns_info.resources[0].data.Corefile is search('(?m)^\\s*ts\\.net:53\\s*\\{') and
+             not (tailscale_coredns_info.resources[0].data.Corefile is search('# BEGIN TAILSCALE EGRESS')) }}
+
+    - name: Fail instead of overwriting unmanaged ts.net CoreDNS block
+      ansible.builtin.fail:
+        msg: "CoreDNS Corefile already contains an unmanaged ts.net block"
+      when: tailscale_corefile_has_unmanaged_ts_net | bool
+
+    - name: Normalize escaped newlines around managed Tailscale block
+      ansible.builtin.set_fact:
+        tailscale_existing_corefile: >-
+          {{ tailscale_existing_corefile |
+             replace(tailscale_corefile_literal_newline ~ tailscale_corefile_literal_newline ~ '# BEGIN TAILSCALE EGRESS',
+                     tailscale_corefile_newline ~ tailscale_corefile_newline ~ '# BEGIN TAILSCALE EGRESS') |
+             replace('# END TAILSCALE EGRESS' ~ tailscale_corefile_literal_newline,
+                     '# END TAILSCALE EGRESS' ~ tailscale_corefile_newline) }}
+      when: tailscale_corefile_has_managed_block | bool
+
+    - name: Build Corefile with managed Tailscale block
+      ansible.builtin.set_fact:
+        tailscale_updated_corefile: >-
+          {{ tailscale_existing_corefile | regex_replace('(?ms)^# BEGIN TAILSCALE EGRESS$.*?^# END TAILSCALE EGRESS$', tailscale_coredns_managed_block)
+             if tailscale_corefile_has_managed_block | bool else
+             tailscale_existing_corefile ~
+             ('' if tailscale_existing_corefile.endswith(tailscale_corefile_newline) else tailscale_corefile_newline) ~
+             tailscale_corefile_newline ~ tailscale_coredns_managed_block ~ tailscale_corefile_newline }}
+
+    - name: Update CoreDNS ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ tailscale_coredns_configmap_name }}"
+            namespace: "{{ tailscale_coredns_namespace }}"
+          data:
+            Corefile: "{{ tailscale_updated_corefile }}"
+      register: tailscale_coredns_configmap
+
+    - name: Restart CoreDNS after managed configuration change
+      kubernetes.core.k8s:
+        state: patched
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: coredns
+            namespace: "{{ tailscale_coredns_namespace }}"
+          spec:
+            template:
+              metadata:
+                annotations:
+                  tailscale.com/corefile-sha256: "{{ tailscale_updated_corefile | hash('sha256') }}"
+      when: tailscale_coredns_configmap.changed
+
+    - name: Wait for CoreDNS rollout
+      kubernetes.core.k8s:
+        api_version: apps/v1
+        kind: Deployment
+        name: coredns
+        namespace: "{{ tailscale_coredns_namespace }}"
+        wait: true
+        wait_timeout: 300
+      when: tailscale_coredns_configmap.changed

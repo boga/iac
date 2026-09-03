@@ -47,6 +47,9 @@ spec:
                   key: password
             - name: BOOKLORE_PORT
               value: "{{ grimmory_port }}"
+            # Limit the SSRF bypass to OIDC so it can reach the Tailscale egress ClusterIP.
+            - name: OIDC_ALLOW_UNSAFE_HOSTS
+              value: "true"
           ports:
             - name: http
               containerPort: {{ grimmory_port }}
