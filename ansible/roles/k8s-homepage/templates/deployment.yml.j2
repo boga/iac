@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ homepage_name }}
+      annotations:
+        checksum/config: "{{ [homepage_kubernetes_yaml, homepage_settings_yaml, homepage_bookmarks_yaml, homepage_services_yaml, homepage_widgets_yaml, homepage_docker_yaml] | join('\n---\n') | hash('sha256') }}"
     spec:
       serviceAccountName: {{ homepage_name }}
       automountServiceAccountToken: true
@@ -27,6 +29,13 @@ spec:
         - name: {{ homepage_name }}
           image: "{{ homepage_image }}"
           imagePullPolicy: {{ homepage_image_pull_policy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
               value: "{{ homepage_allowed_hosts }}"
@@ -34,6 +43,20 @@ spec:
             - name: http
               containerPort: 3000
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+{{ homepage_resources | to_nice_yaml(indent=2) | indent(12, true) }}
           volumeMounts:
             - mountPath: /app/config/bookmarks.yaml
               name: homepage-config
@@ -55,9 +78,13 @@ spec:
               subPath: widgets.yaml
             - mountPath: /app/config/logs
               name: logs
+            - mountPath: /tmp
+              name: tmp
       volumes:
         - name: homepage-config
           configMap:
             name: {{ homepage_name }}
         - name: logs
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
