@@ -53,7 +53,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: "{{ homepage_allowed_hosts }}"
+                  value: "{{ homepage_allowed_hosts.split(',')[0] | trim }}"
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
@@ -62,7 +62,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: "{{ homepage_allowed_hosts }}"
+                  value: "{{ homepage_allowed_hosts.split(',')[0] | trim }}"
             initialDelaySeconds: 15
             periodSeconds: 20
           resources:
