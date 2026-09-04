@@ -18,7 +18,6 @@
     tailscale_coredns_configmap_name: "coredns"
     tailscale_corefile_newline: "\n"
     tailscale_corefile_literal_newline: "\\n"
-    idp_fqdn: "idp.{{ tailscale_tailnet_name }}"
     tailscale_idp_egress_service_name: "idp-tailnet"
     tailscale_coredns_managed_block: |-
       # BEGIN TAILSCALE EGRESS
