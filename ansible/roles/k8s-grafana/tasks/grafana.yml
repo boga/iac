@@ -29,11 +29,12 @@
     values:
       env:
         GF_SERVER_ROOT_URL: "https://{{ grafana_ingress_host }}"
+        GF_AUTH_GENERIC_OAUTH_NAME: "Tailscale"
         GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
         GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
         GF_AUTH_GENERIC_OAUTH_SCOPES: "openid profile email"
         GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://{{ idp_fqdn }}/authorize"
-        GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://{{ idp_fqdn }}/access_token"
+        GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://{{ idp_fqdn }}/token"
         GF_AUTH_GENERIC_OAUTH_API_URL: "https://{{ idp_fqdn }}/userinfo"
       envFromSecret: "{{ grafana_oauth_secret_name }}"
       persistence:
