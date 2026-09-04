@@ -1,0 +1,44 @@
+---
+- name: Apply metrics-server manifest
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ metrics_server_manifest_url }}"
+
+- name: Get metrics-server deployment
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ metrics_server_name }}"
+    namespace: "{{ metrics_server_namespace }}"
+  register: metrics_server_deployment
+
+- name: Configure metrics-server for Talos
+  kubernetes.core.k8s_json_patch:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ metrics_server_name }}"
+    namespace: "{{ metrics_server_namespace }}"
+    patch:
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value: >-
+          {{
+            metrics_server_deployment.resources[0].spec.template.spec.containers[0].args
+            + (
+              metrics_server_kubelet_flags
+              | reject(
+                  'in',
+                  metrics_server_deployment.resources[0].spec.template.spec.containers[0].args
+                )
+              | list
+            )
+          }}
+
+- name: Wait for metrics-server deployment
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ metrics_server_name }}"
+    namespace: "{{ metrics_server_namespace }}"
+    wait: true
+    wait_timeout: "{{ metrics_server_wait_timeout }}"

@@ -1,0 +1,10 @@
+---
+metrics_server_version: "v0.8.0"
+metrics_server_namespace: kube-system
+metrics_server_name: metrics-server
+metrics_server_manifest_url: >-
+  https://github.com/kubernetes-sigs/metrics-server/releases/download/{{ metrics_server_version }}/components.yaml
+metrics_server_kubelet_flags:
+  - --kubelet-insecure-tls
+  - --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
+metrics_server_wait_timeout: 180

@@ -13,11 +13,6 @@
     observability_victoria_logs_chart_version: "0.13.9"
     observability_victoria_logs_collector_chart_version: "0.3.7"
     observability_metrics_server_version: "v0.8.0"
-    observability_metrics_server_manifest_url: >-
-      https://github.com/kubernetes-sigs/metrics-server/releases/download/{{ observability_metrics_server_version }}/components.yaml
-    observability_metrics_server_kubelet_flags:
-      - --kubelet-insecure-tls
-      - --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
 
   roles:
     - role: k8s-create-namespace
@@ -55,47 +50,6 @@
         grafana_storage_class: "{{ observability_storage_class }}"
         grafana_chart_version: "{{ observability_grafana_chart_version }}"
 
-  tasks:
-    - name: Apply metrics-server manifest
-      kubernetes.core.k8s:
-        state: present
-        src: "{{ observability_metrics_server_manifest_url }}"
-
-    - name: Get metrics-server deployment
-      kubernetes.core.k8s_info:
-        api_version: apps/v1
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-      register: observability_metrics_server_deployment
-
-    - name: Configure metrics-server for Talos
-      kubernetes.core.k8s_json_patch:
-        api_version: apps/v1
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-        patch:
-          - op: replace
-            path: /spec/template/spec/containers/0/args
-            value: >-
-              {{
-                observability_metrics_server_deployment.resources[0].spec.template.spec.containers[0].args
-                + (
-                  observability_metrics_server_kubelet_flags
-                  | reject(
-                      'in',
-                      observability_metrics_server_deployment.resources[0].spec.template.spec.containers[0].args
-                    )
-                  | list
-                )
-              }}
-
-    - name: Wait for metrics-server deployment
-      kubernetes.core.k8s:
-        api_version: apps/v1
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-        wait: true
-        wait_timeout: 180
+    - role: k8s-metrics-server
+      vars:
+        metrics_server_version: "{{ observability_metrics_server_version }}"
