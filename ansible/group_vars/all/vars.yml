@@ -8,3 +8,5 @@ immich_db_password: "{{ vault_immich_db_password }}"
 
 mealie_oidc_client_id: "{{ vault_mealie_oidc_client_id }}"
 mealie_oidc_client_secret: "{{ vault_mealie_oidc_client_secret }}"
+grafana_generic_oauth_oidc_client_id: "{{ vault_grafana_generic_oauth_oidc_client_id }}"
+grafana_generic_oauth_oidc_client_secret: "{{ vault_grafana_generic_oauth_oidc_client_secret }}"

@@ -3,6 +3,21 @@
     name: grafana
     repo_url: "https://grafana.github.io/helm-charts"
 
+- name: Create Grafana OAuth credentials Secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ grafana_oauth_secret_name }}"
+      type: Opaque
+      stringData:
+        GF_AUTH_GENERIC_OAUTH_CLIENT_ID: "{{ grafana_generic_oauth_oidc_client_id }}"
+        GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: "{{ grafana_generic_oauth_oidc_client_secret }}"
+  no_log: true
+
 - name: Install Grafana
   kubernetes.core.helm:
     chart_ref: grafana/grafana
@@ -12,12 +27,26 @@
     state: present
     update_repo_cache: true
     values:
+      env:
+        GF_SERVER_ROOT_URL: "https://{{ grafana_ingress_host }}"
+        GF_AUTH_GENERIC_OAUTH_NAME: "Tailscale"
+        GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+        GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
+        GF_AUTH_GENERIC_OAUTH_SCOPES: "openid profile email"
+        GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://{{ idp_fqdn }}/authorize"
+        GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://{{ idp_fqdn }}/token"
+        GF_AUTH_GENERIC_OAUTH_API_URL: "https://{{ idp_fqdn }}/userinfo"
+      envFromSecret: "{{ grafana_oauth_secret_name }}"
+      persistence:
+        enabled: "{{ grafana_persistence_enabled }}"
+        storageClassName: "{{ grafana_storage_class }}"
+        size: "{{ grafana_storage_size }}"
       sidecar:
         datasources:
           enabled: true
           skipReload: false
       plugins:
-        - victoriametrics-logs-datasource
+        - "victoriametrics-logs-datasource 0.31.0"
   register: grafana_install_result
   # To overcome the issue with "helm --all" in kubernetes.core.helm:
   retries: 3

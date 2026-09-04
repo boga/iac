@@ -1,6 +1,6 @@
 ---
 namespace_name: o11y
-victoria_logs_chart_version: "0.11.24"
+victoria_logs_chart_version: "0.13.9"
 victoria_logs_release_name: "victoria-logs"
-victoria_logs_storage_class: "nfs-unraid"
+victoria_logs_storage_class: "local-path"
 victoria_logs_storage_size: "16Gi"
