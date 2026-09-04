@@ -9,6 +9,7 @@
 - Do not assume other files under `group_vars/` or `host_vars/` contain secrets.
 - Avoid putting credentials in plain YAML; use vault files and reference variables from `group_vars/` and `host_vars/`.
 - Use static inspection only unless the user explicitly authorizes another action.
+- **MUST NOT** run `talosctl`. Provide the required `talosctl` commands for the user to run and wait for their output.
 
 ## Scope
 

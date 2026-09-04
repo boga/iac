@@ -38,6 +38,9 @@
         GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://{{ idp_fqdn }}/token"
         GF_AUTH_GENERIC_OAUTH_API_URL: "https://{{ idp_fqdn }}/userinfo"
       envFromSecret: "{{ grafana_oauth_secret_name }}"
+      # The local-path PVC already uses Grafana's 472:472 ownership; avoid the failing no-op recursive chown.
+      initChownData:
+        enabled: false
       persistence:
         enabled: "{{ grafana_persistence_enabled }}"
         storageClassName: "{{ grafana_storage_class }}"
