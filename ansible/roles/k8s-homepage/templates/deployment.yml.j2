@@ -52,12 +52,18 @@ spec:
             httpGet:
               path: /api/healthcheck
               port: http
+              httpHeaders:
+                - name: Host
+                  value: "{{ homepage_allowed_hosts }}"
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/healthcheck
               port: http
+              httpHeaders:
+                - name: Host
+                  value: "{{ homepage_allowed_hosts }}"
             initialDelaySeconds: 15
             periodSeconds: 20
           resources:
