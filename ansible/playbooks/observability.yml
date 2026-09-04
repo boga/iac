@@ -5,6 +5,7 @@
 
   vars:
     k8s_namespace_name: o11y
+    observability_storage_class: local-path
     observability_grafana_chart_version: "10.5.15"
     observability_victoria_metrics_chart_version: "0.45.0"
     observability_victoria_metrics_alert_chart_version: "0.47.0"
@@ -25,6 +26,7 @@
     - role: k8s-victoria-metrics
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
+        victoria_metrics_storage_class: "{{ observability_storage_class }}"
         victoria_metrics_chart_version: "{{ observability_victoria_metrics_chart_version }}"
         victoria_metrics_alert_chart_version: "{{ observability_victoria_metrics_alert_chart_version }}"
         kube_state_metrics_chart_version: "{{ observability_kube_state_metrics_chart_version }}"
@@ -32,6 +34,7 @@
     - role: k8s-victoria-logs
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
+        victoria_logs_storage_class: "{{ observability_storage_class }}"
         victoria_logs_chart_version: "{{ observability_victoria_logs_chart_version }}"
         victoria_logs_storage_size: "16Gi"
 
@@ -43,4 +46,5 @@
     - role: k8s-grafana
       vars:
         namespace_name: "{{ k8s_namespace_name }}"
+        grafana_storage_class: "{{ observability_storage_class }}"
         grafana_chart_version: "{{ observability_grafana_chart_version }}"
