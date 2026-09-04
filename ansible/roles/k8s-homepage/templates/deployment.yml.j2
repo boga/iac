@@ -21,6 +21,9 @@ spec:
       annotations:
         checksum/config: "{{ [homepage_kubernetes_yaml, homepage_settings_yaml, homepage_bookmarks_yaml, homepage_services_yaml, homepage_widgets_yaml, homepage_docker_yaml] | join('\n---\n') | hash('sha256') }}"
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       serviceAccountName: {{ homepage_name }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
@@ -35,7 +38,9 @@ spec:
               drop:
                 - ALL
             readOnlyRootFilesystem: true
+            runAsGroup: 1000
             runAsNonRoot: true
+            runAsUser: 1000
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
               value: "{{ homepage_allowed_hosts }}"
