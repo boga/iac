@@ -28,6 +28,8 @@
     mealie_oidc_auth_enabled: "true"
     mealie_oidc_signup_enabled: "true"
     mealie_oidc_scopes_override: "openid profile email"
+    mealie_oidc_provider_name: "Tailscale"
+    mealie_oidc_secret_name: "{{ mealie_name }}-oidc"
     mealie_default_email: admin@example.com
     mealie_default_group: Home
     mealie_default_household: Family
@@ -63,6 +65,19 @@
               requests:
                 storage: "{{ mealie_data_storage_size }}"
             storageClassName: "{{ mealie_storage_class }}"
+
+    - name: Create Mealie OIDC secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ mealie_oidc_secret_name }}"
+            namespace: "{{ mealie_namespace }}"
+          type: Opaque
+          stringData:
+            client-secret: "{{ mealie_oidc_client_secret }}"
 
     - name: Deploy Mealie app
       kubernetes.core.k8s:
@@ -107,12 +122,17 @@
                         value: "{{ mealie_oidc_signup_enabled }}"
                       - name: OIDC_SCOPES_OVERRIDE
                         value: "{{ mealie_oidc_scopes_override }}"
+                      - name: OIDC_PROVIDER_NAME
+                        value: "{{ mealie_oidc_provider_name }}"
                       - name: OIDC_CONFIGURATION_URL
                         value: "{{ mealie_oidc_configuration_url }}"
                       - name: OIDC_CLIENT_ID
                         value: "{{ mealie_oidc_client_id }}"
                       - name: OIDC_CLIENT_SECRET
-                        value: "{{ mealie_oidc_client_secret }}"
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{ mealie_oidc_secret_name }}"
+                            key: client-secret
                       - name: DEFAULT_EMAIL
                         value: "{{ mealie_default_email }}"
                       - name: DEFAULT_GROUP
