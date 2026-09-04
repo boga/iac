@@ -7,3 +7,18 @@
     - role: k8s-homepage
       vars:
         namespace_name: homepage
+        homepage_image: ghcr.io/gethomepage/homepage:v2.2.0
+        homepage_services_yaml: |
+          - Infrastructure:
+              - Home Assistant:
+                  href: https://home-assistant.saiga-boga.ts.net
+                  description: Home automation
+                  icon: home-assistant.png
+              - Unraid:
+                  href: https://nastromo.saiga-boga.ts.net
+                  description: NAS and server management
+                  icon: unraid.png
+              - Proxmox:
+                  href: https://proxmox-looner.saiga-boga.ts.net
+                  description: Virtualization management
+                  icon: proxmox.png

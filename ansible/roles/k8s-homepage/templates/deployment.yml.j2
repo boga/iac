@@ -18,7 +18,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ homepage_name }}
+      annotations:
+        checksum/config: "{{ [homepage_kubernetes_yaml, homepage_settings_yaml, homepage_bookmarks_yaml, homepage_services_yaml, homepage_widgets_yaml, homepage_docker_yaml] | join('\n---\n') | hash('sha256') }}"
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       serviceAccountName: {{ homepage_name }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
@@ -27,6 +32,14 @@ spec:
         - name: {{ homepage_name }}
           image: "{{ homepage_image }}"
           imagePullPolicy: {{ homepage_image_pull_policy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
               value: "{{ homepage_allowed_hosts }}"
@@ -34,10 +47,36 @@ spec:
             - name: http
               containerPort: 3000
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: "{{ homepage_allowed_hosts }}"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: "{{ homepage_allowed_hosts }}"
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+{{ homepage_resources | to_nice_yaml(indent=2) | indent(12, true) }}
           volumeMounts:
             - mountPath: /app/config/bookmarks.yaml
               name: homepage-config
               subPath: bookmarks.yaml
+            - mountPath: /app/config/custom.css
+              name: homepage-config
+              subPath: custom.css
+            - mountPath: /app/config/custom.js
+              name: homepage-config
+              subPath: custom.js
             - mountPath: /app/config/docker.yaml
               name: homepage-config
               subPath: docker.yaml
@@ -47,6 +86,9 @@ spec:
             - mountPath: /app/config/services.yaml
               name: homepage-config
               subPath: services.yaml
+            - mountPath: /app/config/proxmox.yaml
+              name: homepage-config
+              subPath: proxmox.yaml
             - mountPath: /app/config/settings.yaml
               name: homepage-config
               subPath: settings.yaml
@@ -55,9 +97,13 @@ spec:
               subPath: widgets.yaml
             - mountPath: /app/config/logs
               name: logs
+            - mountPath: /tmp
+              name: tmp
       volumes:
         - name: homepage-config
           configMap:
             name: {{ homepage_name }}
         - name: logs
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}

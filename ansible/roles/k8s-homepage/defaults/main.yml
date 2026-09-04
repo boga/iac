@@ -2,9 +2,16 @@
 namespace_name: "homepage"
 
 homepage_name: "homepage"
-homepage_image: "ghcr.io/gethomepage/homepage:latest"
-homepage_image_pull_policy: "Always"
+homepage_image: "ghcr.io/gethomepage/homepage:v2.2.0"
+homepage_image_pull_policy: "IfNotPresent"
 homepage_replicas: 1
+homepage_resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 homepage_ingress_class_name: "tailscale"
 homepage_ingress_host: "home.{{ tailscale_tailnet_name }}"
@@ -14,7 +21,9 @@ homepage_allowed_hosts: "{{ homepage_ingress_host }}"
 
 homepage_kubernetes_yaml: |
   mode: cluster
-homepage_settings_yaml: ""
+  ingress: true
+homepage_settings_yaml: |
+  target: _self
 homepage_bookmarks_yaml: |
   - Developer:
       - Github:
