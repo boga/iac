@@ -36,7 +36,6 @@
         name: grafana-datasource-victoria-logs
         labels:
           grafana_datasource: "1"
-          namespace: o11y
       data:
         datasource.yaml: |-
           apiVersion: 1

@@ -21,27 +21,3 @@
   retries: 3
   delay: 10
   until: victoria_logs_collector_install_result is succeeded
-
-- name: "Install Grafana ConfigMap: VictoriaLogs datasource"
-  kubernetes.core.k8s:
-    state: present
-    namespace: "{{ namespace_name }}"
-    definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: grafana-datasource-victoria-logs
-        labels:
-          grafana_datasource: "1"
-          namespace: o11y
-      data:
-        datasource.yaml: |-
-          apiVersion: 1
-          datasources:
-          - access: proxy
-            basicAuth: false
-            editable: false
-            isDefault: false
-            name: VictoriaLogs
-            type: victoriametrics-logs-datasource
-            url: http://{{ victoria_logs_release_name }}.{{ namespace_name }}.svc.cluster.local:9428
