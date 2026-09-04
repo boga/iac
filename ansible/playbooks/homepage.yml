@@ -8,10 +8,6 @@
       vars:
         namespace_name: homepage
         homepage_image: ghcr.io/gethomepage/homepage:v2.2.0
-        homepage_image_pull_policy: IfNotPresent
-        homepage_kubernetes_yaml: |
-          mode: cluster
-          ingress: true
         homepage_services_yaml: |
           - Infrastructure:
               - Home Assistant:

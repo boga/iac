@@ -21,6 +21,7 @@ homepage_allowed_hosts: "{{ homepage_ingress_host }}"
 
 homepage_kubernetes_yaml: |
   mode: cluster
+  ingress: true
 homepage_settings_yaml: ""
 homepage_bookmarks_yaml: |
   - Developer:

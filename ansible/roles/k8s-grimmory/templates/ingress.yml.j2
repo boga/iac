@@ -6,6 +6,9 @@ metadata:
   namespace: "{{ namespace_name }}"
   labels:
     app.kubernetes.io/name: {{ grimmory_name }}
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Library"
 spec:
   ingressClassName: tailscale
   tls:
