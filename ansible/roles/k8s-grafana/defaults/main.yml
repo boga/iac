@@ -1,6 +1,7 @@
 ---
 grafana_chart_version: "10.5.15"
 grafana_ingress_host: "grafana.{{ tailscale_tailnet_name }}"
+grafana_oauth_secret_name: grafana-generic-oauth
 grafana_persistence_enabled: true
 grafana_storage_class: "local-path"
 grafana_storage_size: "10Gi"
