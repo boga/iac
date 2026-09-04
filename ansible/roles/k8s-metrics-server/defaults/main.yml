@@ -3,6 +3,8 @@ metrics_server_chart_version: "3.12.2"
 metrics_server_release_name: metrics-server
 metrics_server_namespace: kube-system
 metrics_server_default_args:
+  # Metrics Server needs a writable location for generated serving certificates.
+  - --cert-dir=/tmp
   # Talos kubelets use self-signed certificates, so Metrics Server cannot verify them.
   - --kubelet-insecure-tls
   - --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
