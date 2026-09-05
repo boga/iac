@@ -1,0 +1,273 @@
+---
+- name: Install Paperless-ngx
+  hosts: localhost
+  gather_facts: false
+  vars:
+    paperless_name: paperless
+    paperless_namespace: paperless
+    paperless_image: ghcr.io/paperless-ngx/paperless-ngx:2.18.4
+    paperless_replicas: 1
+    paperless_port: 8000
+    paperless_storage_class: local-path
+    paperless_data_storage_size: 1Gi
+    paperless_media_storage_size: 10Gi
+    paperless_redis_image: redis:7.4-alpine
+    paperless_redis_storage_size: 1Gi
+    paperless_postgres_cluster_name: paperless-database
+    paperless_postgres_storage_size: 2Gi
+    paperless_db_name: paperless
+    paperless_db_username: paperless
+    paperless_db_secret_name: "{{ paperless_postgres_cluster_name }}-{{ paperless_db_username }}-postgres-user"
+    paperless_db_hostname: "{{ paperless_postgres_cluster_name }}-postgresql-postgresql"
+    paperless_app_secret_name: "{{ paperless_name }}-app"
+    paperless_tailscale_hostname: "papers.{{ tailscale_tailnet_name }}"
+
+  roles:
+    - role: k8s-kubeblocks-postgres-cluster
+      vars:
+        kb_postgres_namespace: "{{ paperless_namespace }}"
+        kb_postgres_cluster_name: "{{ paperless_postgres_cluster_name }}"
+        kb_postgres_replicas: 1
+        kb_postgres_storage: "{{ paperless_postgres_storage_size }}"
+        kb_postgres_storage_class: "{{ paperless_storage_class }}"
+        kb_postgres_users:
+          - name: "{{ paperless_db_username }}"
+            secret_name: "{{ paperless_db_secret_name }}"
+            databases:
+              - name: "{{ paperless_db_name }}"
+
+  tasks:
+    - name: Get existing Paperless application secret
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: "{{ paperless_app_secret_name }}"
+        namespace: "{{ paperless_namespace }}"
+      register: paperless_app_secret
+      no_log: true
+
+    - name: Set Paperless application secret key
+      ansible.builtin.set_fact:
+        paperless_secret_key: >-
+          {{
+            (paperless_app_secret.resources[0].data['secret-key'] | b64decode)
+            if (
+              paperless_app_secret.resources | length > 0
+              and paperless_app_secret.resources[0].data is defined
+              and paperless_app_secret.resources[0].data['secret-key'] is defined
+            )
+            else lookup('password', '/dev/null length=64 chars=ascii_letters,digits')
+          }}
+      no_log: true
+
+    - name: Create Paperless application secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ paperless_app_secret_name }}"
+            namespace: "{{ paperless_namespace }}"
+          type: Opaque
+          stringData:
+            secret-key: "{{ paperless_secret_key }}"
+      no_log: true
+
+    - name: Create Paperless persistent volume claims
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: "{{ item.name }}"
+            namespace: "{{ paperless_namespace }}"
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ item.size }}"
+            storageClassName: "{{ paperless_storage_class }}"
+      loop:
+        - name: "{{ paperless_name }}-data"
+          size: "{{ paperless_data_storage_size }}"
+        - name: "{{ paperless_name }}-media"
+          size: "{{ paperless_media_storage_size }}"
+        - name: "{{ paperless_name }}-redis"
+          size: "{{ paperless_redis_storage_size }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Deploy Paperless Redis
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ paperless_name }}-redis"
+            namespace: "{{ paperless_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ paperless_name }}-redis"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: "{{ paperless_name }}-redis"
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: "{{ paperless_name }}-redis"
+              spec:
+                containers:
+                  - name: redis
+                    image: "{{ paperless_redis_image }}"
+                    args:
+                      - redis-server
+                      - --appendonly
+                      - "yes"
+                    ports:
+                      - name: redis
+                        containerPort: 6379
+                        protocol: TCP
+                    volumeMounts:
+                      - name: data
+                        mountPath: /data
+                volumes:
+                  - name: data
+                    persistentVolumeClaim:
+                      claimName: "{{ paperless_name }}-redis"
+
+    - name: Create Paperless Redis service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ paperless_name }}-redis"
+            namespace: "{{ paperless_namespace }}"
+          spec:
+            type: ClusterIP
+            selector:
+              app.kubernetes.io/name: "{{ paperless_name }}-redis"
+            ports:
+              - name: redis
+                port: 6379
+                targetPort: redis
+
+    - name: Deploy Paperless-ngx
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ paperless_name }}"
+            namespace: "{{ paperless_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ paperless_name }}"
+          spec:
+            replicas: "{{ paperless_replicas }}"
+            revisionHistoryLimit: 3
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: "{{ paperless_name }}"
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: "{{ paperless_name }}"
+              spec:
+                containers:
+                  - name: "{{ paperless_name }}"
+                    image: "{{ paperless_image }}"
+                    imagePullPolicy: IfNotPresent
+                    env:
+                      - name: PAPERLESS_DBENGINE
+                        value: postgresql
+                      - name: PAPERLESS_DBHOST
+                        value: "{{ paperless_db_hostname }}"
+                      - name: PAPERLESS_DBNAME
+                        value: "{{ paperless_db_name }}"
+                      - name: PAPERLESS_DBUSER
+                        value: "{{ paperless_db_username }}"
+                      - name: PAPERLESS_DBPASS
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{ paperless_db_secret_name }}"
+                            key: password
+                      - name: PAPERLESS_REDIS
+                        value: "redis://{{ paperless_name }}-redis:6379"
+                      - name: PAPERLESS_SECRET_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{ paperless_app_secret_name }}"
+                            key: secret-key
+                      - name: PAPERLESS_URL
+                        value: "https://{{ paperless_tailscale_hostname }}"
+                    ports:
+                      - name: http
+                        containerPort: "{{ paperless_port }}"
+                        protocol: TCP
+                    volumeMounts:
+                      - name: data
+                        mountPath: /usr/src/paperless/data
+                      - name: media
+                        mountPath: /usr/src/paperless/media
+                volumes:
+                  - name: data
+                    persistentVolumeClaim:
+                      claimName: "{{ paperless_name }}-data"
+                  - name: media
+                    persistentVolumeClaim:
+                      claimName: "{{ paperless_name }}-media"
+
+    - name: Create Paperless service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ paperless_name }}"
+            namespace: "{{ paperless_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ paperless_name }}"
+          spec:
+            type: ClusterIP
+            selector:
+              app.kubernetes.io/name: "{{ paperless_name }}"
+            ports:
+              - name: http
+                port: "{{ paperless_port }}"
+                targetPort: http
+
+    - name: Create Tailscale Ingress for Paperless
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: "{{ paperless_name }}-tailscale"
+            namespace: "{{ paperless_namespace }}"
+            labels:
+              app.kubernetes.io/name: "{{ paperless_name }}"
+          spec:
+            ingressClassName: tailscale
+            tls:
+              - hosts:
+                  - "{{ paperless_tailscale_hostname }}"
+            rules:
+              - host: "{{ paperless_tailscale_hostname }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: "{{ paperless_name }}"
+                          port:
+                            name: http
