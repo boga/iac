@@ -200,7 +200,7 @@
             annotations:
               gethomepage.dev/description: Recipe management
               gethomepage.dev/enabled: "true"
-              gethomepage.dev/group: Apps
+              gethomepage.dev/group: Home
               gethomepage.dev/icon: mealie.png
               gethomepage.dev/name: Mealie
               gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ mealie_name }}"

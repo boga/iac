@@ -331,7 +331,7 @@
             annotations:
               gethomepage.dev/description: Document management
               gethomepage.dev/enabled: "true"
-              gethomepage.dev/group: Apps
+              gethomepage.dev/group: Home
               gethomepage.dev/icon: paperless-ngx.png
               gethomepage.dev/name: Paperless
               gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ paperless_name }}"
