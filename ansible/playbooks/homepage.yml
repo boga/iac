@@ -8,11 +8,12 @@
       vars:
         namespace_name: homepage
         homepage_services_yaml: |
-          - Infrastructure:
+          - Home:
               - Home Assistant:
                   href: https://home-assistant.saiga-boga.ts.net
                   description: Home automation
                   icon: home-assistant.png
+          - Homelab:
               - Unraid:
                   href: https://nastromo.saiga-boga.ts.net
                   description: NAS and server management

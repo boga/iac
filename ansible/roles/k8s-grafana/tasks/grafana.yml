@@ -71,7 +71,7 @@
         annotations:
           gethomepage.dev/description: "Grafana dashboards"
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: "Observability"
+          gethomepage.dev/group: "Homelab"
           gethomepage.dev/icon: "grafana.png"
           gethomepage.dev/name: "Grafana"
       spec:
