@@ -218,6 +218,8 @@
                 labels:
                   app.kubernetes.io/name: "{{ paperless_name }}"
               spec:
+                # Prevent the paperless Service from injecting PAPERLESS_PORT=tcp://... into this pod.
+                enableServiceLinks: false
                 containers:
                   - name: "{{ paperless_name }}"
                     image: "{{ paperless_image }}"
