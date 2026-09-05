@@ -20,6 +20,12 @@
     paperless_db_secret_name: "{{ paperless_postgres_cluster_name }}-{{ paperless_db_username }}-postgres-user"
     paperless_db_hostname: "{{ paperless_postgres_cluster_name }}-postgresql-postgresql"
     paperless_app_secret_name: "{{ paperless_name }}-app"
+    paperless_oidc_secret_name: "{{ paperless_name }}-oidc"
+    paperless_oidc_client_id: cccclient_id
+    paperless_oidc_client_secret: "{{ cccclient_secret }}"
+    paperless_oidc_provider_id: tsidp
+    paperless_oidc_provider_name: Tailscale
+    paperless_oidc_configuration_url: "https://{{ idp_fqdn }}/.well-known/openid-configuration"
     paperless_tailscale_hostname: "papers.{{ tailscale_tailnet_name }}"
 
   roles:
@@ -73,6 +79,33 @@
           type: Opaque
           stringData:
             secret-key: "{{ paperless_secret_key }}"
+      no_log: true
+
+    - name: Create Paperless OIDC secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ paperless_oidc_secret_name }}"
+            namespace: "{{ paperless_namespace }}"
+          type: Opaque
+          stringData:
+            socialaccount-providers: >-
+              {{ {
+                'openid_connect': {
+                  'APPS': [{
+                    'provider_id': paperless_oidc_provider_id,
+                    'name': paperless_oidc_provider_name,
+                    'client_id': paperless_oidc_client_id,
+                    'secret': paperless_oidc_client_secret,
+                    'settings': {
+                      'server_url': paperless_oidc_configuration_url
+                    }
+                  }]
+                }
+              } | to_json }}
       no_log: true
 
     - name: Create Paperless persistent volume claims
@@ -133,6 +166,12 @@
                       - name: redis
                         containerPort: 6379
                         protocol: TCP
+                    resources:
+                      requests:
+                        cpu: 50m
+                        memory: 64Mi
+                      limits:
+                        memory: 256Mi
                     volumeMounts:
                       - name: data
                         mountPath: /data
@@ -208,10 +247,43 @@
                             key: secret-key
                       - name: PAPERLESS_URL
                         value: "https://{{ paperless_tailscale_hostname }}"
+                      - name: PAPERLESS_APPS
+                        value: allauth.socialaccount.providers.openid_connect
+                      - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{ paperless_oidc_secret_name }}"
+                            key: socialaccount-providers
                     ports:
                       - name: http
                         containerPort: "{{ paperless_port }}"
                         protocol: TCP
+                    startupProbe:
+                      httpGet:
+                        path: /
+                        port: http
+                      initialDelaySeconds: 10
+                      periodSeconds: 5
+                      failureThreshold: 30
+                    readinessProbe:
+                      httpGet:
+                        path: /
+                        port: http
+                      periodSeconds: 10
+                      timeoutSeconds: 3
+                    livenessProbe:
+                      httpGet:
+                        path: /
+                        port: http
+                      initialDelaySeconds: 30
+                      periodSeconds: 15
+                      timeoutSeconds: 5
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 512Mi
+                      limits:
+                        memory: 2Gi
                     volumeMounts:
                       - name: data
                         mountPath: /usr/src/paperless/data
@@ -256,6 +328,13 @@
             namespace: "{{ paperless_namespace }}"
             labels:
               app.kubernetes.io/name: "{{ paperless_name }}"
+            annotations:
+              gethomepage.dev/description: Document management
+              gethomepage.dev/enabled: "true"
+              gethomepage.dev/group: Apps
+              gethomepage.dev/icon: paperless-ngx.png
+              gethomepage.dev/name: Paperless
+              gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ paperless_name }}"
           spec:
             ingressClassName: tailscale
             tls:
