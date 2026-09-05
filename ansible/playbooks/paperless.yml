@@ -37,6 +37,7 @@
               - name: "{{ paperless_db_name }}"
 
   tasks:
+    # Preserve this key across reruns; changing it invalidates sessions and encrypted data.
     - name: Get existing Paperless application secret
       kubernetes.core.k8s_info:
         api_version: v1
