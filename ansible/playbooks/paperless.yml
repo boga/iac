@@ -21,8 +21,6 @@
     paperless_db_hostname: "{{ paperless_postgres_cluster_name }}-postgresql-postgresql"
     paperless_app_secret_name: "{{ paperless_name }}-app"
     paperless_oidc_secret_name: "{{ paperless_name }}-oidc"
-    paperless_oidc_client_id: cccclient_id
-    paperless_oidc_client_secret: "{{ cccclient_secret }}"
     paperless_oidc_provider_id: tsidp
     paperless_oidc_provider_name: Tailscale
     paperless_oidc_configuration_url: "https://{{ idp_fqdn }}/.well-known/openid-configuration"
