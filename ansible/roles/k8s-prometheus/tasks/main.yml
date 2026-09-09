@@ -23,6 +23,11 @@
       prometheus:
         prometheusSpec:
           podMonitorSelectorNilUsesHelmValues: false
+          additionalScrapeConfigs:
+            - job_name: proxmox-node-exporter
+              static_configs:
+                - targets:
+                    - "{{ proxmox_node_ip }}:9100"
 
 - name: "Install Grafana ConfigMap: Prometheus datasource"
   kubernetes.core.k8s:
