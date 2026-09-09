@@ -13,3 +13,5 @@ grafana_generic_oauth_oidc_client_secret: "{{ vault_grafana_generic_oauth_oidc_c
 
 paperless_oidc_client_id: "{{ vault_paperless_oidc_client_id }}"
 paperless_oidc_client_secret: "{{ vault_paperless_oidc_client_secret }}"
+
+proxmox_node_ip: "{{ vault_proxmox_node_ip }}"
