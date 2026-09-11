@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "home-assistant": {
+            "type": "streamable-http",
+            "url": "${HOME_ASSISTANT_MCP_URL}"
+        }
+    }
+}
