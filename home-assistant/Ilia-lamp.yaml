@@ -1,0 +1,170 @@
+alias: "Cube_Ilia – KAJPLATS control"
+id: cube_ilia_kajplats_control
+description: >
+  Controls Ilia's KAJPLATS lamp from the Aqara Cube T1 Pro in Zigbee2MQTT
+  action_mode.
+mode: queued
+max: 10
+triggers:
+  - trigger: mqtt
+    id: brightness_up
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_right'
+         and value_json.side | int(0) == 1 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: brightness_down
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_left'
+         and value_json.side | int(0) == 1 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: color_temp_up
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_right'
+         and value_json.side | int(0) == 2 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: color_temp_down
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_left'
+         and value_json.side | int(0) == 2 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: hue_up
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_right'
+         and value_json.side | int(0) == 3 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: hue_down
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_left'
+         and value_json.side | int(0) == 3 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: saturation_up
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_right'
+         and value_json.side | int(0) == 4 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: saturation_down
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'rotate_left'
+         and value_json.side | int(0) == 4 and value_json.action_angle | float(0) != 0 }}
+  - trigger: mqtt
+    id: shake
+    topic: zigbee2mqtt/Cube_Ilia
+    payload: "True"
+    value_template: >
+      {{ value_json.operation_mode == 'action_mode' and value_json.action == 'shake' }}
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: brightness_up
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              brightness_pct: >
+                {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'brightness') | int(255) %}
+                {{ [[((current / 255 * 100) | round(0) | int) + 10, 1] | max, 100] | min }}
+      - conditions:
+          - condition: trigger
+            id: brightness_down
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              brightness_pct: >
+                {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'brightness') | int(255) %}
+                {{ [[((current / 255 * 100) | round(0) | int) - 10, 1] | max, 100] | min }}
+      - conditions:
+          - condition: trigger
+            id: color_temp_up
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              color_temp_kelvin: >
+                {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'color_temp_kelvin') | int(4000) %}
+                {{ [[current + 250, 1801] | max, 6535] | min }}
+      - conditions:
+          - condition: trigger
+            id: color_temp_down
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              color_temp_kelvin: >
+                {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'color_temp_kelvin') | int(4000) %}
+                {{ [[current - 250, 1801] | max, 6535] | min }}
+      - conditions:
+          - condition: trigger
+            id: hue_up
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              hs_color: >
+                {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') | default([0, 100], true) %}
+                {{ [((hs[0] | float(0) + 15) % 360), hs[1] | float(100)] }}
+      - conditions:
+          - condition: trigger
+            id: hue_down
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              hs_color: >
+                {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') | default([0, 100], true) %}
+                {{ [((hs[0] | float(0) - 15) % 360), hs[1] | float(100)] }}
+      - conditions:
+          - condition: trigger
+            id: saturation_up
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              hs_color: >
+                {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') | default([0, 100], true) %}
+                {{ [hs[0] | float(0), [[(hs[1] | float(100)) + 10, 0] | max, 100] | min] }}
+      - conditions:
+          - condition: trigger
+            id: saturation_down
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              hs_color: >
+                {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') | default([0, 100], true) %}
+                {{ [hs[0] | float(0), [[(hs[1] | float(100)) - 10, 0] | max, 100] | min] }}
+      - conditions:
+          - condition: trigger
+            id: shake
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+            data:
+              brightness: "{{ state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'brightness') | int(255) }}"
+              hs_color: "{{ [range(0, 360) | random, range(0, 101) | random] }}"
