@@ -155,10 +155,10 @@
 
 - alias: "Kid lamp: set to warm white 50% at 20:00"
   id: kid_lamp_set_warm_white_50
-  description: Sets the Kid lamp to warm white at 50%; temporarily scheduled for 16:03 for debugging.
+  description: Sets the Kid lamp to warm white at 50%; temporarily scheduled for 16:06 for debugging.
   triggers:
     - trigger: time
-      at: "16:03:00"
+      at: "16:06:00"
   actions:
     - if:
         - condition: state
