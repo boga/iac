@@ -1,0 +1,90 @@
+- alias: "SNZB-01M – KAJPLATS control"
+  id: snzb_01m_kajplats_control
+  description: Controls the KAJPLATS lamp from the SONOFF SNZB-01M via Zigbee2MQTT.
+  mode: queued
+  max: 10
+  triggers:
+    - trigger: mqtt
+      id: toggle
+      topic: zigbee2mqtt/Round switch A
+      value_template: "{{ value_json.action == 'single_button_1' }}"
+      payload: "True"
+    - trigger: mqtt
+      id: brightness_up
+      topic: zigbee2mqtt/Round switch A
+      value_template: "{{ value_json.action == 'single_button_2' }}"
+      payload: "True"
+    - trigger: mqtt
+      id: cycle_color
+      topic: zigbee2mqtt/Round switch A
+      value_template: "{{ value_json.action == 'single_button_3' }}"
+      payload: "True"
+    - trigger: mqtt
+      id: brightness_down
+      topic: zigbee2mqtt/Round switch A
+      value_template: "{{ value_json.action == 'single_button_4' }}"
+      payload: "True"
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: toggle
+          sequence:
+            - action: light.toggle
+              target:
+                entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+        - conditions:
+            - condition: trigger
+              id: brightness_up
+          sequence:
+            - action: light.turn_on
+              target:
+                entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+              data:
+                brightness_pct: >
+                  {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'brightness') | int(255) %}
+                  {{ [[((current / 255 * 100) | round(0) | int) + 10, 1] | max, 100] | min }}
+        - conditions:
+            - condition: trigger
+              id: brightness_down
+          sequence:
+            - action: light.turn_on
+              target:
+                entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+              data:
+                brightness_pct: >
+                  {% set current = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'brightness') | int(255) %}
+                  {{ [[((current / 255 * 100) | round(0) | int) - 10, 1] | max, 100] | min }}
+        - conditions:
+            - condition: trigger
+              id: cycle_color
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: template
+                      value_template: >
+                        {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') %}
+                        {{ hs is not none and hs[0] | float(360) < 10 and hs[1] | float(0) > 90 }}
+                  sequence:
+                    - action: light.turn_on
+                      target:
+                        entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+                      data:
+                        hs_color: [180, 100]
+                - conditions:
+                    - condition: template
+                      value_template: >
+                        {% set hs = state_attr('light.kid_room_ilia_kajplats_e27_cws_globe_1055lm', 'hs_color') %}
+                        {{ hs is not none and hs[0] | float(0) > 170 and hs[0] | float(0) < 190 and hs[1] | float(0) > 90 }}
+                  sequence:
+                    - action: light.turn_on
+                      target:
+                        entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+                      data:
+                        color_temp_kelvin: 2700
+              default:
+                - action: light.turn_on
+                  target:
+                    entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+                  data:
+                    hs_color: [0, 100]
