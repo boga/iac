@@ -152,3 +152,33 @@
                     entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
                   data:
                     hs_color: [0, 100]
+
+- alias: "Kid lamp: set to warm white 50% at 20:00"
+  id: kid_lamp_set_warm_white_50
+  description: Sets the Kid lamp to warm white at 50%; temporarily scheduled for 16:03 for debugging.
+  triggers:
+    - trigger: time
+      at: "16:03:00"
+  actions:
+    - if:
+        - condition: state
+          entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+          state: "on"
+      then:
+        - action: light.turn_on
+          target:
+            entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+          data:
+            brightness_pct: 50
+            color_temp_kelvin: 2700
+            transition: 60
+      else:
+        - action: light.turn_on
+          target:
+            entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
+          data:
+            brightness_pct: 50
+            color_temp_kelvin: 2700
+        - action: light.turn_off
+          target:
+            entity_id: light.kid_room_ilia_kajplats_e27_cws_globe_1055lm
