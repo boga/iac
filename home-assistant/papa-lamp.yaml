@@ -1,0 +1,39 @@
+- alias: "Papa lamp: manage via presense sensor"
+  id: external_outlet_a_presence_controlled_table_lamp
+  description: >
+    Turns on the table lamp connected to External outlet A when Presense sensor B
+    detects occupancy below 500 lx, and turns it off after five minutes without occupancy.
+  mode: restart
+  triggers:
+    - trigger: state
+      id: occupied
+      entity_id: binary_sensor.presense_sensor_b_occupancy
+      to: "on"
+    - trigger: state
+      id: unoccupied
+      entity_id: binary_sensor.presense_sensor_b_occupancy
+      to: "off"
+      for:
+        minutes: 5
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: occupied
+            - condition: numeric_state
+              entity_id: sensor.presense_sensor_b_illuminance
+              below: 500
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.external_outlet_a
+        - conditions:
+            - condition: trigger
+              id: unoccupied
+            - condition: state
+              entity_id: switch.external_outlet_a
+              state: "on"
+          sequence:
+            - action: switch.turn_off
+              target:
+                entity_id: switch.external_outlet_a
