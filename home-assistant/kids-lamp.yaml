@@ -1,4 +1,4 @@
-- alias: "SNZB-01M – KAJPLATS control"
+- alias: "Kid lamp: manage via Round switch A"
   id: snzb_01m_kajplats_control
   description: Controls the KAJPLATS lamp from the SONOFF SNZB-01M via Zigbee2MQTT.
   mode: queued
