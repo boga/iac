@@ -8,7 +8,9 @@ metadata:
     gethomepage.dev/description: Workflow automation
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Homelab
+    gethomepage.dev/icon: n8n.png
     gethomepage.dev/name: n8n
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ n8n_name }}"
   labels:
     app.kubernetes.io/name: {{ n8n_name }}
 spec:
