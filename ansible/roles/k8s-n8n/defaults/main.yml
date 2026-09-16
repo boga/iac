@@ -1,0 +1,28 @@
+---
+namespace_name: "n8n"
+
+n8n_name: "n8n"
+n8n_image: "n8nio/n8n:2.39.6"
+n8n_image_pull_policy: "IfNotPresent"
+n8n_replicas: 1
+n8n_port: 5678
+n8n_tailscale_hostname: "n8n.{{ tailscale_tailnet_name }}"
+n8n_storage_class_name: "local-path"
+n8n_storage_size: "2Gi"
+n8n_resources:
+  requests:
+    cpu: "50m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+
+n8n_postgres_cluster_name: "n8n-postgres"
+n8n_postgres_storage_size: "2Gi"
+n8n_db_port: 5432
+n8n_db_name: "n8n"
+n8n_db_user: "n8n"
+n8n_db_password_secret_name: >-
+  {{ n8n_postgres_cluster_name }}-{{ n8n_db_user }}-postgres-user
+n8n_db_host: "{{ n8n_postgres_cluster_name }}-postgresql-postgresql"
+n8n_app_secret_name: "{{ n8n_name }}-app"

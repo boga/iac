@@ -15,6 +15,7 @@
   when:
     - item.password is defined
     - item.password | length == 0
+  no_log: true
 
 - name: Validate PostgreSQL users are unique by name
   ansible.builtin.assert:

@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ n8n_name }}
+  namespace: "{{ namespace_name }}"
+  labels:
+    app.kubernetes.io/name: {{ n8n_name }}
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ n8n_replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ n8n_name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ n8n_name }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: {{ n8n_name }}
+          image: "{{ n8n_image }}"
+          imagePullPolicy: {{ n8n_image_pull_policy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: DB_TYPE
+              value: postgresdb
+            - name: DB_POSTGRESDB_HOST
+              value: "{{ n8n_db_host }}"
+            - name: DB_POSTGRESDB_PORT
+              value: "{{ n8n_db_port }}"
+            - name: DB_POSTGRESDB_DATABASE
+              value: "{{ n8n_db_name }}"
+            - name: DB_POSTGRESDB_USER
+              value: "{{ n8n_db_user }}"
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ n8n_db_password_secret_name }}"
+                  key: password
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ n8n_app_secret_name }}"
+                  key: N8N_ENCRYPTION_KEY
+            - name: N8N_PORT
+              value: "5678"
+            - name: N8N_WEBHOOK_URL
+              value: "https://{{ n8n_tailscale_hostname }}"
+            - name: N8N_EDITOR_BASE_URL
+              value: "https://{{ n8n_tailscale_hostname }}"
+            - name: N8N_PROXY_HOPS
+              value: "1"
+          ports:
+            - name: http
+              containerPort: {{ n8n_port }}
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz/readiness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+          resources:
+{{ n8n_resources | to_nice_yaml(indent=2) | indent(12, true) }}
+          volumeMounts:
+            - name: n8n-data
+              mountPath: /home/node/.n8n
+      volumes:
+        - name: n8n-data
+          persistentVolumeClaim:
+            claimName: {{ n8n_name }}-data

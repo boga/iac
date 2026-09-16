@@ -1,0 +1,83 @@
+---
+- name: "Create k8s namespace: {{ namespace_name }}"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ namespace_name }}"
+
+- name: Create PostgreSQL cluster for n8n
+  ansible.builtin.include_role:
+    name: k8s-kubeblocks-postgres-cluster
+  vars:
+    kb_postgres_namespace: "{{ namespace_name }}"
+    kb_postgres_cluster_name: "{{ n8n_postgres_cluster_name }}"
+    kb_postgres_replicas: 1
+    kb_postgres_storage: "{{ n8n_postgres_storage_size }}"
+    kb_postgres_storage_class: "{{ n8n_storage_class_name }}"
+    kb_postgres_termination_policy: DoNotTerminate
+    kb_postgres_users:
+      - name: "{{ n8n_db_user }}"
+        password: "{{ n8n_db_password }}"
+        secret_name: "{{ n8n_db_password_secret_name }}"
+        databases:
+          - name: "{{ n8n_db_name }}"
+  no_log: true
+
+# Preserve this key across reruns to retain existing credentials.
+- name: Get existing n8n application secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ n8n_app_secret_name }}"
+    namespace: "{{ namespace_name }}"
+  register: n8n_app_secret
+  no_log: true
+
+- name: Set n8n application encryption key
+  ansible.builtin.set_fact:
+    n8n_encryption_key: >-
+      {{
+        (n8n_app_secret.resources[0].data['N8N_ENCRYPTION_KEY'] | b64decode)
+        if (
+          n8n_app_secret.resources | length > 0
+          and n8n_app_secret.resources[0].data is defined
+          and (
+            n8n_app_secret.resources[0].data[
+              'N8N_ENCRYPTION_KEY'
+            ] is defined
+          )
+        )
+        else lookup(
+          'password',
+          '/dev/null length=64 chars=ascii_letters,digits'
+        )
+      }}
+  no_log: true
+
+- name: Create n8n application secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ n8n_app_secret_name }}"
+        namespace: "{{ namespace_name }}"
+      type: Opaque
+      stringData:
+        N8N_ENCRYPTION_KEY: "{{ n8n_encryption_key }}"
+  no_log: true
+
+- name: Deploy n8n app
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ namespace_name }}"
+    template: "{{ item }}"
+  loop:
+    - pvc.yml.j2
+    - service.yml.j2
+    - deployment.yml.j2
+    - ingress.yml.j2

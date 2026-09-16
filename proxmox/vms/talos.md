@@ -48,7 +48,7 @@ Enable Secure Boot later only after confirming the Talos image supports it. Then
 - CPU type: `host`
 - Sockets: `1`
 - Cores: `3`
-- Memory: `8192` MB (8 GB)
+- Memory: `12288` MB (12 GB)
 - Balloon memory: `0` MB
 - NUMA: `0`
 

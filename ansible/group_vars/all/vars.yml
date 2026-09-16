@@ -5,6 +5,7 @@ k8s_tailscale_operator_client_secret: "{{ vault_k8s_tailscale_client_secret }}"
 tailscale_tailnet_name: "saiga-boga.ts.net"
 idp_fqdn: "idp.{{ tailscale_tailnet_name }}"
 immich_db_password: "{{ vault_immich_db_password }}"
+n8n_db_password: "{{ vault_n8n_db_password }}"
 
 mealie_oidc_client_id: "{{ vault_mealie_oidc_client_id }}"
 mealie_oidc_client_secret: "{{ vault_mealie_oidc_client_secret }}"
