@@ -4,6 +4,11 @@ kind: Ingress
 metadata:
   name: {{ n8n_name }}-tailscale
   namespace: "{{ namespace_name }}"
+  annotations:
+    gethomepage.dev/description: Workflow automation
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: homelab
+    gethomepage.dev/name: n8n
   labels:
     app.kubernetes.io/name: {{ n8n_name }}
 spec:
