@@ -11,9 +11,10 @@ This role assumes KubeBlocks is already installed, installs the KubeBlocks Postg
 | `kb_postgres_version`                            | PostgreSQL service version             | `17.5.0`                                |
 | `kb_postgres_mode`                               | PostgreSQL mode for `PG_MODE`          | `standalone`                            |
 | `kb_postgres_replicas`                           | Number of PostgreSQL replicas          | `1`                                     |
-| `kb_postgres_cpu`                                | CPU limit per replica                  | `500m`                                  |
-| `kb_postgres_cpu_request`                        | CPU request per replica                | `250m`                                  |
-| `kb_postgres_memory`                             | Memory limit/request per replica       | `0.5Gi`                                 |
+| `kb_postgres_cpu_req`                            | CPU request per replica                | `250m`                                  |
+| `kb_postgres_cpu_lim`                            | CPU limit per replica                  | `500m`                                  |
+| `kb_postgres_memory_req`                         | Memory request per replica             | `0.5Gi`                                 |
+| `kb_postgres_memory_lim`                         | Memory limit per replica               | `0.5Gi`                                 |
 | `kb_postgres_storage`                            | Storage size for data volume           | `2Gi`                                   |
 | `kb_postgres_storage_class`                      | StorageClass name                      | cluster default                         |
 | `kb_postgres_termination_policy`                 | KubeBlocks termination policy          | `Delete`                                |
