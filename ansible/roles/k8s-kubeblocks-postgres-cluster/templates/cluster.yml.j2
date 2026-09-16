@@ -13,11 +13,11 @@ spec:
       replicas: {{ kb_postgres_replicas }}
       resources:
         limits:
-          cpu: "{{ kb_postgres_cpu }}"
-          memory: "{{ kb_postgres_memory }}"
+          cpu: "{{ kb_postgres_cpu_lim }}"
+          memory: "{{ kb_postgres_memory_lim }}"
         requests:
-          cpu: "{{ kb_postgres_cpu }}"
-          memory: "{{ kb_postgres_memory }}"
+          cpu: "{{ kb_postgres_cpu_req }}"
+          memory: "{{ kb_postgres_memory_req }}"
       volumeClaimTemplates:
         - name: data
           spec:

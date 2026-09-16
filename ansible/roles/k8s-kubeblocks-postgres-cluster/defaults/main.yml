@@ -4,8 +4,10 @@ kb_postgres_cluster_name: "postgres-cluster"
 kb_postgres_version: "17.5.0"
 kb_postgres_mode: "standalone"
 kb_postgres_replicas: 1
-kb_postgres_cpu: "0.5"
-kb_postgres_memory: "0.5Gi"
+kb_postgres_cpu_req: "250m"
+kb_postgres_cpu_lim: "500m"
+kb_postgres_memory_req: "0.5Gi"
+kb_postgres_memory_lim: "0.5Gi"
 kb_postgres_storage: "2Gi"
 kb_postgres_storage_class: ""
 kb_postgres_termination_policy: Delete

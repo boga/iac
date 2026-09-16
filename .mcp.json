@@ -3,6 +3,15 @@
         "home-assistant": {
             "type": "streamable-http",
             "url": "${HOME_ASSISTANT_MCP_URL}"
+        },
+        "grafana": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": ["mcp-grafana"],
+            "env": {
+                "GRAFANA_URL": "${GRAFANA_URL}",
+                "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SERVICE_ACCOUNT_TOKEN}"
+            }
         }
     }
 }
