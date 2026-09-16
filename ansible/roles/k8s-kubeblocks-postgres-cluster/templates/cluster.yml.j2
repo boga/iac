@@ -16,7 +16,7 @@ spec:
           cpu: "{{ kb_postgres_cpu }}"
           memory: "{{ kb_postgres_memory }}"
         requests:
-          cpu: "{{ kb_postgres_cpu }}"
+          cpu: "{{ kb_postgres_cpu_request }}"
           memory: "{{ kb_postgres_memory }}"
       volumeClaimTemplates:
         - name: data

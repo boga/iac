@@ -1,6 +1,7 @@
 ---
 kubeblocks_release_name: kubeblocks
 kubeblocks_chart_version: "1.0.2"
+kubeblocks_cpu: "100m"
 kubeblocks_storage_class: ""
 # Disabled by default: local-path-provisioner doesn't support CSI snapshots,
 # so the dataprotection controller crashes waiting for VolumeSnapshot CRDs.
