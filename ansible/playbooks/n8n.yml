@@ -1,0 +1,9 @@
+---
+- name: Install n8n
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: k8s-n8n
+      vars:
+        namespace_name: n8n

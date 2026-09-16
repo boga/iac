@@ -12,4 +12,5 @@
     - role: k8s-kubeblocks
 
 - ansible.builtin.import_playbook: "playbooks/k8s-tailscale.yml"
+- ansible.builtin.import_playbook: "playbooks/n8n.yml"
 - ansible.builtin.import_playbook: "playbooks/grimmory.yml"
