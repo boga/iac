@@ -4,47 +4,14 @@
 
 ## Physical Topology
 
-```text
-                                  INTERNET
-                                     |
-                              Odido ~400 Mbps
-                                     |
-                                  ether1
-                                     |
-                         +-----------------------+
-                         | MikroTik hAP ac3      |
-                         | Main router / CAPsMAN |
-                         | 192.168.88.1          |
-                         +-----------------------+
-                                  |
-                               ether4
-                                  |
-                           Ethernet trunk
-                                  |
-                         +-----------------------+
-                         | NETGEAR GS108PEv2     |
-                         | 192.168.88.21         |
-                         +-----------------------+
-                          |         |         |
-                       port 2    port 3     other ports
-                          |         |         |
-                          |         |         +--> Trusted LAN / VLAN 1
-                          |         |
-                          |         +----------------------+
-                          |                                |
-                          |                         +---------------+
-                          |                         | GS105Ev2      |
-                          |                         +---------------+
-                          |                                |
-                          |                         +---------------+
-                          |                         | Proxmox VE    |
-                          |                         | 192.168.88.115|
-                          |                         +---------------+
-                          |
-                  +-------------------+
-                  | MikroTik wAP ac   |
-                  | 192.168.88.51     |
-                  +-------------------+
+```mermaid
+flowchart LR
+    internet[Internet] -->|Odido ~400 Mbps via ether1| hap[MikroTik hAP ac3<br/>Main router / CAPsMAN<br/>192.168.88.1]
+    hap -->|ether4 · Ethernet trunk| gs108[NETGEAR GS108PEv2<br/>192.168.88.21]
+    gs108 -->|port 2| wap[MikroTik wAP ac<br/>192.168.88.51]
+    gs108 -->|port 3| gs105[GS105Ev2]
+    gs105 --> proxmox[Proxmox VE<br/>192.168.88.115]
+    gs108 -->|other ports| trusted[Trusted LAN / VLAN 1]
 ```
 
 Known physical links:
@@ -58,44 +25,16 @@ Known physical links:
 
 ## Current Logical Topology
 
-```text
-                            INTERNET
-                               |
-                        Odido VLAN 300
-                               |
-                     vlan-internet on hAP
-                               |
-                    +--------------------+
-                    | MikroTik hAP ac3   |
-                    | 192.168.88.1       |
-                    |                    |
-                    | VLAN 1 / Trusted   |
-                    | VLAN 20 / IoT      |
-                    +--------------------+
-                               |
-                       ether4 trunk
-                    VLAN 1 untagged
-                    VLAN 20 tagged
-                               |
-                    +--------------------+
-                    | GS108PEv2          |
-                    | 192.168.88.21      |
-                    +--------------------+
-                      |               |
-                 port 2 trunk      port 3 access-like
-                      |               |
-               VLAN1 + VLAN20       VLAN1 only
-                      |               |
-               +-------------+    +----------+
-               | wAP ac      |    | GS105Ev2 |
-               | .88.51      |    +----------+
-               +-------------+          |
-                    |                   |
-              Trusted SSID(s)        Proxmox
-              IoT SSID VLAN20       192.168.88.115
-                                         |
-                                 +-------+-------+
-                                 |               |
-                           Home Assistant      Talos
-                           192.168.88.31       192.168.88.26
+```mermaid
+flowchart LR
+    internet[Internet] -->|Odido VLAN 300| wan[vlan-internet on hAP]
+    wan --> hap[MikroTik hAP ac3<br/>192.168.88.1<br/>VLAN 1 / Trusted<br/>VLAN 20 / IoT]
+    hap -->|ether4 trunk<br/>VLAN 1 untagged<br/>VLAN 20 tagged| gs108[GS108PEv2<br/>192.168.88.21]
+    gs108 -->|port 2 trunk<br/>VLAN 1 + VLAN 20| wap[wAP ac<br/>192.168.88.51]
+    wap --> trustedSsid[Trusted SSID(s)]
+    wap --> iotSsid[IoT SSID VLAN 20]
+    gs108 -->|port 3 access-like<br/>VLAN 1 only| gs105[GS105Ev2]
+    gs105 --> proxmox[Proxmox<br/>192.168.88.115]
+    proxmox --> homeAssistant[Home Assistant<br/>192.168.88.31]
+    proxmox --> talos[Talos<br/>192.168.88.26]
 ```
