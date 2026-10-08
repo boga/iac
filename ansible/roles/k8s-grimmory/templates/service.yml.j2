@@ -7,10 +7,11 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ grimmory_name }}
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: {{ grimmory_port }}
       targetPort: http
+      nodePort: {{ grimmory_node_port }}
       protocol: TCP
       name: http
   selector:

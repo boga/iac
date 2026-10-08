@@ -1,4 +1,7 @@
 ---
+- name: Preflight Grimmory NodePort
+  ansible.builtin.import_tasks: nodeport-preflight.yml
+
 - name: "Create k8s namespace: {{ namespace_name }}"
   kubernetes.core.k8s:
     state: present
