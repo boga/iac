@@ -15,6 +15,10 @@ machine:
         - mountpoint: /var/local/storage
 
 cluster:
+  # Use the only Talos node as the Kubernetes API endpoint.
+  controlPlane:
+    endpoint: https://192.168.88.26:6443
+
   # Single-node cluster — allow workloads on the control-plane node.
   allowSchedulingOnControlPlanes: true
 
