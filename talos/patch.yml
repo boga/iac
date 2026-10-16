@@ -47,3 +47,9 @@ cluster:
 apiVersion: v1alpha1
 kind: FilesystemTrimConfig
 interval: 168h0m0s # one week
+
+---
+# Isolate the workload runtime from Talos system services.
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: true
