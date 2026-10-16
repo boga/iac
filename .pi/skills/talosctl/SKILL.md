@@ -12,6 +12,11 @@ description: Manage Talos Kubernetes clusters with the `talosctl` CLI. Use for c
 - Assume `$TALOSCONFIG` exists and is valid. Run `talosctl` without a `--talosconfig` argument unless the user explicitly provides a safe alternate path.
 - Treat Talos machine configuration as sensitive. Do not display generated configuration or decrypted values.
 
+## Approval Requirement
+
+- **MUST NOT** perform any change or mutation unless the user explicitly approves it.
+- Treat every state-changing `talosctl` command as unapproved until the user provides approval in the current request.
+
 ## Safe Read Operations
 
 Start with narrowly scoped, read-only checks:
