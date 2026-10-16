@@ -11,7 +11,7 @@
 
 ## Source
 
-- Sidero Labs: [Talos on Proxmox](https://docs.siderolabs.com/talos/v1.13/platform-specific-installations/virtualized-platforms/proxmox)
+- Sidero Labs: [Talos on Proxmox](https://docs.siderolabs.com/talos/v1.14/platform-specific-installations/virtualized-platforms/proxmox)
 - Virtualization Howto: [Proxmox Kubernetes install with Talos Linux](https://www.virtualizationhowto.com/2024/01/proxmox-kubernetes-install-with-talos-linux/)
 
 Current state checked with:
@@ -93,6 +93,11 @@ cluster:
 - RNG: `source=/dev/urandom`
 - Tablet: Proxmox default
 
+## History
+
+- 2026-10-16: Upgraded Talos from v1.13.3 to v1.14.2 and added the QEMU guest agent system extension.
+- 2026-10-16: Upgraded Talos from v1.14.2 to v1.14.3.
+
 ## Notes
 
 - Originally created as VMID `104` with a single 100G disk. Migrated to VMID `105` with split disks (20G OS + 80G data).
@@ -100,16 +105,13 @@ cluster:
 - ISO was ejected after bootstrap; boot order changed from `ide2;scsi0;scsi1` to `scsi0;scsi1`.
 - Sidero recommends OVMF, `q35`, CPU `host`, VirtIO network, and VirtIO SCSI.
 - Talos does not support memory hotplug, so ballooning is disabled.
-- Use Talos Factory schematic `90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13` for first boot.
-- Factory customization includes these official extensions:
-  - `siderolabs/iscsi-tools`
-  - `siderolabs/nfs-utils`
-  - `siderolabs/qemu-guest-agent`
-  - `siderolabs/tailscale`
-- First boot options:
-  - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.raw.xz`
-  - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.iso`
-  - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64`
+- Use Talos Factory schematic `ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515`.
+- Factory customization includes the official `siderolabs/qemu-guest-agent` extension.
+- Talos v1.14.3 artifacts:
+  - Disk image: `https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.3/nocloud-amd64.raw.xz`
+  - ISO: `https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.3/nocloud-amd64.iso`
+  - PXE: `https://pxe.factory.talos.dev/pxe/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.3/nocloud-amd64`
+  - Upgrade installer: `factory.talos.dev/nocloud-installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:v1.14.3`
 - VM initially boot-looped with OVMF and no EFI disk.
 - Added EFI disk, `q35`, CPU `host`, balloon `0`, RNG, and restarted VM.
 - Display was changed from `serial0` to Proxmox default so the console UI is visible.
