@@ -11,7 +11,7 @@
 
 ## Source
 
-- Sidero Labs: [Talos on Proxmox](https://docs.siderolabs.com/talos/v1.13/platform-specific-installations/virtualized-platforms/proxmox)
+- Sidero Labs: [Talos on Proxmox](https://docs.siderolabs.com/talos/v1.14/platform-specific-installations/virtualized-platforms/proxmox)
 - Virtualization Howto: [Proxmox Kubernetes install with Talos Linux](https://www.virtualizationhowto.com/2024/01/proxmox-kubernetes-install-with-talos-linux/)
 
 Current state checked with:
@@ -93,6 +93,10 @@ cluster:
 - RNG: `source=/dev/urandom`
 - Tablet: Proxmox default
 
+## History
+
+- 2026-10-16: Updated the Talos documentation reference and Factory first-boot artifacts to v1.14.0.
+
 ## Notes
 
 - Originally created as VMID `104` with a single 100G disk. Migrated to VMID `105` with split disks (20G OS + 80G data).
@@ -107,9 +111,9 @@ cluster:
   - `siderolabs/qemu-guest-agent`
   - `siderolabs/tailscale`
 - First boot options:
-  - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.raw.xz`
-  - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64.iso`
-  - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.13.3/nocloud-amd64`
+  - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64.raw.xz`
+  - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64.iso`
+  - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64`
 - VM initially boot-looped with OVMF and no EFI disk.
 - Added EFI disk, `q35`, CPU `host`, balloon `0`, RNG, and restarted VM.
 - Display was changed from `serial0` to Proxmox default so the console UI is visible.
