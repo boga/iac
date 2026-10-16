@@ -95,7 +95,7 @@ cluster:
 
 ## History
 
-- 2026-10-16: Updated the Talos documentation reference and Factory first-boot artifacts to v1.14.0.
+- 2026-10-16: Upgraded Talos from v1.13.3 to v1.14.2 and added the QEMU guest agent system extension.
 
 ## Notes
 
@@ -104,16 +104,13 @@ cluster:
 - ISO was ejected after bootstrap; boot order changed from `ide2;scsi0;scsi1` to `scsi0;scsi1`.
 - Sidero recommends OVMF, `q35`, CPU `host`, VirtIO network, and VirtIO SCSI.
 - Talos does not support memory hotplug, so ballooning is disabled.
-- Use Talos Factory schematic `90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13` for first boot.
-- Factory customization includes these official extensions:
-  - `siderolabs/iscsi-tools`
-  - `siderolabs/nfs-utils`
-  - `siderolabs/qemu-guest-agent`
-  - `siderolabs/tailscale`
-- First boot options:
-  - Disk image: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64.raw.xz`
-  - ISO: `https://factory.talos.dev/image/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64.iso`
-  - PXE: `https://pxe.factory.talos.dev/pxe/90067e7859c9c19a3c0c7729000b8ac31b9d625733fe7c3f338801498c551e13/v1.14.0/nocloud-amd64`
+- Use Talos Factory schematic `ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515`.
+- Factory customization includes the official `siderolabs/qemu-guest-agent` extension.
+- Talos v1.14.2 artifacts:
+  - Disk image: `https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.2/nocloud-amd64.raw.xz`
+  - ISO: `https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.2/nocloud-amd64.iso`
+  - PXE: `https://pxe.factory.talos.dev/pxe/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.14.2/nocloud-amd64`
+  - Upgrade installer: `factory.talos.dev/nocloud-installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:v1.14.2`
 - VM initially boot-looped with OVMF and no EFI disk.
 - Added EFI disk, `q35`, CPU `host`, balloon `0`, RNG, and restarted VM.
 - Display was changed from `serial0` to Proxmox default so the console UI is visible.
