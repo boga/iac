@@ -17,5 +17,8 @@ create-venv = "[ -x .venv/bin/python ] || (rm -rf .venv && mise exec -- python -
 [[pre-start]]
 install-python-deps = "mise run ansible-python-deps"
 
+[post-start]
+copy-ignored = "wt step copy-ignored"
+
 [step.copy-ignored]
 exclude = [".venv/"]
