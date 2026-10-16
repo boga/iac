@@ -4,6 +4,8 @@ python = "3"
 
 [env]
 _.python.venv = { path = ".venv" }
+TALOSCONFIG = "{{config_root}}/talos/talosconfig"
+KUBECONFIG = "{{config_root}}/talos/kubeconfig"
 
 [tasks.ansible-python-deps]
 description = "Install Python dependencies for Ansible modules"
