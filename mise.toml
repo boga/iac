@@ -1,6 +1,7 @@
 [tools]
 kubectl = "latest"
 python = "3"
+talosctl = "latest"
 
 [env]
 _.python.venv = { path = ".venv" }
