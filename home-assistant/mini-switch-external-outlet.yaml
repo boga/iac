@@ -1,32 +1,31 @@
-- alias: "Mini switch B: control external outlet A"
-  id: mini_switch_b_external_outlet_a
-  description: Controls External outlet A using Mini switch B via Zigbee2MQTT.
-  mode: queued
-  max: 10
-  triggers:
-    - trigger: mqtt
-      id: turn_on
-      topic: zigbee2mqtt/Mini switch B
-      value_template: "{{ value_json.action }}"
-      payload: "1_initial_press"
-    - trigger: mqtt
-      id: turn_off
-      topic: zigbee2mqtt/Mini switch B
-      value_template: "{{ value_json.action }}"
-      payload: "2_initial_press"
-  actions:
-    - choose:
-        - conditions:
-            - condition: trigger
-              id: turn_on
-          sequence:
-            - action: switch.turn_on
-              target:
-                entity_id: switch.external_outlet_a
-        - conditions:
-            - condition: trigger
-              id: turn_off
-          sequence:
-            - action: switch.turn_off
-              target:
-                entity_id: switch.external_outlet_a
+alias: 'Mini switch B: control external outlet A'
+description: Controls External outlet A using Mini switch B via Zigbee2MQTT.
+triggers:
+  - trigger: mqtt
+    id: turn_on
+    topic: zigbee2mqtt/Mini switch B
+    value_template: '{{ value_json.action }}'
+    payload: 1_initial_press
+  - trigger: mqtt
+    id: turn_off
+    topic: zigbee2mqtt/Mini switch B
+    value_template: '{{ value_json.action }}'
+    payload: 2_initial_press
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: turn_on
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.external_outlet_a
+      - conditions:
+          - condition: trigger
+            id: turn_off
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: switch.external_outlet_a
+mode: queued
+max: 10
